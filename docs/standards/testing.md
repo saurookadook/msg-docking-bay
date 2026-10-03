@@ -4,12 +4,12 @@ Applies to tests in every workspace.
 
 | Workspace | Runner         | Environment | Libraries                                                        |
 | --------- | -------------- | ----------- | ---------------------------------------------------------------- |
-| `client`  | Vitest         | jsdom       | Testing Library (`react`, `user-event`, `jest-dom`), MSW         |
-| `server`  | Jest + ts-jest | node        | `@nestjs/testing`, `supertest`, a real MongoDB test database     |
+| `frontend` | Vitest        | jsdom       | Testing Library (`react`, `user-event`, `jest-dom`), MSW         |
+| `backend` | Jest + ts-jest | node        | `@nestjs/testing`, `supertest`, a real MongoDB test database     |
 | `shared`  | Jest + ts-jest | node        | —                                                                |
 
-**Run:** `pnpm client:test`, `pnpm shared:test`, `pnpm server:test`. Server tests run in a
-dedicated `server-test` Compose service against the test database.
+**Run:** `pnpm frontend:test`, `pnpm shared:test`, `pnpm backend:test`. Backend tests run in a
+dedicated `backend-test` Compose service against the test database.
 
 ---
 
@@ -17,8 +17,8 @@ dedicated `server-test` Compose service against the test database.
 
 **TEST-1 — Test files sit next to the code they test and are named `*.test.ts(x)`**
 (`projects.controller.test.ts`, `pages/ProjectDetails/index.test.tsx`). In `shared`,
-tests MAY be grouped in a `__tests__/` folder inside the module they cover. Server
-end-to-end tests live in `server/test/` as `*.e2e-test.ts`, with their own Jest config
+tests MAY be grouped in a `__tests__/` folder inside the module they cover. Backend
+end-to-end tests live in `backend/test/` as `*.e2e-test.ts`, with their own Jest config
 whose `testRegex` matches that suffix.
 
 **TEST-2 — Fixtures live in `__mocks__/` as `<entity>Mocks.ts`** (`userMocks.ts`,
@@ -61,8 +61,8 @@ describe('ProjectsController', () => {
 Name method blocks `"'methodName' method"` (or `"'name' static method"`). Name route
 blocks `'/path (VERB)'`.
 
-**TEST-5 — Test names describe behaviour in the present tense.** Server tests use
-`it('should …')`. Client and `shared` tests use `it('<verb>s …')` or
+**TEST-5 — Test names describe behaviour in the present tense.** Backend tests use
+`it('should …')`. Frontend and `shared` tests use `it('<verb>s …')` or
 `it('renders correctly')`. Use one form per file.
 
 **TEST-6 — Mark long setup with `/* START TEST SETUP */` … `/* END TEST SETUP */`** so the
@@ -78,7 +78,7 @@ and the Nest app, restore spies, and switch back to real timers.
 
 ---
 
-## Server (Jest + Nest)
+## Backend (Jest + Nest)
 
 **TEST-9 — Service and controller tests are integration tests against the real test
 database.** Build a testing module from real modules, and resolve providers and models by
@@ -114,7 +114,7 @@ ignore generated `_id`, `__v`, and timestamp values.
 
 ---
 
-## Client (Vitest + Testing Library)
+## Frontend (Vitest + Testing Library)
 
 **TEST-14 — Import test APIs explicitly from `vitest`** (`describe`, `it`, `expect`, `vi`,
 and hooks). Do not rely on globals.

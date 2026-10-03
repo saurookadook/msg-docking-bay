@@ -23,11 +23,11 @@ they configure:**
 APP_DOMAIN=app.example.dev
 LOG_LEVEL=DEBUG
 
-CLIENT_HOST=client
-CLIENT_PORT=5173
+FRONTEND_HOST=frontend
+FRONTEND_PORT=5173
 
-SERVER_HOST=server
-SERVER_PORT=3000
+BACKEND_HOST=backend
+BACKEND_PORT=3000
 WS_PORT=8080
 
 DB_HOST=mongo
@@ -44,7 +44,7 @@ is up.
 ## Docker Compose
 
 **ENV-5 — Each workspace and each piece of infrastructure is a Compose service**: for
-example `client`, `server`, `server-test`, `mongo`, and `proxy`, plus an aggregate
+example `frontend`, `backend`, `backend-test`, `mongo`, and `proxy`, plus an aggregate
 service so `docker compose up <aggregate>` starts the whole stack. Service names match the
 hostnames used in env vars and proxy upstreams.
 
@@ -77,12 +77,12 @@ the workspace itself:
 RUN corepack enable
 RUN pnpm install --frozen-lockfile
 RUN pnpm shared:base build
-RUN pnpm server:base build
+RUN pnpm backend:base build
 ```
 
 **ENV-11 — In dev and test stages, `ENTRYPOINT` runs the root workspace alias and `CMD`
-names the script** (`ENTRYPOINT ["pnpm", "server:base"]`, `CMD ["start:dev"]`). That way
-`docker compose run server <script>` works for any script.
+names the script** (`ENTRYPOINT ["pnpm", "backend:base"]`, `CMD ["start:dev"]`). That way
+`docker compose run backend <script>` works for any script.
 
 **ENV-12 — Never copy `.env` files into an image.** Provide configuration at runtime
 through Compose `env_file` or the deployment platform. Production stages contain only
@@ -95,13 +95,13 @@ built output and production dependencies.
 **ENV-13 — A reverse proxy (NGINX) is the single public entry point.** It terminates TLS
 for `APP_DOMAIN` and routes traffic to upstreams named by role:
 
-- `/api` → `backend` (the server)
+- `/api` → `backend` (the NestJS app)
 - WebSocket traffic → `websocket`, with `Upgrade` and `Connection` headers
 - everything else → `frontend`
 
 **ENV-14 — Generate local TLS certificates with `mkcert`** through a setup script, into a
 git-ignored `certs/` directory. Never commit certificates or keys.
 
-**ENV-15 — Client and server code MUST NOT hard-code `localhost` URLs or ports.** Derive
+**ENV-15 — Frontend and backend code MUST NOT hard-code `localhost` URLs or ports.** Derive
 them from configuration (`APP_DOMAIN`, `window.location`) and route traffic through the
 proxy.

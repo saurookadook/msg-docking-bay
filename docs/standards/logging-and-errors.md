@@ -21,7 +21,7 @@ symbol is in scope (`sharedLog.getLogger(LoginForm.name)`). Suffix test loggers 
 relative path.
 
 **LOG-2 — Set the log level once per process**, from `LOG_LEVEL`: in the shared logger
-module, in the client entry point, and in script entry points. Application modules MUST
+module, in the frontend entry point, and in script entry points. Application modules MUST
 NOT call `setLevel`. You may raise a level temporarily while debugging, but do not commit
 it.
 
@@ -48,7 +48,7 @@ logger.debug(`[${this.updateOne.name} method] AFTER update\n`, {
 });
 ```
 
-On the server, wrap large objects in `inspect(...)` from `node:util` with a small
+In the backend, wrap large objects in `inspect(...)` from `node:util` with a small
 `depth`.
 
 **LOG-6 — Never log secrets or personal data.** That includes passwords (hashed or

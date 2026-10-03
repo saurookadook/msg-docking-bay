@@ -1,6 +1,6 @@
 # CSS / SCSS Standards
 
-Applies to all styles in `client`.
+Applies to all styles in `frontend`.
 
 **Stack:** plain CSS processed by PostCSS (`postcss-preset-env`, `postcss-import`,
 `autoprefixer`, and `cssnano` in production). Styles use **native CSS nesting** and
@@ -10,7 +10,7 @@ Applies to all styles in `client`.
 > most needs. Add SCSS only for a concrete need (mixins, loops, maps), and follow the
 > [SCSS section](#if-scss-is-introduced) when you do.
 
-**Source of truth:** `client/postcss.config.js`, `client/src/index.css`.
+**Source of truth:** `frontend/postcss.config.js`, `frontend/src/index.css`.
 
 ---
 
@@ -143,7 +143,7 @@ rules.** The oxfmt config overrides `*.css` with `tabWidth: 4`, so this is enfor
 
 ## If SCSS is introduced
 
-**CSS-21 — Add `sass` to `client` devDependencies and name files `styles.scss`**, following
+**CSS-21 — Add `sass` to `frontend` devDependencies and name files `styles.scss`**, following
 the same colocation, scoping, and nesting rules above.
 
 **CSS-22 — Keep runtime-themeable values as CSS custom properties.** Use Sass variables

@@ -1,19 +1,19 @@
 # React Standards
 
-Applies to `client/src`. General TypeScript rules are in [typescript.md](typescript.md),
+Applies to `frontend/src`. General TypeScript rules are in [typescript.md](typescript.md),
 styling in [css.md](css.md), and tests in [testing.md](testing.md).
 
 **Stack:** React 19 (function components), Vite, React Router (data router), a global
 store built on Context + `useReducer`, and `classnames`.
 
-**Source of truth:** the root `.oxlintrc.json` (`react` plugin), `client/tsconfig.app.json`,
-and `client/vite.config.ts`.
+**Source of truth:** the root `.oxlintrc.json` (`react` plugin), `frontend/tsconfig.app.json`,
+and `frontend/vite.config.ts`.
 
 ---
 
 ## Directory layout
 
-**REACT-1 — Organize `client/src` by role:**
+**REACT-1 — Organize `frontend/src` by role:**
 
 ```txt
 src/
@@ -31,10 +31,10 @@ src/
           styles.css
       utils/              page-specific helpers: guards.ts, hooks.ts
   store/          global state (see "State")
-  utils/          framework-agnostic client helpers (safeFetch, WebSocketManager)
+  utils/          framework-agnostic frontend helpers (safeFetch, WebSocketManager)
     testing/      test-only helpers
-  constants/      client constants
-  types/          client-wide types
+  constants/      frontend constants
+  types/          frontend-wide types
   __mocks__/      fixtures and mock-server handlers
 ```
 
@@ -97,7 +97,7 @@ and prefix it (`` `col-${index}` ``).
 message, status component, or dialog instead.
 
 **REACT-11 — Lean on native form validation** (`required`, `minLength`, `maxLength`,
-`pattern`), using validation patterns from `shared` so client and server agree. Read form
+`pattern`), using validation patterns from `shared` so frontend and backend agree. Read form
 values with a single helper (`getFormData`). Wrap native inputs in a base component
 (`BaseInput`) so defaults are applied once.
 
@@ -231,7 +231,7 @@ name ends in `_LS_KEY`, and each value starts with a short app-specific prefix. 
 read stored values with `safeParseJSON`. Never store credentials or tokens in
 `localStorage`.
 
-**REACT-31 — Build-time configuration reaches the client through Vite `define`**
+**REACT-31 — Build-time configuration reaches the frontend through Vite `define`**
 (`import.meta.env.LOG_LEVEL`), declared in `vite.config.ts`. Do not infer the
 environment from `window.location`.
 

@@ -1,6 +1,6 @@
 # MongoDB / Mongoose Standards
 
-Applies to schemas, models, and queries in `server/src`. Nest module wiring is in
+Applies to schemas, models, and queries in `backend/src`. Nest module wiring is in
 [nestjs.md](nestjs.md).
 
 **Stack:** MongoDB (the Compose `mongo` service), Mongoose via `@nestjs/mongoose`.

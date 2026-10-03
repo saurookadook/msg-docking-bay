@@ -107,7 +107,7 @@ expressions, ASCII diagrams). Put the comment directly above a single statement:
   },
   "overrides": [
     {
-      "files": ["client/**/*.tsx"],
+      "files": ["frontend/**/*.tsx"],
       "rules": {
         "react/only-export-components": ["warn", { "allowConstantExport": true }]
       }

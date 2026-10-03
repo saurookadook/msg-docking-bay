@@ -1,10 +1,10 @@
 # WebSocket Standards
 
-Applies to real-time messaging between the client and the server: the event constants and
-types in `shared`, the Nest gateway in `server`, and the connection manager in `client`.
+Applies to real-time messaging between the frontend and the backend: the event constants and
+types in `shared`, the Nest gateway in `backend`, and the connection manager in `frontend`.
 
-**Stack:** `ws` via `@nestjs/platform-ws` (`WsAdapter`) on the server, the browser
-`WebSocket` API on the client, and MSW `ws` handlers in client tests.
+**Stack:** `ws` via `@nestjs/platform-ws` (`WsAdapter`) in the backend, the browser
+`WebSocket` API in the frontend, and MSW `ws` handlers in frontend tests.
 
 ---
 
@@ -51,7 +51,7 @@ connection URL; use full names (`projectID`), per [typescript.md](typescript.md)
 
 ---
 
-## Server gateway
+## Backend gateway
 
 **WS-6 — Each gateway is a `@WebSocketGateway()` class in
 `<feature>/events/<feature>-events.gateway.ts`**, registered in its own module. That
@@ -76,7 +76,7 @@ gateway file.
 
 ---
 
-## Client manager
+## Frontend connection manager
 
 **WS-12 — One `WebSocketManager` singleton (`wsManager`) owns the connection.** Components
 call its methods to open, get, and close the connection. They never call `new WebSocket`
@@ -101,5 +101,5 @@ cap, then re-sends any join/subscribe messages for the current room.
 ## Testing
 
 **WS-17 — Gateway tests call handler methods directly**, put mocked client sockets in the
-room map, and assert on their `send` calls with `JSON.stringify(expectedEvent)`. Client
+room map, and assert on their `send` calls with `JSON.stringify(expectedEvent)`. Frontend
 tests use MSW `ws.link(url)` handlers in `__mocks__/`. See [testing.md](testing.md).

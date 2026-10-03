@@ -1,7 +1,7 @@
 # Coding Standards
 
 These standards define how code in this repository is written, organized, tested, and
-shipped. They assume a TypeScript monorepo with a React client, a NestJS server backed by
+shipped. They assume a TypeScript monorepo with a React frontend, a NestJS backend on
 MongoDB, real-time messaging over WebSockets, and a framework-free `shared` package used
 by both sides.
 
@@ -30,7 +30,7 @@ by both sides.
 `userID`, `projectID`). They are placeholders; apply the same patterns to the real
 entities.
 
-**Package scope.** Workspace packages are shown as `@app/client`, `@app/server`, and
+**Package scope.** Workspace packages are shown as `@app/frontend`, `@app/backend`, and
 `@app/shared`. Replace `app` with the repository's actual scope.
 
 ## How to read a rule

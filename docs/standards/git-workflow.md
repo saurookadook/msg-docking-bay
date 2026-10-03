@@ -28,9 +28,9 @@ Start the summary with a verb where it reads naturally (`add-…`, `fix-…`, `c
 Conventional Commits with a required scope.
 
 ```txt
-feat(server): add project invite endpoint
-fix(client): keep task order stable after drag and drop
-chore(server): rename users service and module files
+feat(backend): add project invite endpoint
+fix(frontend): keep task order stable after drag and drop
+chore(backend): rename users service and module files
 docs(standards): add testing standards
 ```
 
@@ -48,9 +48,9 @@ review.
 **GIT-5 — A PR title follows the same format as a commit subject (GIT-3):**
 
 ```txt
-feat(server): add project invites
-fix(client): fix task ordering
-refactor(server): extract config module
+feat(backend): add project invites
+fix(frontend): fix task ordering
+refactor(backend): extract config module
 ```
 
 PRs are squash-merged, so the title becomes the commit message on `main` (GitHub appends

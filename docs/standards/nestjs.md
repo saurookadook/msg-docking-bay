@@ -1,6 +1,6 @@
 # NestJS Standards
 
-Applies to `server/src`. Database rules are in [mongoose.md](mongoose.md), the WebSocket
+Applies to `backend/src`. Database rules are in [mongoose.md](mongoose.md), the WebSocket
 gateway in [websockets.md](websockets.md), and general rules in
 [typescript.md](typescript.md) and [nodejs.md](nodejs.md).
 
@@ -191,7 +191,7 @@ Response DTOs extend a `BaseDTO` (`id`, `createdAt`, `updatedAt`). Update DTOs e
 by indexed access (`TaskDTO['projectID']`).
 
 **NEST-24 — Every DTO field has at least one `class-validator` decorator.** Fields that are
-optional MUST be `@IsOptional()`. Use shared validation patterns for formats the client
+optional MUST be `@IsOptional()`. Use shared validation patterns for formats the frontend
 also checks (`@Matches(usernamePattern.asRegExp)`), and `@ValidateIf((o) => o.x != null)`
 for nullable fields.
 
@@ -223,7 +223,7 @@ vocabulary:**
 documents. Controllers convert those documents into response DTOs.
 
 **NEST-29 — Pure domain logic lives in `shared`**, where it can be tested without Nest and
-reused by the client. Services instantiate or inject it; they do not reimplement domain
+reused by the frontend. Services instantiate or inject it; they do not reimplement domain
 rules.
 
 ---
@@ -257,5 +257,5 @@ and only the global `HttpExceptionFilter` / `CatchAllFilter` produce them. Inclu
 
 **NEST-33 — Write one-off and maintenance tasks as `nest-commander` commands** in
 `scripts/commands/<name>.command.ts`, register them in a `ScriptsModule`, and run them
-with `pnpm server:ncs <command_name>`. Command names are `snake_case` (`seed_db`). One-off
+with `pnpm backend:ncs <command_name>`. Command names are `snake_case` (`seed_db`). One-off
 data migrations go in `scripts/commands/adhoc/`.

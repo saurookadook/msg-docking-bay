@@ -11,8 +11,8 @@ unit:
 
 ```txt
 <repo>/
-  client/     @app/client   React UI
-  server/     @app/server   NestJS API + WebSocket gateway
+  frontend/   @app/frontend React UI
+  backend/    @app/backend  NestJS API + WebSocket gateway
   shared/     @app/shared   framework-free code used by both
   package.json              root scripts, shared tooling, packageManager
   pnpm-workspace.yaml       workspace packages and pnpm settings
@@ -26,28 +26,28 @@ Workspace packages are listed in `pnpm-workspace.yaml`, not in a `workspaces` fi
 
 ```yaml
 packages:
-  - client
-  - server
+  - frontend
+  - backend
   - shared
 onlyBuiltDependencies:
   - bcrypt
   - esbuild
 ```
 
-Package names share one scope: `@app/client`, `@app/server`, `@app/shared`.
+Package names share one scope: `@app/frontend`, `@app/backend`, `@app/shared`.
 
 **MONO-2 — Depend on sibling workspaces with `"workspace:*"`.** Never import across
 workspaces with relative paths (`../../shared/src/...`); import the package by name.
 
-**MONO-3 — Dependencies flow one way:** `client → shared` and `server → shared`. `shared`
-MUST NOT import from `client` or `server`, and `client` and `server` MUST NOT import from
+**MONO-3 — Dependencies flow one way:** `frontend → shared` and `backend → shared`. `shared`
+MUST NOT import from `frontend` or `backend`, and `frontend` and `backend` MUST NOT import from
 each other.
 
 ---
 
 ## The `shared` package
 
-**MONO-4 — Put code in `shared` when client and server both need the same
+**MONO-4 — Put code in `shared` when frontend and backend both need the same
 definition:**
 
 - pure domain logic (rules, state machines, calculations)
@@ -98,7 +98,7 @@ prefix:**
 | `<pkg>:test` | runs that workspace's tests                                            |
 | `all:<task>` | runs a task in every workspace in dependency order (`pnpm -r run <task>`) |
 | `dcr`        | `docker compose run --rm --remove-orphans`                             |
-| `server:ncs` | runs a nest-commander script in the server container                   |
+| `backend:ncs` | runs a nest-commander script in the backend container                 |
 
 Add a root alias for a workspace script that is run often; otherwise use
 `pnpm <pkg>:base <script>`.
@@ -107,7 +107,7 @@ Add a root alias for a workspace script that is run often; otherwise use
 - Long-running watchers (`all:start:dev`) need `pnpm -r --parallel run start:dev`, since
   each watcher never exits.
 - To run a task for one workspace plus the workspaces it depends on, use
-  `pnpm --filter "@app/server..." build`.
+  `pnpm --filter "@app/backend..." build`.
 
 **MONO-12 — Every workspace defines `build` and `test` scripts**, and runnable apps also
 define `start:dev`. Formatting and linting are root-only scripts (`format`,

@@ -1,6 +1,6 @@
 # Node.js Standards
 
-Applies to the runtime, the package manager, tooling, and server-side code (`server`,
+Applies to the runtime, the package manager, tooling, and backend code (`backend`,
 `shared`, scripts, and config files). NestJS specifics live in [nestjs.md](nestjs.md);
 environment files and containers in [docker-and-environment.md](docker-and-environment.md).
 
@@ -39,7 +39,7 @@ fail at runtime. Review new requests with `pnpm approve-builds`, and do not allo
 package without knowing why it needs a build step.
 
 **NODE-4 — Add each dependency to the workspace that uses it**
-(`pnpm --filter @app/server add bcrypt`), not to the root. pnpm only lets a package
+(`pnpm --filter @app/backend add bcrypt`), not to the root. pnpm only lets a package
 import what it declares, so every workspace MUST declare everything it imports. The root
 `package.json` holds only tooling shared by every workspace (TypeScript, oxlint, oxfmt,
 test runners), added with `pnpm add -D -w <pkg>`. `@types/*` packages and test tools go
@@ -59,8 +59,8 @@ format:**
 | Workspace | Source                   | Emitted                                 |
 | --------- | ------------------------ | --------------------------------------- |
 | root      | ESM (`"type": "module"`) | —                                       |
-| `client`  | ESM                      | ESM bundle (Vite)                       |
-| `server`  | ESM syntax in TS         | CommonJS via the Nest CLI               |
+| `frontend` | ESM                     | ESM bundle (Vite)                       |
+| `backend` | ESM syntax in TS         | CommonJS via the Nest CLI               |
 | `shared`  | ESM (`"type": "module"`) | ESM + CommonJS via tsup (`exports` map) |
 
 A config file that a tool loads as CommonJS MAY use `module.exports`.
@@ -75,20 +75,20 @@ import `node:*` modules from `shared` runtime code; type-only imports such as
 ## Environment variables
 
 **NODE-8 — Read `process.env` in one place per concern:** the NestJS config factory for
-the server, and Vite `define` for the client. Pass typed values onward from there. Do not
+the backend, and Vite `define` for the frontend. Pass typed values onward from there. Do not
 scatter `process.env.X` reads through services, gateways, or components.
 
 **NODE-9 — Destructure env vars at the top of the function that needs them**, then parse
 each one and give it an explicit default:
 
 ```ts
-const { DB_HOST, DB_NAME, DB_PORT, SERVER_PORT } = process.env;
+const { DB_HOST, DB_NAME, DB_PORT, BACKEND_PORT } = process.env;
 
 const safeSetInt = (val: unknown, fallback: number): number =>
   typeof val === 'string' ? parseInt(val, 10) : fallback;
 
 return {
-  port: safeSetInt(SERVER_PORT, 3000),
+  port: safeSetInt(BACKEND_PORT, 3000),
   database: { host: DB_HOST || 'localhost', name: DB_NAME || 'app', port: safeSetInt(DB_PORT, 27017) },
 };
 ```
@@ -150,7 +150,7 @@ in the authentication path (see [mongoose.md](mongoose.md)).
 
 ## Debug output
 
-**NODE-19 — Format structured debug output on the server with `inspect` from
+**NODE-19 — Format structured debug output in the backend with `inspect` from
 `node:util`**, and pass it to the logger rather than to `console`:
 
 ```ts
