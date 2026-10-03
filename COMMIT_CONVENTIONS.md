@@ -16,8 +16,8 @@ bumps, and makes each commit's intent clear before anyone opens the diff.
 ```
 
 ```txt
-feat(server): add project invite endpoint
-fix(client): keep task order stable after drag and drop
+feat(backend): add project invite endpoint
+fix(frontend): keep task order stable after drag and drop
 docs(standards): add testing standards
 refactor(shared)!: rename TaskUpdate to TaskChange
 ```
@@ -49,8 +49,8 @@ The scope is required and names the part of the repository the commit touches:
 
 | Scope       | Area                                                     |
 | ----------- | -------------------------------------------------------- |
-| `client`    | the React app (`client/`)                                |
-| `server`    | the NestJS app (`server/`)                               |
+| `frontend`  | the React app (`frontend/`)                              |
+| `backend`   | the NestJS app (`backend/`)                              |
 | `shared`    | the shared package (`shared/`)                           |
 | `standards` | coding standards (`docs/standards/`)                     |
 | `docs`      | other documentation (`docs/`, READMEs)                   |
@@ -59,7 +59,7 @@ The scope is required and names the part of the repository the commit touches:
 | `repo`      | root-level configuration and repository meta files       |
 
 Use one scope per commit. A change that genuinely spans several workspaces uses the scope
-of the area that drives it (for example, a new shared event used by client and server is
+of the area that drives it (for example, a new shared event used by frontend and backend is
 `shared`). If no single area drives it, split the commit.
 
 ## Description
