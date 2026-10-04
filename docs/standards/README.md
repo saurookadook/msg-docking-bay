@@ -2,8 +2,10 @@
 
 These standards define how code in this repository is written, organized, tested, and
 shipped. They assume a TypeScript monorepo with a React frontend, a NestJS backend on
-MongoDB, real-time messaging over WebSockets, and a framework-free `shared` package used
-by both sides.
+PostgreSQL with Drizzle, real-time messaging over WebSockets, and a framework-free
+`shared` package used by both sides. The backend is moving from MongoDB to PostgreSQL;
+some documents still describe MongoDB, and the database documents say which of their
+rules they replace.
 
 ## Documents
 
@@ -13,7 +15,10 @@ by both sides.
 | [nodejs.md](nodejs.md)                                 | Runtime, pnpm, modules, env vars, async, crypto                  |
 | [react.md](react.md)                                   | Components, state store, hooks, routing, client-side data access |
 | [nestjs.md](nestjs.md)                                 | Modules, controllers, services, DTOs, guards, pipes, filters     |
-| [mongoose.md](mongoose.md)                             | Schemas, documents, IDs, queries, model tokens                   |
+| [relational-databases.md](relational-databases.md)     | Modeling, keys, constraints, indexes, queries, migrations        |
+| [postgresql.md](postgresql.md)                         | Version, types, IDs, search, roles, connections, containers      |
+| [drizzle.md](drizzle.md)                               | Tables, relations, queries, transactions, drizzle-kit, tests     |
+| [mongoose.md](mongoose.md)                             | Being replaced by the three documents above                      |
 | [websockets.md](websockets.md)                         | Event names, message shapes, gateway and client manager          |
 | [css.md](css.md)                                       | CSS / SCSS: file layout, nesting, tokens, selectors              |
 | [testing.md](testing.md)                               | Jest, Vitest, Testing Library, MSW, fixtures, custom matchers    |
