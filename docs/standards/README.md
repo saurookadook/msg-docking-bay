@@ -20,7 +20,7 @@ by both sides.
 | [logging-and-errors.md](logging-and-errors.md)         | Shared logger, log levels, error messages, error wrapping        |
 | [formatting-and-linting.md](formatting-and-linting.md) | oxfmt, oxlint, suppression comments                              |
 | [monorepo.md](monorepo.md)                             | pnpm workspace, the `shared` package, root scripts               |
-| [docker-and-environment.md](docker-and-environment.md) | Compose services, Dockerfiles, `.env` files, reverse proxy       |
+| [docker-and-environment.md](docker-and-environment.md) | `.env` files, Compose, Dockerfiles, image security, CI, proxy    |
 | [git-workflow.md](git-workflow.md)                     | Branch names, commit messages, PR titles and template            |
 
 ## Conventions used in these documents

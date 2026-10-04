@@ -18,7 +18,7 @@ unit:
   pnpm-workspace.yaml       workspace packages and pnpm settings
   pnpm-lock.yaml
   tsconfig.json             project references only
-  docker-compose.yaml
+  compose.yaml
 ```
 
 Workspace packages are listed in `pnpm-workspace.yaml`, not in a `workspaces` field in
