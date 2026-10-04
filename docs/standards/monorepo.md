@@ -109,8 +109,9 @@ Add a root alias for a workspace script that is run often; otherwise use
 - To run a task for one workspace plus the workspaces it depends on, use
   `pnpm --filter "@app/backend..." build`.
 
-**MONO-12 — Every workspace defines `build` and `test` scripts**, and runnable apps also
-define `start:dev`. Formatting and linting are root-only scripts (`format`,
+**MONO-12 — Every workspace defines `build`, `test`, and `typecheck` scripts**, and
+runnable apps also define `start:dev`. Workspaces whose tests run on the CI runner also
+define `test:cov` ([ci-pipeline.md](ci-pipeline.md) CI-2). Formatting and linting are root-only scripts (`format`,
 `format:check`, `lint`, `lint:fix`) that cover every workspace
 ([formatting-and-linting.md](formatting-and-linting.md) FMT-11); workspaces do not define
 their own. A script that needs an environment file loads it from the root rather than

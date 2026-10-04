@@ -256,7 +256,8 @@ deployment target's platform; `linux/arm64` MAY use GitHub's free arm64 runners.
 
 **ENV-29 — CI runs tests the way developers do:** unit tests on the runner, backend tests
 in the `backend-test` Compose service ([testing.md](testing.md)). Never test in a `-prod`
-stage.
+stage. [ci-pipeline.md](ci-pipeline.md) defines the jobs, and
+[github-actions.md](github-actions.md) how workflows are written.
 
 **ENV-30 — Images are published to GHCR and deployed by immutable tag.**
 `docker/metadata-action` tags `main` builds `sha-<short>` and `vX.Y.Z` git tags `X.Y.Z`,
