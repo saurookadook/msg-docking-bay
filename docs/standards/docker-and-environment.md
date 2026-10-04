@@ -217,12 +217,42 @@ records build-arg values. A step that needs a credential mounts it for that one 
 (`RUN --mount=type=secret,id=npmrc,target=/root/.npmrc pnpm install …`). Keep tokens out
 of the environment while `pnpm install` runs; NODE-3 governs install scripts.
 
-**ENV-24 — Pin every image to an exact version, and let a bot update the pins.** `FROM`
-lines and Compose `image:` entries MUST name a full version tag
+**ENV-24 — Pin every image to an exact version, and let Dependabot update every pin.**
+`FROM` lines and Compose `image:` entries MUST name a full version tag
 (`node:24.21.0-bookworm-slim`), never `latest`, `lts`, or a bare major, and SHOULD add the
-digest. A digest pin without automated updates stops security fixes, so commit a
-`.github/dependabot.yml` with weekly `docker`, `docker-compose`, and `github-actions`
-updates. Renovate MAY replace Dependabot.
+digest. A pin without automated updates stops security fixes, so
+`.github/dependabot.yml` covers every ecosystem that holds pins: `npm` (the pnpm
+lockfile), `docker` (every directory with a Dockerfile, including `.github/tools/*`),
+`docker-compose`, and `github-actions` (workflows and `.github/actions/*`). Updates run
+weekly, minor and patch updates are grouped, and each update waits a 7-day cooldown after
+release. That is longer than GitHub's 3-day default (since 14 July 2026), so a compromised
+release is more likely to be pulled before it reaches this repository. Security updates
+ignore the cooldown. Renovate MAY replace Dependabot.
+
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule: { interval: "weekly" }
+    cooldown: { default-days: 7 }
+    groups:
+      npm-minor-and-patch: { update-types: ["minor", "patch"] }
+  - package-ecosystem: "github-actions"
+    directories: ["/", "/.github/actions/*"]
+    schedule: { interval: "weekly" }
+    cooldown: { default-days: 7 }
+    groups:
+      actions-minor-and-patch: { update-types: ["minor", "patch"] }
+  - package-ecosystem: "docker"
+    directories: ["/backend", "/frontend", "/.github/tools/*"]
+    schedule: { interval: "weekly" }
+    cooldown: { default-days: 7 }
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule: { interval: "weekly" }
+    cooldown: { default-days: 7 }
+```
 
 **ENV-25 — Containers run with least privilege.** Never mount the Docker socket or use
 `privileged: true`. Production services MUST set `cap_drop: [ALL]` and
@@ -231,39 +261,69 @@ updates. Renovate MAY replace Dependabot.
 limits. Development services SHOULD drop capabilities too unless a tool breaks. On a PaaS,
 use the platform's equivalents.
 
-**ENV-26 — CI SHOULD scan images and attach provenance.** Scan the production images with
-one free scanner (Trivy, Grype, or Docker Scout) on PRs that change a Dockerfile or the
-lockfile, and weekly. Fail on fixable `HIGH` and `CRITICAL` findings; each accepted
-finding goes in the ignore file with a reason and an expiry date. Pushed images get
-`build-push-action`'s default provenance plus `sbom: true`. Signing MAY follow once a
-deploy step verifies it. Do not use Docker Content Trust; it shuts down on 2026-12-08.
+**ENV-26 — CI scans images, and published images carry a GitHub attestation.**
+
+- **Scanning.** The `docker` CI area scans each image it builds on a PR
+  ([ci-pipeline.md](ci-pipeline.md) CI-13). `scan.yml` scans the published images
+  weekly and uploads the results as SARIF to code scanning (free for public
+  repositories; `security-events: write`). Use one free scanner. Trivy through
+  `aquasecurity/trivy-action` MUST be pinned by SHA at v0.35.0 or later: on 19 March 2026,
+  76 of 77 earlier tags were force-pushed to a credential stealer _(non-GitHub: Aqua
+  Security, Microsoft)_. Grype or Docker Scout are alternatives. Fail on fixable `HIGH`
+  and `CRITICAL` findings. Each accepted finding goes in the ignore file with a reason and
+  an expiry date.
+- **Attestation.** The `publish` job attests each pushed digest with GitHub's
+  `actions/attest` (free for public repositories), in addition to
+  `build-push-action`'s default provenance with `sbom: true`. That meets SLSA Build Level
+  2. A deploy verifies it first:
+  `gh attestation verify oci://ghcr.io/<owner>/<repo>/<image>@<digest> --repo <owner>/<repo>`
+  ([github-actions.md](github-actions.md) GHA-27). An attestation shows where and how an
+  image was built, not that it is safe.
+
+Do not use Docker Content Trust; it shuts down on 2026-12-08.
 
 ---
 
 ## Build and CI
 
 **ENV-27 — Pin every GitHub Action to a full commit SHA, with its version in a comment**
-(`uses: docker/build-push-action@<sha> # v7`), and give each workflow the least
-`permissions` it needs. In March 2026 attackers force-pushed the tags of Trivy's actions
-to steal CI secrets. A job that builds images gets no secret beyond its registry
-credential.
+(`uses: docker/build-push-action@<sha> # v7.x.y`), and give each job the least
+`permissions` it needs ([github-actions.md](github-actions.md) GHA-9, GHA-24). In March
+2026 attackers force-pushed the tags of Trivy's actions to steal CI secrets. A job that
+builds images gets no secret beyond its registry credential.
 
-**ENV-28 — Production images are built only in CI**, from `main` and release tags; never
-on a laptop and pushed by hand. PRs build without pushing. CI uses Buildx through Docker's
-official actions with the GitHub Actions cache (`type=gha`, `mode=max`) and a cache scope
-per image. Each image SHOULD be a target in a root `docker-bake.hcl`. Build for the
-deployment target's platform; `linux/arm64` MAY use GitHub's free arm64 runners.
+**ENV-28 — Production images are built only in CI**, by the `publish` job on pushes to
+`main` and `v*` tags ([ci-pipeline.md](ci-pipeline.md) CI-13); never on a laptop and
+pushed by hand. PRs build without pushing. CI uses Buildx through Docker's official
+actions with the GitHub Actions cache (`type=gha`, `mode=max`) and one cache `scope` per
+image, or each image's build overwrites the others' cache. Only pushing runs set
+`cache-to`, so PR builds read `main`'s cache without evicting it. The cache backend has
+required Buildx 0.21+ and BuildKit 0.20+ since 15 April 2025; current
+`setup-buildx-action` releases provide them. Each image SHOULD be a target in a root
+`docker-bake.hcl`. Build for the deployment target's platform; `linux/arm64` MAY use
+GitHub's arm64 runners, which are free for public repositories.
 
 **ENV-29 — CI runs tests the way developers do:** unit tests on the runner, backend tests
 in the `backend-test` Compose service ([testing.md](testing.md)). Never test in a `-prod`
 stage. [ci-pipeline.md](ci-pipeline.md) defines the jobs, and
 [github-actions.md](github-actions.md) how workflows are written.
 
-**ENV-30 — Images are published to GHCR and deployed by immutable tag.**
-`docker/metadata-action` tags `main` builds `sha-<short>` and `vX.Y.Z` git tags `X.Y.Z`,
-and adds OCI labels, including `org.opencontainers.image.source`. Deploy configuration
-MUST reference a `sha-…` tag or a digest, never `latest`; rollback is redeploying the
-previous SHA.
+**ENV-30 — Images are published to GHCR and deployed by immutable tag or digest.**
+
+- **Login.** The `publish` job logs in with `GITHUB_TOKEN`, and it is the only job granted
+  `packages: write` ([github-actions.md](github-actions.md) GHA-9).
+- **Tags and labels.** `docker/metadata-action` tags `main` builds `sha-<short>` and
+  `vX.Y.Z` git tags `X.Y.Z`, and adds OCI labels, including
+  `org.opencontainers.image.source`. Images pushed from a workflow are linked to the
+  repository automatically.
+- **Visibility.** New GHCR packages start private. Set each package to public, matching
+  the repository, so a deploy target can pull without credentials. Outside Actions, GHCR
+  accepts only a classic personal access token for private packages.
+- **Deploys.** Deploy configuration MUST reference a `sha-…` tag or a digest, never
+  `latest`. Rollback is redeploying the previous digest.
+- **Cleanup.** Old untagged versions MAY be pruned with `actions/delete-package-versions`
+  (in limited maintenance). Never delete an untagged child manifest of a multi-platform
+  image that a tag still references.
 
 ---
 

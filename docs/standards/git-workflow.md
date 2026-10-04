@@ -19,6 +19,7 @@ Applies to branches, commits, and pull requests.
 Start the summary with a verb where it reads naturally (`add-…`, `fix-…`, `create-…`).
 
 **GIT-2 — Do not commit directly to `main`.** Every change lands through a pull request.
+The `main` ruleset enforces this ([github-actions.md](github-actions.md) GHA-26).
 
 ---
 
@@ -66,7 +67,8 @@ PRs are squash-merged, so the title becomes the commit message on `main` (GitHub
 `docs/standards/` ([README](README.md)).
 
 **GIT-8 — Before requesting review**, confirm three things:
-- Tests pass for every workspace the PR touches.
+- Tests pass for every workspace the PR touches, and CI's `ci-success` check is green
+  ([ci-pipeline.md](ci-pipeline.md) CI-14).
 - Formatting and lint are clean ([formatting-and-linting.md](formatting-and-linting.md)
   FMT-12).
 - Any new environment variables are in the `.example` files

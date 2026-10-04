@@ -21,8 +21,8 @@ by both sides.
 | [formatting-and-linting.md](formatting-and-linting.md) | oxfmt, oxlint, suppression comments                              |
 | [monorepo.md](monorepo.md)                             | pnpm workspace, the `shared` package, root scripts               |
 | [docker-and-environment.md](docker-and-environment.md) | `.env` files, Compose, Dockerfiles, image security, CI, proxy    |
-| [github-actions.md](github-actions.md)                 | Workflow layout, naming, triggers, permissions, composite actions |
-| [ci-pipeline.md](ci-pipeline.md)                       | What CI checks per area, the setup action, coverage reporting    |
+| [github-actions.md](github-actions.md)                 | Workflow layout, change detection, permissions, repo settings    |
+| [ci-pipeline.md](ci-pipeline.md)                       | `ci.yml`, per-area checks, setup action, image publishing        |
 | [git-workflow.md](git-workflow.md)                     | Branch names, commit messages, PR titles and template            |
 
 ## Conventions used in these documents
