@@ -17,6 +17,9 @@ app's real entities.
   `docs/standards/testing.md`.
 - **Real-time messaging**: the WebSocket manager, socket message handlers, or event
   types. Read `docs/standards/websockets.md`.
+- **Calling the API**: a fetch, an action creator, or a type for a request or response.
+  Use the generated types from `@app/shared`; read `docs/standards/monorepo.md`
+  (MONO-13 to MONO-15) and `docs/standards/react.md` (REACT-28).
 - **Dependencies**: `package.json`, adding a package, or importing from `@app/shared`.
   Read `docs/standards/monorepo.md` and `docs/standards/nodejs.md`.
 - **Container or env vars**: the Dockerfile, Compose service, or `import.meta.env` values.
