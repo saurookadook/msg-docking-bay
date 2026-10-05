@@ -1,30 +1,31 @@
 # Testing Standards
 
-Applies to tests in every workspace.
+Applies to tests in the TypeScript workspaces, `frontend` and `shared`. Backend tests are
+Python and follow [python/pytest.md](python/pytest.md); TEST-9 to TEST-13 say how the two
+sides meet.
 
-| Workspace | Runner         | Environment | Libraries                                                        |
-| --------- | -------------- | ----------- | ---------------------------------------------------------------- |
-| `frontend` | Vitest        | jsdom       | Testing Library (`react`, `user-event`, `jest-dom`), MSW         |
-| `backend` | Jest + ts-jest | node        | `@nestjs/testing`, `supertest`, a real MongoDB test database     |
-| `shared`  | Jest + ts-jest | node        | —                                                                |
+| Workspace  | Runner         | Environment | Libraries                                                          |
+| ---------- | -------------- | ----------- | ------------------------------------------------------------------ |
+| `frontend` | Vitest         | jsdom       | Testing Library (`react`, `user-event`, `jest-dom`), MSW           |
+| `shared`   | Jest + ts-jest | node        | —                                                                  |
+| `backend`  | pytest         | Python      | see [python/pytest.md](python/pytest.md) PYTEST-1; a real PostgreSQL test database |
 
 **Run:** `pnpm frontend:test`, `pnpm shared:test`, `pnpm backend:test`. Backend tests run in a
-dedicated `backend-test` Compose service against the test database.
+dedicated `backend-test` Compose service against the test database
+([docker-and-environment.md](docker-and-environment.md) ENV-4).
 
 ---
 
 ## Files and naming
 
 **TEST-1 — Test files sit next to the code they test and are named `*.test.ts(x)`**
-(`projects.controller.test.ts`, `pages/ProjectDetails/index.test.tsx`). In `shared`,
-tests MAY be grouped in a `__tests__/` folder inside the module they cover. Backend
-end-to-end tests live in `backend/test/` as `*.e2e-test.ts`, with their own Jest config
-whose `testRegex` matches that suffix.
+(`utils/safeFetch.test.ts`, `pages/ProjectDetails/index.test.tsx`). In `shared`, tests
+MAY be grouped in a `__tests__/` folder inside the module they cover.
 
 **TEST-2 — Fixtures live in `__mocks__/` as `<entity>Mocks.ts`** (`userMocks.ts`,
 `projectMocks.ts`, `commonMocks.ts`).
 - Fixture values are named `mock<Thing>` (`mockFirstUser`, `mockNow`).
-- Factories are named `create<Thing>Mock` (`createTaskDocumentMock`).
+- Factories are named `create<Thing>Mock` (`createTaskMock`).
 - Lookups are named `find<Thing>Mock`.
 
 Fixtures used by more than one workspace live in `shared` and are exported from its
@@ -47,22 +48,21 @@ Production code MUST NOT import from these folders.
 **TEST-4 — Nest `describe` blocks by subject, then by unit:**
 
 ```ts
-describe('TasksService', () => {
-  describe("'updateOne' method", () => {
-    it('should reject a status change on an archived project', async () => { ... });
+describe('TaskList', () => {
+  describe("'addMany' method", () => {
+    it('rejects a task for an archived project', () => { ... });
   });
 });
 
-describe('ProjectsController', () => {
-  describe('/projects/:projectID (GET)', () => { ... });
+describe('ProjectDetails', () => {
+  describe('when the project is archived', () => { ... });
 });
 ```
 
-Name method blocks `"'methodName' method"` (or `"'name' static method"`). Name route
-blocks `'/path (VERB)'`.
+Name method blocks `"'methodName' method"` (or `"'name' static method"`), and name state
+blocks `'when …'`.
 
-**TEST-5 — Test names describe behaviour in the present tense.** Backend tests use
-`it('should …')`. Frontend and `shared` tests use `it('<verb>s …')` or
+**TEST-5 — Test names describe behaviour in the present tense:** `it('<verb>s …')` or
 `it('renders correctly')`. Use one form per file.
 
 **TEST-6 — Mark long setup with `/* START TEST SETUP */` … `/* END TEST SETUP */`** so the
@@ -72,45 +72,39 @@ act and assert steps are easy to find.
 placeholder assertion. A skipped test MUST have a `// TODO:` saying why it is skipped.
 
 **TEST-8 — Tests MUST be independent of each other.** Reset state in `beforeEach` or
-`afterEach` (`deleteMany({})`, `cleanup()`, `vi.clearAllMocks()`,
-`server.resetHandlers()`). Release resources in `afterAll`: close the database connection
-and the Nest app, restore spies, and switch back to real timers.
+`afterEach` (`cleanup()`, `vi.clearAllMocks()`, `server.resetHandlers()`). Release
+resources in `afterAll`: close the MSW server, restore spies, and switch back to real
+timers.
 
 ---
 
-## Backend (Jest + Nest)
+## Backend and the API contract
 
-**TEST-9 — Service and controller tests are integration tests against the real test
-database.** Build a testing module from real modules, and resolve providers and models by
-token:
+**TEST-9 — Backend tests follow [python/pytest.md](python/pytest.md):** pytest against a
+real PostgreSQL test database, with each test rolled back (PYTEST-10), routes tested
+through `TestClient` (PYTEST-14, FAPI-20), and WebSocket routes as in
+[websockets.md](websockets.md) WS-17. The rules in this document do not apply to them.
 
-```ts
-const module = await Test.createTestingModule({
-  imports: [RootConfigModule, DatabaseModule, ProjectsModule, UsersModule],
-}).compile();
+**TEST-10 — Frontend tests type every mocked API response with the generated contract**
+([monorepo.md](monorepo.md) MONO-15). A mock built as
+`const mockProjectResponse: ProjectResponse = { data: { ... } }` stops compiling when the
+backend changes the response, so the frontend's tests cannot keep passing against a shape
+the API no longer returns. Never type a mock as `any` or cast it with `as` to make it fit.
 
-mongoConnection = await module.resolve(getConnectionToken());
-projectsService = await module.resolve(ProjectsService);
-userModel = await module.resolve(USER_MODEL_TOKEN);
-```
+**TEST-11 — Fake timers MUST leave the event loop running.** In `shared` (Jest):
+`jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'], now: mockNow })`. In
+`frontend` (Vitest), fake only what the test needs, `vi.useFakeTimers({ toFake:
+['setTimeout', 'clearTimeout', 'Date'], now: mockNow })`, so promises and MSW handlers
+still resolve.
 
-Mock a collaborator only when it is external (network, clock, email) or when the test is
-about the interaction itself.
+**TEST-12 — Compare objects that carry generated values with asymmetric matchers**
+(`project_id: expect.toBeUUID()`, `created_at: expect.toBeISODateString()`; TEST-19),
+rather than deleting the fields before comparing or copying a generated value into the
+expectation.
 
-**TEST-10 — Controller tests send HTTP requests through `supertest`** on
-`app.getHttpServer()`. Register the global filter providers so error responses have the
-production shape, and assert on both `statusCode` and `message`. Use `await` with
-`supertest`, not the `done` callback.
-
-**TEST-11 — Fake timers MUST leave the event loop running:**
-`jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'], now: mockNow })`.
-
-**TEST-12 — Compare Mongoose documents and serialized responses with shared helpers**
-(`expectHydratedDocumentToMatch<T>()`, `expectSerializedDocumentToMatch<T>()`). These
-ignore generated `_id`, `__v`, and timestamp values.
-
-**TEST-13 — Never point tests at the development database.** The test script loads
-`.env.test` (a separate database name and ports) and sets `NODE_ENV=test`.
+**TEST-13 — Never point tests at a development service.** Frontend and `shared` tests
+never call a running backend; they mock the network (TEST-18). Backend tests use
+`.env.test` and the `test_app` database (ENV-4, PYTEST-10).
 
 ---
 

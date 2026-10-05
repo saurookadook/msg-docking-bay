@@ -1,7 +1,8 @@
 # TypeScript Standards
 
-Applies to every `.ts` / `.tsx` file in every workspace. Framework-specific rules live in
-[react.md](react.md) and [nestjs.md](nestjs.md); formatting is enforced by oxfmt
+Applies to every `.ts` / `.tsx` file, in `frontend` and `shared`. React rules live in
+[react.md](react.md); the backend is Python ([python/python.md](python/python.md));
+formatting is enforced by oxfmt
 ([formatting-and-linting.md](formatting-and-linting.md)).
 
 **Source of truth:** `tsconfig*.json` in each workspace and the root `.oxlintrc.json`.
@@ -16,7 +17,7 @@ configs. Also enable `noFallthroughCasesInSwitch`, `isolatedModules`, and
 `forceConsistentCasingInFileNames`.
 
 **TS-2 — Each workspace MUST define the `@/*` path alias to its own `src/`.** Import
-in-workspace modules as `@/store` or `@/projects/dtos`, never as `../../../store`. Mirror
+in-workspace modules as `@/store` or `@/projects/components`, never as `../../../store`. Mirror
 the alias in every tool that resolves modules (Vite `resolve.alias`, Jest
 `moduleNameMapper`). Extra aliases SHOULD be rare.
 
@@ -30,12 +31,18 @@ plus `tsconfig.app.json` or `tsconfig.build.json` (source, excluding tests),
 ## Naming
 
 **TS-4 — Acronyms and initialisms MUST be fully capitalized** inside identifiers:
-`userID`, `projectID`, `CreateProjectDTO`, `safeParseJSON`, `buildConnectionURI`,
+`userID`, `projectID`, `ProjectFormDTO`, `safeParseJSON`, `buildConnectionURI`,
 `BASE_API_URL`, `isUUID`. When the acronym starts a camelCase identifier, it is all
 lowercase: `wsManager`, `uuidPattern`, `dbConn`.
 
 > Why: one spelling per concept keeps search and automated refactors reliable. Mixing
 > `userId` and `userID` breaks both.
+
+The one exception is data whose shape the backend defines: fields of the types generated
+from the OpenAPI schema keep the backend's `snake_case` names (`project.project_id`,
+`task.created_at`), and code reads them as they are, with no renaming or mapping layer
+([monorepo.md](monorepo.md) MONO-13). TypeScript identifiers that hold those values still
+follow this rule (`const projectID = project.project_id`).
 
 **TS-5 — Use these casings:**
 
@@ -82,18 +89,18 @@ interface, when a class `implements` it, or when global declaration merging is r
 utility types so a change in one place propagates:
 
 ```ts
-projectID: TaskDTO['projectID'];
-username: UserDTO['username'];
+projectID: Task['project_id'];
+username: User['username'];
 project: Omit<ProjectStateSlice, 'requestInProgress'>;
-members: Pick<UserDTO, 'userID' | 'username'>[];
+members: Pick<User, 'user_id' | 'username'>[];
 ```
 
 **TS-12 — Use a shared `Nullable<T>` alias** (`T | null`) for values that are
 intentionally `null`. Reserve `?:` and `undefined` for "not provided".
 
 **TS-13 — Give IDs semantic type aliases** (`type UserID = UUID`). Where an ID is a plain
-`string`, say which kind it is in a `/** @note */` comment (for example, "string form of a
-MongoDB ObjectId").
+`string`, say which kind it is in a `/** @note */` comment (for example, "a mobile suit's
+model number, not its UUID").
 
 **TS-14 — Do not use `any`.** Use `unknown` and narrow it with a type guard. Values that
 come from outside the program (setters, parsed JSON, request bodies, socket messages) MUST
@@ -148,8 +155,8 @@ assignTask({
 }): TaskDocument { ... }
 ```
 
-Exceptions: hot-path pure functions with a fixed positional contract, framework
-callbacks, and NestJS handler parameters.
+Exceptions: hot-path pure functions with a fixed positional contract, and framework
+callbacks.
 
 **TS-20 — Use `function` declarations for top-level named functions.** Use arrow
 functions for callbacks, one-line helpers (`const isProdEnv = (env: unknown) => ...`),
@@ -212,7 +219,7 @@ requires a default export.
 
 **TS-31 — Give each directory imported as a unit an `index.ts` barrel** that re-exports
 with `export * from './file'`. Code outside the directory imports from the barrel
-(`@/projects/dtos`), not from individual files.
+(`@/projects/components`), not from individual files.
 
 **TS-32 — Order imports in groups separated by one blank line:**
 

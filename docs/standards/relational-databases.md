@@ -2,23 +2,10 @@
 
 Applies to how the backend models, constrains, queries, and changes relational data,
 whatever the engine or library. PostgreSQL-specific rules are in
-[postgresql.md](postgresql.md), and the Drizzle code that implements these rules is in
-[drizzle.md](drizzle.md).
-
-**Database.** The backend is moving from MongoDB to PostgreSQL. These rules replace the
-modeling and query rules in [mongoose.md](mongoose.md); the table below maps the most
-common MongoDB habits to their relational equivalents.
-
-| MongoDB habit                         | Relational equivalent                                                 |
-| ------------------------------------- | --------------------------------------------------------------------- |
-| embedded subdocument                  | a child table with a foreign key (RDB-1)                              |
-| array of `ObjectId` references        | a junction table (RDB-2)                                              |
-| `.populate()`                         | a join or a relational query (RDB-24)                                 |
-| `_id` plus a separate public `userID` | one `id` column, also used publicly (RDB-12)                          |
-| validation in the schema only         | `NOT NULL`, `UNIQUE`, `FOREIGN KEY`, and `CHECK` constraints (RDB-14) |
-| `@Schema({ timestamps: true })`       | `created_at` and `updated_at` columns (RDB-17)                        |
-| TTL index                             | an `expires_at` column and a scheduled delete                         |
-| changing a schema class               | a versioned migration (RDB-31)                                        |
+[postgresql.md](postgresql.md), and the SQLAlchemy and Alembic code that implements these
+rules is in [python/sqlalchemy.md](python/sqlalchemy.md) and
+[python/alembic.md](python/alembic.md). Where a Python document departs from a rule here,
+it names the rule it replaces.
 
 ---
 
@@ -78,8 +65,9 @@ and never use an SQL reserved word as a name (`user`, `order`, `group`).
 | calendar date | `<noun>_date`                            | `due_date`                  |
 | count         | `<noun>_count`                           | `member_count`              |
 
-The application maps these to camelCase with the casing rules of
-[typescript.md](typescript.md) TS-4 (`owner_id` → `ownerID`).
+The backend uses the same names for model attributes and entity fields, and the API
+returns them unchanged ([python/fastapi.md](python/fastapi.md) FAPI-12), so the frontend
+reads `owner_id` as generated ([typescript.md](typescript.md) TS-4).
 
 **RDB-10 — Name every constraint and index with PostgreSQL's default pattern**, so names
 are predictable in error messages and migrations:
@@ -101,8 +89,8 @@ are predictable in error messages and migrations:
 named `id`. A junction table's key is its foreign-key pair (RDB-2).
 
 **RDB-12 — A row has one identifier, and the application uses it everywhere:** in foreign
-keys, URLs, DTOs, and events. Its type is set in [postgresql.md](postgresql.md) PG-3. This
-replaces the separate `_id` and public `userID` of MONGO-7. A table MAY also have a
+keys, URLs, request and response models, and events. Its type is set in
+[postgresql.md](postgresql.md) PG-3. A table MAY also have a
 unique, human-readable `slug` for URLs; a slug is a lookup key and is never the target of
 a foreign key.
 
@@ -117,7 +105,7 @@ never derived from business data and never reused.
 **RDB-14 — The database enforces every invariant it can.** Columns are `NOT NULL` unless
 "unknown" or "not applicable" is a real state. Every natural key is `UNIQUE`, every
 reference is a `FOREIGN KEY`, and simple value rules (ranges, non-empty strings) are
-`CHECK` constraints. DTO validation exists to give the user a helpful message; constraints
+`CHECK` constraints. Request-model validation exists to give the user a helpful message; constraints
 exist so that data stays correct when two requests race or a script bypasses the API.
 
 > Why: two sign-up requests with the same email can both pass a "does this email exist?"
@@ -162,14 +150,15 @@ the same columns.
 ## Queries
 
 **RDB-21 — Select only the columns the caller needs, and never select credential columns
-outside the authentication path** (this replaces MONGO-11). Never send a row straight to
-the client; services return rows and controllers convert them to DTOs
-([nestjs.md](nestjs.md) NEST-16).
+outside the authentication path.** Never send a row straight to the client: facades
+return Pydantic entities, and routes wrap them in response models
+([python/sqlalchemy.md](python/sqlalchemy.md) SQLA-18,
+[python/fastapi.md](python/fastapi.md) FAPI-12). A field the client must never see is
+kept off the response model ([python/pydantic.md](python/pydantic.md)).
 
 **RDB-22 — Every read that returns many rows has an `ORDER BY` that ends in a unique
 column** (`ORDER BY updated_at DESC, id DESC`). Without `ORDER BY`, row order is
-undefined, and without the unique tiebreaker, pages can repeat or skip rows. This replaces
-MONGO-13.
+undefined, and without the unique tiebreaker, pages can repeat or skip rows.
 
 **RDB-23 — Every list endpoint is paginated with a capped page size.** Use
 `LIMIT`/`OFFSET` for short, bounded lists that show page numbers. Use keyset pagination
@@ -204,7 +193,20 @@ commits.
 **RDB-29 — Do not rely on read-then-write checks for correctness.** Use a constraint
 (RDB-14), an atomic update (`SET member_count = member_count + 1`), or a row lock
 (`SELECT ... FOR UPDATE`). Treat a constraint violation as an expected outcome and map it
-to an HTTP error ([drizzle.md](drizzle.md) DRIZZLE-24).
+to an HTTP error. The facade catches SQLAlchemy's `IntegrityError` for the constraint it
+expects, reads the PostgreSQL error from `exc.orig` (`sqlstate`, and
+`diag.constraint_name`), and raises its own error (PY-20, PY-22), which the route maps
+(FAPI-13):
+
+| `sqlstate` | Meaning               | Usual response                                   |
+| ---------- | --------------------- | ------------------------------------------------ |
+| `23505`    | unique violation      | 409 Conflict                                     |
+| `23503`    | foreign-key violation | 404 if the parent is missing, otherwise 422      |
+| `23514`    | check violation       | 422                                              |
+
+Never put `str(exc)` in a response or a log message: SQLAlchemy's message contains the
+SQL and every bound parameter, which can include credentials and personal data. Log the
+`sqlstate` and constraint name instead.
 
 **RDB-30 — Use the default `READ COMMITTED` isolation level.** Use `SERIALIZABLE` only for
 logic that needs it, and only together with retry handling for serialization failures.
@@ -234,5 +236,5 @@ code still reads. A deploy that stops the app before migrating MAY combine the s
 | Data                                                  | Where it lives                              |
 | ----------------------------------------------------- | ------------------------------------------- |
 | rows the app needs in every environment (lookup rows) | a migration                                 |
-| a one-off fix or backfill of existing data            | a migration, or an ad hoc command (NEST-33) |
+| a one-off fix or backfill of existing data            | a migration, or a script (PY-36, ALEM-12)   |
 | sample data for development                           | the `seed_db` command, never a migration    |

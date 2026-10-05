@@ -1,7 +1,10 @@
 # Formatting and Linting Standards
 
-Applies to every file the formatter or linter can process. The tools enforce these rules;
+Applies to every file oxfmt or oxlint can process: TypeScript, JavaScript, JSON, CSS,
+and Markdown, in every directory including `backend/`. The tools enforce these rules;
 this document records their configuration and the conventions for suppressing them.
+Python files are formatted and linted by Ruff and type-checked by pyright, configured in
+`backend/pyproject.toml` ([python/python.md](python/python.md) PY-8 to PY-10).
 
 **Tools:** [oxfmt](https://oxc.rs/docs/guide/usage/formatter) (formatter) and
 [oxlint](https://oxc.rs/docs/guide/usage/linter/) (linter), both from the Oxc project.
@@ -168,7 +171,13 @@ use the `oxlint-` form rather than `eslint-disable`.
 }
 ```
 
-CI runs `pnpm format:check` and `pnpm lint --deny-warnings`.
+CI runs `pnpm format:check` and `pnpm lint --deny-warnings`, and runs the backend's
+Ruff and pyright checks in the `backend` area ([ci-pipeline.md](ci-pipeline.md) CI-9).
+
+Generated files are formatted, never linted: `pnpm api:generate` runs oxfmt over its
+output, so `format:check` passes on it, and `.oxlintrc.json` lists
+`shared/src/generated/**` in `ignorePatterns` ([monorepo.md](monorepo.md) MONO-13,
+MONO-14). Do not add suppression comments to generated files.
 
 **FMT-12 — New code MUST NOT add warnings.** Run `pnpm format` and `pnpm lint` before
 opening a PR.

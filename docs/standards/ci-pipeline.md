@@ -7,11 +7,8 @@ Image scanning and publishing rules live in
 [docker-and-environment.md](docker-and-environment.md) (ENV-24 to ENV-30).
 
 **Source of truth:** `.github/workflows/ci.yml`, the reusable workflows it calls,
-`.github/actions/node-setup/action.yml`, and the root `package.json` scripts.
-
-**Database.** The backend is moving from MongoDB to PostgreSQL. Backend examples here use
-a `postgres` Compose service. [docker-and-environment.md](docker-and-environment.md) and
-[testing.md](testing.md) still describe MongoDB until they are updated.
+`.github/actions/node-setup/action.yml`, `.github/actions/python-setup/action.yml`, the
+root `package.json` scripts, and the backend's `pyproject.toml`.
 
 ---
 
@@ -25,21 +22,28 @@ a `postgres` Compose service. [docker-and-environment.md](docker-and-environment
 | `repo`       | every run                                     | `repo-lint.yml`     | format check, lint, workflow lint and audit, dependency review |
 | `shared`     | PRs touching `shared`; every push             | `shared-test.yml`   | build, typecheck, tests with coverage                         |
 | `frontend`   | PRs touching `frontend`; every push           | `frontend-test.yml` | typecheck, tests with coverage, coverage report               |
-| `backend`    | PRs touching `backend`; every push            | `backend-test.yml`  | typecheck on the runner; tests in Compose against PostgreSQL  |
+| `backend`    | PRs touching `backend` or the API contract; every push | `backend-test.yml` | Ruff, pyright, and audit on the runner; contract drift check; tests and migration check in Compose against PostgreSQL |
 | `docker`     | PRs touching images                           | `docker-build.yml`  | builds and scans production images without pushing            |
 | `ci-success` | every run                                     | —                   | the only required check (GHA-7)                               |
-| `publish`    | pushes to `main` and `v*` tags, after success | `docker-build.yml`  | builds, pushes, and attests production images (CI-13)        |
+| `publish`    | pushes to `main` and `v*` tags, after success | `docker-build.yml`  | builds, pushes to Docker Hub, and attests production images (CI-13) |
+| `deploy`     | pushes to `main`, after `publish`             | `deploy.yml`        | redeploys the Railway services ([github-actions.md](github-actions.md) GHA-27) |
 
 Outside `ci.yml`, `scan.yml` scans the published images weekly (ENV-26), and CodeQL
-default setup scans JavaScript, TypeScript, and workflow files on every PR (GHA-26).
+default setup scans JavaScript, TypeScript, Python, and workflow files on every PR
+(GHA-26).
 
-**CI-2 — CI runs the scripts developers run** (ENV-29). Each check is one root script
-call, so a red check reproduces locally with the same command. If CI needs a new command,
-add it as a script first. Every workspace defines a `typecheck` script that type-checks
-without emitting. Every workspace whose tests run on the runner (`frontend`, `shared`)
-also defines `test:cov`. The backend `test` job is the one exception (CI-9): it runs the
-root `backend:test` script's Compose commands one at a time, so each phase gets its own
-log section.
+**CI-2 — CI runs the commands developers run** (ENV-29), so a red check reproduces
+locally with the same command. If CI needs a new command, add it as a script first.
+
+- For the pnpm workspaces, each check is one root script call. Every pnpm workspace
+  defines a `typecheck` script that type-checks without emitting, and every workspace
+  whose tests run on the runner (`frontend`, `shared`) also defines `test:cov`.
+- For the backend, each check is one of the `uv run` commands that
+  [python/python.md](python/python.md) PY-8 and PY-50 give, run with
+  `working-directory: backend`. The root `backend:check` script runs the same commands in
+  the same order ([monorepo.md](monorepo.md) MONO-11).
+- The backend `test` job runs the root `backend:test` script's Compose commands one at a
+  time, so each phase gets its own log section (CI-9).
 
 **CI-3 — Checks run cheapest first, and a PR gets its result within ten minutes.**
 Within a job, the order is setup, 🏗️ build, 🔎 typecheck, 🖊️ tests, then 📊 reports, and
@@ -112,19 +116,19 @@ jobs:
               - "shared/**"
               - "tsconfig.json"
             backend:
-              - ".dockerignore"
               - ".env.example"
               - ".env.test.example"
               - ".github/actions/node-setup/**"
+              - ".github/actions/python-setup/**"
               - ".github/workflows/backend-*.yml"
               - ".nvmrc"
+              - ".oxfmtrc.json"
               - "backend/**"
               - "compose.yaml"
               - "package.json"
               - "pnpm-lock.yaml"
-              - "pnpm-workspace.yaml"
-              - "shared/**"
-              - "tsconfig.json"
+              - "shared/openapi/**"
+              - "shared/src/generated/**"
             docker:
               - ".dockerignore"
               - ".github/workflows/docker-*.yml"
@@ -199,20 +203,37 @@ jobs:
       cancel-in-progress: false
     permissions:
       contents: read
-      packages: write # push images to GHCR
       attestations: write # store build provenance
       id-token: write # sign build provenance
     uses: ./.github/workflows/docker-build.yml
     with:
       push: true
+    secrets:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  deploy:
+    needs: publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      attestations: read # verify build provenance before deploying
+    # deploy.yml declares `environment: production`, which holds RAILWAY_TOKEN (GHA-10).
+    uses: ./.github/workflows/deploy.yml
 ```
+
+`publish` and `deploy` are not in `ci-success`'s `needs`: they run after it, on pushes
+only, and a failed deploy shows on `main`'s commit status without blocking PRs.
 
 ---
 
 ## Setup
 
 **CI-5 — Every job that needs Node uses the `node-setup` composite action**, and no job
-installs Node or pnpm any other way. The action:
+installs Node or pnpm any other way. Every job that needs Python uses `python-setup`
+(CI-16). The `node-setup` action:
 
 1. Installs pnpm with `pnpm/action-setup` and no `version` input, so it reads the
    `packageManager` field of the root `package.json` ([nodejs.md](nodejs.md) NODE-2).
@@ -252,7 +273,8 @@ installs pnpm and Node and runs the install in one step. It is not used here bec
 takes the Node version as an input, which would be a second copy of `.nvmrc`. Re-evaluate
 it if that changes.
 
-**CI-6 — A job that imports `shared` builds it in its own `🏗️ Build shared` step**
+**CI-6 — A job that imports `shared` (the frontend's jobs and `repo`'s `lint`) builds it
+in its own `🏗️ Build shared` step**
 (`pnpm shared:base build`), right after setup. Typecheck, tests, and type-aware lint all
 import its built output ([monorepo.md](monorepo.md) MONO-8). Building it inside the
 composite action would fold a possible failure into the single "Node.js setup" log entry
@@ -322,19 +344,53 @@ a signal, not a target: thresholds, if any, live in the Vitest config, not the w
 
 ## Backend
 
-**CI-9 — `backend-test.yml` runs two jobs in parallel:** `typecheck` on the runner and
-`test` in Compose.
+**CI-9 — `backend-test.yml` runs three jobs in parallel:**
 
-- `typecheck`: checkout, `node-setup`, 🏗️ build shared, then
-  🔎 `pnpm backend:base typecheck`.
+- `check`: checkout, `python-setup` (CI-16), then the PY-8 and PY-50 commands, each its
+  own step: 🧹 `uv run ruff format --check .`, 🧹 `uv run ruff check .`,
+  🔎 `uv run pyright`, and 🧹 the dependency audit.
+- `contract`: checkout, `python-setup`, `node-setup`, 🏗️ `pnpm api:generate`, then
+  🔎 `git diff --exit-code -- shared/openapi shared/src/generated`. It fails when an API
+  change was merged without regenerating the TypeScript contract, or when a generated
+  file was edited by hand ([monorepo.md](monorepo.md) MONO-14).
 - `test`: needs only Docker (GHA-19). It runs the root `backend:test` script's Compose
   commands one at a time, against the isolated `app-test` project
-  ([docker-and-environment.md](docker-and-environment.md) ENV-4). These commands MUST
-  match that script; change both in the same PR.
+  ([docker-and-environment.md](docker-and-environment.md) ENV-4), then checks that the
+  models and the migration chain agree (ALEM-14). These commands MUST match that script;
+  change both in the same PR.
 
 ```yaml
 jobs:
-  # typecheck: checkout, node-setup, 🏗️ Build shared, 🔎 Typecheck (as in CI-7)
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: "Check out code"
+        uses: actions/checkout@<sha> # vX.Y.Z
+        with:
+          persist-credentials: false
+
+      - name: "Set up Python and dependencies"
+        uses: ./.github/actions/python-setup
+
+      - name: "🧹 Check formatting"
+        run: uv run ruff format --check .
+
+      - name: "🧹 Lint"
+        run: uv run ruff check .
+
+      - name: "🔎 Typecheck"
+        run: uv run pyright
+
+      - name: "🧹 Audit dependencies"
+        run: |
+          uv export --locked --no-dev --no-emit-project --format requirements-txt > "$RUNNER_TEMP/requirements.txt"
+          uvx pip-audit@<version> --requirement "$RUNNER_TEMP/requirements.txt" --disable-pip
+
+  # contract: checkout, python-setup, node-setup, 🏗️ pnpm api:generate, 🔎 git diff --exit-code
 
   test:
     runs-on: ubuntu-24.04
@@ -358,7 +414,15 @@ jobs:
 
       - name: "🖊️ Run tests"
         run: docker compose -p app-test --env-file .env.test run --rm backend-test
+
+      - name: "🔎 Check migrations match the models"
+        run: docker compose -p app-test --env-file .env.test run --rm --entrypoint alembic backend-test check
 ```
+
+`uv export` writes hashed requirements, which is what lets `pip-audit --disable-pip`
+audit the exact locked versions without resolving anything. The tests run first because
+`pytest_sessionstart` migrates the test database to head (PYTEST-10), which
+`alembic check` then compares with the models.
 
 The runner is discarded after the job, so there is no teardown step (GHA-18). GitHub's own
 pattern for databases in CI is a `services:` container. Compose is a deliberate departure,
@@ -443,15 +507,22 @@ when `push` is `true`.** It takes a boolean `push` input and runs one job per im
 a matrix (`image: [backend, frontend]`):
 
 1. checkout, then Buildx through `docker/setup-buildx-action`
-2. when pushing: log in to GHCR with `docker/login-action`, `GITHUB_TOKEN`, and
-   `${{ github.actor }}`
+2. when pushing: log in to Docker Hub with `docker/login-action`, using
+   `${{ vars.DOCKERHUB_USERNAME }}` and the `DOCKERHUB_TOKEN` secret that `publish`
+   passes in (GHA-10). The workflow declares that secret as optional, since PR builds do
+   not push.
 3. `docker/metadata-action` for tags and OCI labels (ENV-30)
-4. 🐳 `docker/build-push-action`: root context, the image's Dockerfile, target
+4. 🐳 `docker/build-push-action`: the image's context and Dockerfile (`.` and
+   `frontend/Dockerfile`, or `backend` and `backend/Dockerfile`; ENV-14), target
    `<image>-prod`, and `type=gha` cache scoped to the image. Only pushing runs write the
-   cache (ENV-28). PR builds `load` the image for the next step.
+   cache (ENV-28). PR builds `load` the image for the next step. The backend's build
+   stage imports the app (ENV-17), so a packaging mistake fails the build here rather than
+   on Railway.
 5. on PRs: 🧹 scan the loaded image (ENV-26)
 6. when pushing: 📦 attest the pushed digest with `actions/attest`
-   (`subject-name`, `subject-digest`, `push-to-registry: true`)
+   (`subject-name: docker.io/<user>/<image>`, `subject-digest`). The attestation is
+   stored in GitHub, which is where `gh attestation verify` reads it (GHA-27), so it is
+   not also pushed to Docker Hub.
 
 `publish` grants the extra permissions this needs (GHA-9). If the images move to
 `docker-bake.hcl` (ENV-28), `docker/bake-action` replaces step 4.
@@ -462,8 +533,9 @@ a matrix (`image: [backend, frontend]`):
 
 **CI-14 — A red check blocks the merge.** The `main` ruleset requires `ci-success`
 (GHA-26), and `ci-success` fails when any CI job fails (GHA-7). Fix the failure or revert
-the change that caused it. A flaky test is fixed, or skipped with a `// TODO:` that says
-why ([testing.md](testing.md) TEST-7), in its own PR. Never get a check to pass by
+the change that caused it. A flaky test is fixed, or skipped with a `TODO:` comment that says
+why ([testing.md](testing.md) TEST-7, [python/pytest.md](python/pytest.md)), in its own
+PR. Never get a check to pass by
 weakening the workflow.
 
 **CI-15 — Adding a workspace or area** means doing all of these in one PR:
@@ -473,4 +545,47 @@ weakening the workflow.
   depends on it (GHA-6)
 - a calling job in `ci.yml`, added to `ci-success`'s `needs` (GHA-7)
 - a row in the CI-1 table
-- a `typecheck` script, plus `test:cov` if its tests run on the runner (CI-2)
+- for a pnpm workspace, a `typecheck` script, plus `test:cov` if its tests run on the
+  runner (CI-2); for a Python project, the PY-8 commands and a root `<area>:check` script
+
+---
+
+## Python setup
+
+**CI-16 — Every job that needs Python uses the `python-setup` composite action**, and no
+job installs Python or uv any other way. A job that tests in Docker does not use it
+(GHA-19). The action:
+
+1. Sets up Python with `actions/setup-python` from `backend/.python-version`, so CI runs
+   the interpreter PY-1 pins.
+2. Installs uv with `astral-sh/setup-uv` _(non-GitHub)_, pinned by SHA, with its `version`
+   input set to the same uv release as the Dockerfile's `UV_IMAGE` (ENV-17); upgrade
+   both in one PR. Its cache is keyed on `backend/uv.lock`.
+3. Installs the backend's locked environment, `dev` group included, with
+   `uv sync --locked` (PY-3). `--locked` fails if `uv.lock` is out of date with
+   `pyproject.toml`, instead of rewriting it.
+
+```yaml
+name: "Python setup"
+description: "Install Python and uv, then install the backend's locked dependencies"
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Set up Python"
+      uses: actions/setup-python@<sha> # vX.Y.Z
+      with:
+        python-version-file: "backend/.python-version"
+
+    - name: "Install uv"
+      uses: astral-sh/setup-uv@<sha> # vX.Y.Z
+      with:
+        version: "<uv version>" # same release as UV_IMAGE in backend/Dockerfile
+        enable-cache: true
+        cache-dependency-glob: "backend/uv.lock"
+
+    - name: "Install dependencies"
+      shell: bash
+      working-directory: backend
+      run: uv sync --locked
+```

@@ -12,7 +12,7 @@ Applies to branches, commits, and pull requests.
 | ----------- | --------------------------------------- | -------------------------------- |
 | `feat/`     | new behaviour                           | `feat/add-project-invites`       |
 | `bug/`      | fixing incorrect behaviour              | `bug/fix-task-ordering`          |
-| `chore/`    | renames, cleanup, tooling, dependencies | `chore/upgrade-nestjs`           |
+| `chore/`    | renames, cleanup, tooling, dependencies | `chore/upgrade-fastapi`          |
 | `refactor/` | restructuring without behaviour change  | `refactor/extract-config-module` |
 | `docs/`     | documentation only                      | `docs/add-coding-standards`      |
 

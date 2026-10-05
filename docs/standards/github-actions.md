@@ -13,7 +13,9 @@ ENV-30).
 **Basis.** The structure started from the workflows in `aoam-property-plan`, then was
 checked against GitHub's documentation in October 2026
 ([research report](../research/github-actions-cicd-best-practices.md)). GitHub's guidance
-wins wherever it gives any; rules marked _(non-GitHub)_ come from other sources. The
+wins wherever it gives any; rules marked _(non-GitHub)_ come from other sources.
+Publishing to Docker Hub and deploying to Railway (GHA-27, GHA-28) also follow
+`aoam-property-plan`, checked against Railway's documentation in October 2026. The
 repository is **public**, which makes rulesets, environments with required reviewers,
 artifact attestations, CodeQL, dependency review, and secret scanning free. Several rules
 below depend on that.
@@ -30,8 +32,10 @@ below depend on that.
   dependabot.yml
   actions/
     node-setup/action.yml     composite: pnpm, Node, install
+    python-setup/action.yml   composite: Python, uv, locked install of backend/
   tools/
     actionlint/Dockerfile     pins the actionlint image so Dependabot updates it
+    railway/Dockerfile        pins the Railway CLI image the same way (GHA-27)
   workflows/
     ci.yml                    entry: pull_request, push to main and v* tags, manual
     scan.yml                  entry: weekly schedule, manual (ENV-26)
@@ -40,6 +44,7 @@ below depend on that.
     frontend-test.yml
     backend-test.yml
     docker-build.yml
+    deploy.yml
 ```
 
 An entry workflow decides _when_ work runs, _which_ areas run, and _with what
@@ -94,9 +99,12 @@ result depends on:
 
 - the area's own workspace: `<area>/**`
 - every workspace it depends on ([monorepo.md](monorepo.md) MONO-3): `shared/**` for
-  `frontend` and `backend`
+  `frontend`; for `backend`, the generated contract files its `contract` job compares,
+  `shared/openapi/**` and `shared/src/generated/**` (MONO-14)
 - root files that change installs or tooling: `package.json`, `pnpm-lock.yaml`,
-  `pnpm-workspace.yaml`, `.nvmrc`, and root `tsconfig*.json`
+  `pnpm-workspace.yaml`, `.nvmrc`, and root `tsconfig*.json` for the pnpm workspaces;
+  the backend's `pyproject.toml`, `uv.lock`, and `.python-version` sit inside
+  `backend/**`
 - for areas built or tested in Docker: `compose.yaml`, `.dockerignore`,
   `docker-bake.hcl`, and the `.env*.example` templates
 - its own CI files: `.github/workflows/<area>-*.yml`, plus `.github/actions/<name>/**`
@@ -141,7 +149,8 @@ what it needs.** Comment every grant beyond `contents: read`:
 | `repo`, `shared`, `backend`, `docker` | `contents: read`                                                           |
 | `frontend`                            | `contents: read`, `pull-requests: write` (coverage comment, CI-8)          |
 | `ci-success`                          | none                                                                       |
-| `publish`                             | `contents: read`, `packages: write`, `attestations: write`, `id-token: write` |
+| `publish`                             | `contents: read`, `attestations: write`, `id-token: write` (sign and store provenance, ENV-26) |
+| `deploy`                              | `contents: read`, `attestations: read` (verify provenance before deploying, GHA-27) |
 | `scan.yml` job                        | `contents: read`, `security-events: write` (SARIF upload, ENV-26)          |
 
 A job that calls a reusable workflow MUST set `permissions`; otherwise the called workflow
@@ -259,7 +268,9 @@ reads it.
 
 **GHA-19 — Do not set up toolchains a job does not use.** A job that tests in Docker needs
 only Docker, which the runner already has. `aoam-property-plan`'s backend job installed
-Python on the runner even though its tests ran in a container.
+Python on the runner even though its tests ran in a container. Here the backend's `check`
+and `contract` jobs set up Python because they run Ruff, pyright, and the OpenAPI export
+on the runner; its `test` job sets up nothing ([ci-pipeline.md](ci-pipeline.md) CI-9).
 
 ---
 
@@ -309,9 +320,15 @@ audits in CI-12 cover known-vulnerable actions _(non-GitHub)_.
 
 Prefer actions from the tool's owner (`actions/*`, `github/*`, `docker/*`, `pnpm/*`).
 The community actions allowed today are `dorny/paths-filter`,
-`davelosert/vitest-coverage-report-action`, `zizmorcore/zizmor-action`, and
+`davelosert/vitest-coverage-report-action`, `zizmorcore/zizmor-action`,
+`astral-sh/setup-uv` ([ci-pipeline.md](ci-pipeline.md) CI-16), and
 `aquasecurity/trivy-action` at v0.35.0 or later (ENV-26). Adding another action means
 updating this list and the allowed-actions setting (GHA-26) in the same PR.
+
+A tool that has no trusted action runs from a container image pinned in
+`.github/tools/<tool>/Dockerfile` (`FROM <image>:<version>@sha256:<digest>`), so
+Dependabot's `docker` updates keep it current (ENV-24): actionlint (CI-12) and the
+Railway CLI (GHA-27) work this way.
 
 **GHA-25 — Never run PR code with elevated access.** Do not use `pull_request_target` or
 `workflow_run`: both run with the base repository's secrets and a writable token, and
@@ -357,12 +374,20 @@ with no bypass list:
 
 - dependency graph, Dependabot alerts, and Dependabot security updates on; version
   updates come from `.github/dependabot.yml` (ENV-24)
-- CodeQL **default setup** on, covering `javascript-typescript` and `actions` (CodeQL has
-  scanned workflow files since April 2025)
+- CodeQL **default setup** on, covering `javascript-typescript`, `python`, and `actions`
+  (CodeQL has scanned workflow files since April 2025)
 - secret scanning and push protection on
 - private vulnerability reporting on, with a root `SECURITY.md` saying how to report
 - MAY run the OpenSSF Scorecard action from `scan.yml` _(non-GitHub tool; GitHub's
   security guidance recommends it)_
+
+**Environments and secrets** (Settings → Environments, Settings → Secrets and variables):
+
+- a `production` environment, with deployment branches limited to `main`, holding the
+  `RAILWAY_TOKEN` secret (GHA-27); it MAY require the owner's review
+- repository variable `DOCKERHUB_USERNAME` and repository secret `DOCKERHUB_TOKEN`, used
+  only by the `publish` job ([docker-and-environment.md](docker-and-environment.md)
+  ENV-30). Dependabot and fork PRs never receive them.
 
 **CODEOWNERS:** `.github/CODEOWNERS` assigns `* @saurookadook`, so outside PRs request a
 review automatically. Code-owner review is not required, because a solo owner cannot
@@ -372,27 +397,130 @@ review their own PRs.
 
 ## Deployments
 
-**GHA-27 — Deploys run from `ci.yml` after `publish`, through a reusable `deploy.yml`.**
-No deploy target has been chosen yet; when one is, the deploy workflow:
+> **First-time setup checklist.** Read this before creating the Railway services or
+> writing `deploy.yml`:
+>
+> - **Railway's CLI has no "wait" option.** Nothing in `railway redeploy` waits for the
+>   new deployment to finish, so the `deploy` job waits for `backend-migrations` by polling
+>   `railway deployment list --service backend-migrations --limit 1 --json` until the
+>   newest deployment settles (GHA-27).
+> - **Confirm the migration service's exit statuses.** Railway's documentation does not
+>   say which status a one-shot service reports when its process exits `0` and when it
+>   exits non-zero. Before relying on the `deploy` job, run `backend-migrations` once with
+>   a migration that succeeds and once with one that fails, note the status
+>   `railway deployment list --json` shows for each, and make the wait step treat them
+>   that way (GHA-28).
+> - Create the `production` environment, the Railway project token, and the Docker Hub
+>   secrets listed in GHA-26.
 
-- declares `environment: production` inside the reusable workflow (GHA-10); the
-  environment allows deploys only from `main` and holds the deploy secrets
-- MAY add the owner as a required reviewer, so production deploys wait for a click
-  (continuous delivery rather than continuous deployment)
-- authenticates with OIDC when the target supports it, trusting the token's
-  `environment` claim; otherwise, with an SSH key stored as a `production` environment
-  secret and a pinned host key
-- verifies the image's attestation (`gh attestation verify`, ENV-26), then deploys by
-  digest (ENV-30)
-- uses `concurrency: { group: deploy-production, cancel-in-progress: false }` (GHA-12)
-- ends with 🚀 a smoke check against `GET /api/health`; rollback is redeploying the
-  previous digest
+**GHA-27 — Deploys run on Railway, from `ci.yml` after `publish`, through a reusable
+`deploy.yml`.** As in `aoam-property-plan`, production runs on Railway. Each deployable
+image is the source of one or more Railway services, at its Docker Hub `:latest` tag
+([docker-and-environment.md](docker-and-environment.md) ENV-30): the backend image runs
+as `backend-migrations` and `backend`, and the frontend image as `frontend`. Railway never
+builds from the repository. The `deploy` job runs on pushes to `main` only, after
+`publish` succeeds, and the workflow:
+
+- declares `environment: production` inside the reusable workflow (GHA-10). The
+  environment allows deploys only from `main` and holds `RAILWAY_TOKEN`, a Railway
+  **project token** for the production environment. A project token can only deploy,
+  redeploy, and read logs in that one environment; never put an account or workspace
+  token in CI.
+- MAY wait for the owner's approval through the environment's required reviewer
+  (continuous delivery rather than continuous deployment).
+- 🔎 verifies each image's attestation before deploying it:
+  `gh attestation verify oci://docker.io/<user>/<image>:latest --repo <owner>/<repo>`
+  (ENV-26).
+- 🚀 redeploys the services in order with `railway redeploy --service <service> --yes`.
+  Redeploying an image-sourced service makes Railway pull the tag again without building
+  anything.
+  1. `backend-migrations`, then waits for it: it polls
+     `railway deployment list --service backend-migrations --limit 1 --json` every few
+     seconds, for at most ten minutes, and fails the job if the newest deployment's
+     status is `FAILED` or `CRASHED` or never settles. A failed migration stops the
+     deploy before any new code runs.
+  2. `backend`. Migrations are backward compatible (RDB-34), so the backend still running
+     keeps working while they apply.
+  3. `frontend`, last, so it never calls an API the backend does not serve yet.
+- runs the Railway CLI from the image pinned in `.github/tools/railway/Dockerfile`
+  (GHA-24), with `RAILWAY_TOKEN` passed as an environment variable to that one step.
+- uses `concurrency: { group: deploy-production, cancel-in-progress: false }` (GHA-12).
+  `publish` is serialized the same way, so deploys run in order. If a later `publish` has
+  already moved `:latest`, the redeploy ships that newer image, which passed CI too.
+- ends with 🚀 a smoke check against `GET /api/health-check` on the public URL
+  ([python/fastapi.md](python/fastapi.md) FAPI-3).
+
+Do not rely on Railway's image auto-updates to deploy: Railway caches update checks for
+up to several hours, so a deploy would land at an unknown time after CI. Rollback is
+pointing the service's source at the previous `sha-<short>` tag and redeploying, or using
+Railway's rollback to the previous deployment. When the `publish` job cannot run at all,
+the owner MAY publish and deploy from a laptop instead
+([docker-and-environment.md](docker-and-environment.md) ENV-41).
+
+**GHA-28 — Railway's service configuration is code, in `.railway/railway.ts`.** Use
+Railway's Infrastructure as Code (generally available for TypeScript), not `railway.json`
+or `railway.toml` as `aoam-property-plan` did: Railway has deprecated those files and
+stops reading them on 2026-12-01. Apply changes from a laptop with `railway config plan`,
+then `railway config apply`, and commit the file in the same PR; CI never applies
+infrastructure. The file declares each service's image source, start command, health
+check, and networking:
+
+```ts
+const backendImage = image('docker.io/<user>/msg-docking-bay-backend:latest');
+
+const backendMigrations = service('backend-migrations', {
+  source: backendImage,
+  start: 'alembic upgrade head',
+  env: { DATABASE_USER: 'app_owner', DATABASE_PASSWORD: preserve() },
+});
+
+const backend = service('backend', {
+  source: backendImage,
+  healthcheck: '/api/health-check',
+  healthcheckTimeout: 100,
+  replicas: 1, // one process until WebSocket broadcasts are shared (WS-8)
+  env: {
+    PORT: '8000',
+    UVICORN_PORT: '8000',
+    UVICORN_HOST: '::', // reachable on the private network (ENV-36)
+    UVICORN_FORWARDED_ALLOW_IPS: '*', // no public domain; only the frontend reaches it
+    DATABASE_USER: 'app',
+    DATABASE_PASSWORD: preserve(),
+  },
+});
+
+const frontend = service('frontend', {
+  source: image('docker.io/<user>/msg-docking-bay-frontend:latest'),
+  healthcheck: '/',
+  env: { PORT: '8080', BACKEND_UPSTREAM: 'backend.railway.internal:8000' },
+});
+```
+
+- **Migrations service.** `backend-migrations` runs the backend image with
+  `alembic upgrade head` instead of Uvicorn, exits, and is never restarted: set its
+  restart policy to **Never** (in the dashboard, if `railway.ts` has no field for it). It
+  is the only service with the owner role's credentials
+  ([postgresql.md](postgresql.md) PG-13), so the app process never sees them, and the
+  `deploy` job runs it to completion before the backend is redeployed (GHA-27), so
+  exactly one process migrates (ALEM-13). It has no health check and no domain. On the
+  first setup, confirm which status Railway reports when this one-shot process exits `0`
+  and when it exits non-zero, and make the `deploy` job's wait match.
+- **Public and private.** Only `frontend` has a public domain; its Caddy proxies `/api`
+  and `/ws/` to `backend` over the private network
+  ([docker-and-environment.md](docker-and-environment.md) ENV-22, ENV-36). The backend
+  and the migrations service have no public domain.
+- **Health checks.** Railway switches traffic to a new deployment only after its health
+  check returns 200, so a backend that cannot start never replaces the running one. The
+  backend's check is `GET /api/health-check`, which touches no database (FAPI-3), and
+  `PORT` matches the port each server listens on.
+- **Secrets** are Railway service variables, kept with `preserve()` and set in the
+  dashboard, never written into the file.
 
 ---
 
 ## Changing CI
 
-**GHA-28 — A CI change is tested by CI.** `ci.yml` has no path filter, so every PR runs
+**GHA-29 — A CI change is tested by CI.** `ci.yml` has no path filter, so every PR runs
 the `repo` area, including actionlint and zizmor (CI-12). Area workflows run when their
 own files change (GHA-6). Commit CI changes with type `ci`, scoped to the area the
 workflow serves (`ci(frontend): report coverage on main`); changes to `ci.yml`, shared

@@ -1,8 +1,10 @@
 # Node.js Standards
 
-Applies to the runtime, the package manager, tooling, and backend code (`backend`,
-`shared`, scripts, and config files). NestJS specifics live in [nestjs.md](nestjs.md);
-environment files and containers in [docker-and-environment.md](docker-and-environment.md).
+Applies to the Node.js runtime, the package manager, and tooling, and to the TypeScript
+that runs under Node: `shared`, the frontend's build and config files (`vite.config.ts`),
+root scripts, and test setup. The backend is Python and follows
+[python/python.md](python/python.md); environment files and containers are in
+[docker-and-environment.md](docker-and-environment.md).
 
 **Source of truth:** `.nvmrc`, root `package.json` (`engines`, `packageManager`),
 `pnpm-workspace.yaml`, Dockerfiles.
@@ -39,7 +41,7 @@ fail at runtime. Review new requests with `pnpm approve-builds`, and do not allo
 package without knowing why it needs a build step.
 
 **NODE-4 — Add each dependency to the workspace that uses it**
-(`pnpm --filter @app/backend add bcrypt`), not to the root. pnpm only lets a package
+(`pnpm --filter @app/frontend add <pkg>`), not to the root. pnpm only lets a package
 import what it declares, so every workspace MUST declare everything it imports. The root
 `package.json` holds only tooling shared by every workspace (TypeScript, oxlint, oxfmt,
 test runners), added with `pnpm add -D -w <pkg>`. `@types/*` packages and test tools go
@@ -60,8 +62,7 @@ format:**
 | --------- | ------------------------ | --------------------------------------- |
 | root      | ESM (`"type": "module"`) | —                                       |
 | `frontend` | ESM                     | ESM bundle (Vite)                       |
-| `backend` | ESM syntax in TS         | CommonJS via the Nest CLI               |
-| `shared`  | ESM (`"type": "module"`) | ESM + CommonJS via tsup (`exports` map) |
+| `shared`  | ESM (`"type": "module"`) | ESM via tsup (`exports` map, MONO-8)    |
 
 A config file that a tool loads as CommonJS MAY use `module.exports`.
 
@@ -74,30 +75,33 @@ import `node:*` modules from `shared` runtime code; type-only imports such as
 
 ## Environment variables
 
-**NODE-8 — Read `process.env` in one place per concern:** the NestJS config factory for
-the backend, and Vite `define` for the frontend. Pass typed values onward from there. Do not
-scatter `process.env.X` reads through services, gateways, or components.
+**NODE-8 — Read `process.env` in one place per concern:** `vite.config.ts` for the
+frontend, which passes values to the app through Vite `define` (REACT-31), and the top of
+each root or build script. Pass typed values onward from there. Do not scatter
+`process.env.X` reads through modules or components. The backend reads its environment
+only through `EnvVars` ([python/python.md](python/python.md) PY-26).
 
 **NODE-9 — Destructure env vars at the top of the function that needs them**, then parse
 each one and give it an explicit default:
 
 ```ts
-const { DB_HOST, DB_NAME, DB_PORT, BACKEND_PORT } = process.env;
+const { APP_DOMAIN, FRONTEND_PORT, LOG_LEVEL } = process.env;
 
 const safeSetInt = (val: unknown, fallback: number): number =>
   typeof val === 'string' ? parseInt(val, 10) : fallback;
 
 return {
-  port: safeSetInt(BACKEND_PORT, 3000),
-  database: { host: DB_HOST || 'localhost', name: DB_NAME || 'app', port: safeSetInt(DB_PORT, 27017) },
+  server: { port: safeSetInt(FRONTEND_PORT, 5173), allowedHosts: [requireEnv('APP_DOMAIN', APP_DOMAIN)] },
+  define: { 'import.meta.env.LOG_LEVEL': JSON.stringify(LOG_LEVEL || 'INFO') },
 };
 ```
 
 Always pass radix `10` to `parseInt`.
 
-**NODE-10 — Required secrets MUST fail fast.** If a required value (such as
-`SESSION_SECRET`) is missing, throw at startup with the variable's name. Never fall back
-to a default secret.
+**NODE-10 — Required values MUST fail fast.** If a required value (such as
+`APP_DOMAIN` in `vite.config.ts`) is missing, throw at startup with the variable's name.
+Never fall back to a default secret. No secret is ever passed to the frontend build:
+everything in Vite `define` ships to the browser.
 
 **NODE-11 — `NODE_ENV` is one of `dev`, `test`, or `prod`, everywhere:** scripts,
 Dockerfiles, and code. Check it only through predicate helpers
@@ -122,36 +126,37 @@ void bootstrap();
 ```
 
 Fire-and-forget work MUST attach a `.catch` that logs:
-`void syncIndexes(conn).catch((reason) => logger.error(reason));`
+`void prefetchProjects(dispatch).catch((reason) => logger.error(reason));`
 
-**NODE-14 — Do not call `process.exit()` from commands or services.** Set
-`process.exitCode` and let the event loop drain.
+**NODE-14 — Do not call `process.exit()` from scripts.** Set `process.exitCode` and let
+the event loop drain.
 
-**NODE-15 — Use `process.nextTick` only to defer a callback that a library expects to run
-asynchronously** (for example, Passport's `serializeUser` and `deserializeUser`).
+**NODE-15 — Use `process.nextTick` only in Node-only code, to defer a callback that a
+library expects to run asynchronously.** Code that also runs in the browser uses
+`queueMicrotask`.
 
 ---
 
 ## Crypto and security
 
-**NODE-16 — Generate UUIDs with `randomUUID()` from `node:crypto`.** Do not add a UUID
-package.
+**NODE-16 — Generate UUIDs with the global `crypto.randomUUID()`**, which Node and the
+browser both provide, so `shared` code can use it (NODE-7). Do not add a UUID package.
+IDs of stored rows come from the database ([postgresql.md](postgresql.md) PG-3); generate
+one in TypeScript only for client-side keys and test fixtures (TEST-20).
 
-**NODE-17 — Hash passwords with `bcrypt` using the async API** (`genSalt` + `hash`,
-`compare`) and a named salt-rounds constant (`static readonly SALT_ROUNDS = 10`). The
-`*Sync` variants are allowed only in test fixtures and seed data.
+**NODE-17 — Credentials are handled only by the backend.** TypeScript code never hashes,
+stores, or compares passwords or tokens. The browser holds the session only as an
+`HttpOnly` cookie that scripts cannot read (REACT-30).
 
 **NODE-18 — Never log, return, or serialize secrets or credentials.** That includes
-passwords (hashed or plain), session secrets, cookies, and whole `req`/`res` objects.
-Exclude password fields from database reads by default, and select them explicitly only
-in the authentication path (see [mongoose.md](mongoose.md)).
+passwords, session secrets, cookies, and whole request or response objects.
 
 ---
 
 ## Debug output
 
-**NODE-19 — Format structured debug output in the backend with `inspect` from
-`node:util`**, and pass it to the logger rather than to `console`:
+**NODE-19 — Format structured debug output in Node-only code (scripts, build config) with
+`inspect` from `node:util`**, and pass it to the logger rather than to `console`:
 
 ```ts
 logger.debug(

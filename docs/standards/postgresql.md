@@ -2,17 +2,14 @@
 
 Applies to PostgreSQL-specific choices: the server version, column types, identifiers,
 search, extensions, roles, connections, containers, and operations. General modeling and
-query rules are in [relational-databases.md](relational-databases.md); the Drizzle code
-that declares tables and runs queries is in [drizzle.md](drizzle.md).
+query rules are in [relational-databases.md](relational-databases.md); the SQLAlchemy
+models, sessions, and queries are in [python/sqlalchemy.md](python/sqlalchemy.md), and
+migrations in [python/alembic.md](python/alembic.md).
 
 **Stack:** PostgreSQL 18 (the official `postgres` image in development, tests, and CI; a
-managed PostgreSQL 18 service in production), the `pg_trgm` extension, and the `pg`
-(node-postgres) driver underneath Drizzle.
-
-**Database.** The backend is moving from MongoDB to PostgreSQL.
-[docker-and-environment.md](docker-and-environment.md) still describes the `mongo`
-service; until it is updated, PG-16 to PG-19 replace ENV-10, the `mongo` example in
-ENV-11, ENV-13, and the MongoDB parts of ENV-35.
+managed PostgreSQL 18 service in production), the `pg_trgm` extension, and the psycopg 3
+driver underneath SQLAlchemy (`postgresql+psycopg://`,
+[python/python.md](python/python.md) PY-2).
 
 ---
 
@@ -49,21 +46,25 @@ every environment at once, following PG-23.
 **PG-3 — Primary keys are `uuid` columns with `DEFAULT uuidv7()`.** The database generates
 the value, so every insert path gets one. UUIDv7 values sort by creation time, so new rows
 land at the end of the primary-key index instead of at random positions as with UUIDv4,
-and they stay valid for `ParseUUIDPipe` and the shared `isUUID`. Tests MAY insert fixed
-UUIDs (TEST-20).
+and they stay valid for FastAPI's `UUID` path parameters (FAPI-10) and the shared
+`isUUID`. Tests MAY insert fixed UUIDs (SQLA-2, TEST-20).
 
 A UUIDv7 encodes the time it was created. If an entity's creation time must not be exposed
 through its ID, use `DEFAULT uuidv4()` for that table instead.
 
-**PG-4 — Store points in time as `timestamptz` with precision 3, and default them to
-`now()`.** PostgreSQL stores `timestamptz` in UTC and keeps microseconds by default;
-JavaScript `Date` has milliseconds, so precision 3 makes values round-trip exactly and
-keeps test comparisons stable. Keep the server and session time zone at `UTC`.
+**PG-4 — Store points in time as `timestamptz` at its default precision, and default them
+to `now()`.** PostgreSQL stores `timestamptz` in UTC with microseconds, which is exactly
+what Python's `datetime` holds, so values round-trip through SQLAlchemy and the backend's
+tests unchanged ([python/sqlalchemy.md](python/sqlalchemy.md) SQLA-7). JavaScript's
+`Date` keeps only milliseconds, so the frontend never sends a timestamp back as an
+identifier or a concurrency token; it uses the row's `id`. Keep the server and session
+time zone at `UTC` (SQLA-14 sets the session's).
 
-**PG-5 — Use an enum type only for a small, stable set** that mirrors a string enum in
-`shared` (`project_status` for `ProjectStatus`). Name enum types in singular `snake_case`.
-Adding a value is a simple migration, but it cannot be used in the same transaction that
-adds it ([drizzle.md](drizzle.md) DRIZZLE-30). Renaming or removing a value means creating
+**PG-5 — Use an enum type only for a small, stable set** that mirrors a Python `StrEnum`
+in the backend (`project_status` for `ProjectStatus`); the frontend gets its values
+through the generated API contract ([monorepo.md](monorepo.md) MONO-13). Name enum types
+in singular `snake_case`. Adding a value is a simple migration, but it cannot be used in
+the same transaction that adds it ([python/alembic.md](python/alembic.md) ALEM-11). Renaming or removing a value means creating
 a new type and converting the column. If a set changes often, use a lookup table instead
 (RDB-6).
 
@@ -81,8 +82,10 @@ column, and reject accidental manual values.
 
 **PG-8 — Declare generated columns as `STORED`, explicitly.** Since PostgreSQL 18, a
 generated column without a keyword is `VIRTUAL`: computed on every read, and unable to use
-user-defined functions. A column you index, such as a search vector, MUST be `STORED`.
-Drizzle writes `STORED` into the migration; check for it when reviewing (DRIZZLE-27).
+user-defined functions. A column you index, such as a search vector, MUST be `STORED`:
+declare it with `Computed(..., persisted=True)` in the model, and check that the
+migration says `STORED` when reviewing it ([python/alembic.md](python/alembic.md)
+ALEM-6).
 
 ---
 
@@ -118,8 +121,9 @@ with full-text search by `OR`-ing the two conditions and ordering by the greater
 `ts_rank` and `similarity`.
 
 **PG-12 — Create extensions in migrations**, with
-`CREATE EXTENSION IF NOT EXISTS pg_trgm;` in a custom migration ([drizzle.md](drizzle.md)
-DRIZZLE-28), so every environment, including a managed database, gets them. Use only
+`op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")` in a hand-written Alembic
+migration (autogenerate does not detect extensions; ALEM-6), so every environment,
+including a managed database, gets them. Use only
 extensions available on the production provider. `pg_trgm`, `unaccent`, and
 `fuzzystrmatch` are widely available; `unaccent()` is not `IMMUTABLE`, so using it in a
 generated column or index requires an immutable wrapper function, created in the same
@@ -131,7 +135,7 @@ migration. Do not add AGPL-licensed extensions.
 
 **PG-13 — The backend connects as a role that can only read and write rows.** Use two
 login roles: an owner role (`app_owner`) that owns the database and every object in it and
-runs migrations, and an application role (`app`, the `DB_USER` of ENV-3) with only
+runs migrations, and an application role (`app`, the `DATABASE_USER` of ENV-3) with only
 `SELECT`, `INSERT`, `UPDATE`, and `DELETE`. Grant these through default privileges, so
 tables created by later migrations are covered automatically. MUST in production, SHOULD
 in development; the `postgres` superuser is for administration only.
@@ -150,31 +154,40 @@ ALTER DEFAULT PRIVILEGES FOR ROLE app_owner IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO app;
 ```
 
-Passwords come from secret files, as in ENV-13. The test database also grants `TRUNCATE`
-on tables to `app`, so the test reset helper can run (DRIZZLE-33).
+Passwords come from secret files, as in ENV-13. Migrations connect as `app_owner`: the
+`backend-migrations` service locally (ENV-6) and the release step in production
+(ALEM-13). The test suite migrates its own database and runs the downgrade round trip
+(PYTEST-10, ALEM-14), so `backend-test` connects to the test database as the owner role.
+That is the only place application code runs as the owner, and that database holds
+nothing that matters.
 
 ---
 
 ## Connections
 
-**PG-14 — Each backend process opens one connection pool**, created by `DrizzleModule` and
-shared with the session store ([drizzle.md](drizzle.md) DRIZZLE-15). Configure it
+**PG-14 — Each backend process opens one connection pool**, created by
+`DBSessionManager` ([python/sqlalchemy.md](python/sqlalchemy.md) SQLA-14). Configure it
 explicitly:
 
-| `pg` pool option                      | Value                                                                               |
-| ------------------------------------- | ----------------------------------------------------------------------------------- |
-| `max`                                 | 10 by default; all instances together stay well below the server's connection limit |
-| `application_name`                    | `app-backend` (`app-backend-test` under test), so connections are identifiable      |
-| `statement_timeout`                   | 10 seconds; a slow query fails instead of piling up                                 |
-| `idle_in_transaction_session_timeout` | 30 seconds; a stuck transaction releases its locks                                  |
-| `connectionTimeoutMillis`             | 5 seconds                                                                           |
-| `ssl`                                 | required for any database outside the Compose network                               |
+| Setting                               | Value                                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `pool_size` + `max_overflow`          | sized with the thread pool (FAPI-8); all workers and instances together stay well below the server's `max_connections` |
+| `application_name`                    | `app-backend` (`app-backend-test` under test), so connections are identifiable             |
+| `statement_timeout`                   | 10 seconds; a slow query fails instead of piling up                                        |
+| `idle_in_transaction_session_timeout` | 30 seconds; a stuck transaction releases its locks                                         |
+| `connect_timeout`                     | 5 seconds, in `connect_args`                                                               |
+| `sslmode`                             | `require` (or stricter) for any database outside the Compose network                       |
+
+The timeouts and time zone are set per connection through `connect_args["options"]`
+(SQLA-14), not in `postgresql.conf`.
 
 **PG-15 — Know which connection string goes through a pooler.** Managed providers offer a
-direct connection and a transaction-mode pooler (PgBouncer, Supavisor). A long-running
-NestJS server MAY use either, but over a transaction-mode pooler it MUST NOT rely on
-session state (`SET`, `LISTEN`, temporary tables, session advisory locks). Migrations,
-`pg_dump`, and `pg_restore` MUST use the direct connection.
+direct connection and a transaction-mode pooler (PgBouncer, Supavisor). The FastAPI server
+MAY use either, but over a transaction-mode pooler it MUST NOT rely on session state
+(`SET`, `LISTEN`, temporary tables, session advisory locks), and the pooler must accept
+the startup `options` of PG-14; if it does not, use the direct connection. Migrations
+(which `SET lock_timeout`, ALEM-2), `pg_dump`, `pg_restore`, the cron lock backend's
+advisory locks (FAPI-19), and any `LISTEN` (WS-8) MUST use the direct connection.
 
 ---
 
@@ -191,7 +204,7 @@ postgres:
   image: postgres:18.6-trixie
   environment:
     POSTGRES_USER: postgres
-    POSTGRES_DB: ${DB_NAME}
+    POSTGRES_DB: ${DATABASE_NAME}
     POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
   secrets: [postgres_password, db_owner_password, db_app_password]
   volumes:
@@ -218,8 +231,7 @@ matters.
 `127.0.0.1:5432:5432` only while you use it.
 
 **PG-19 — Init scripts in `/docker-entrypoint-initdb.d` only bootstrap a local server:**
-they create the roles and grants of PG-13 (and, for the test server, the extra `TRUNCATE`
-grant). They run only when the data folder is empty, so anything every environment needs,
+they create the roles and grants of PG-13. They run only when the data folder is empty, so anything every environment needs,
 including extensions, belongs in a migration (PG-12).
 
 ---

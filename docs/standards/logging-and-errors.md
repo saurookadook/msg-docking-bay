@@ -1,7 +1,9 @@
 # Logging and Error-Handling Standards
 
-Applies to every workspace. All logging goes through one shared logger built on
-`loglevel`, exported from `@app/shared` as `sharedLog`.
+Applies to the TypeScript workspaces, `frontend` and `shared`. All logging there goes
+through one shared logger built on `loglevel`, exported from `@app/shared` as
+`sharedLog`. The backend logs with Python's `logging` module and raises its own exception
+hierarchy ([python/python.md](python/python.md) PY-20 to PY-23, PY-37 to PY-40).
 
 ---
 
@@ -48,8 +50,8 @@ logger.debug(`[${this.updateOne.name} method] AFTER update\n`, {
 });
 ```
 
-In the backend, wrap large objects in `inspect(...)` from `node:util` with a small
-`depth`.
+In Node-only code, wrap large objects in `inspect(...)` from `node:util` with a small
+`depth` (NODE-19).
 
 **LOG-6 — Never log secrets or personal data.** That includes passwords (hashed or
 plain), session IDs, cookies, request headers, tokens, and whole `req`, `res`, or
@@ -71,15 +73,16 @@ throw new TypeError(
 ```
 
 **LOG-8 — Throw `TypeError` for an argument of the wrong type and `Error` for an invalid
-value or state.** At the HTTP boundary, throw Nest HTTP exceptions instead
-([nestjs.md](nestjs.md) NEST-30).
+value or state.** An error response from the API is not an exception to re-type: the
+fetch wrapper turns it into a tagged `Error` that keeps the response's `detail`
+([react.md](react.md) REACT-28, [python/fastapi.md](python/fastapi.md) FAPI-13).
 
 **LOG-9 — When you catch and re-throw, keep the original error as `cause`:**
 
 ```ts
 } catch (error) {
   throw new Error(
-    `[TasksService.updateOne] : ERROR saving task - ${error.message}`,
+    `[fetchProject] : ERROR fetching project - ${error.message}`,
     { cause: error },
   );
 }

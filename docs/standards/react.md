@@ -97,7 +97,8 @@ and prefix it (`` `col-${index}` ``).
 message, status component, or dialog instead.
 
 **REACT-11 — Lean on native form validation** (`required`, `minLength`, `maxLength`,
-`pattern`), using validation patterns from `shared` so frontend and backend agree. Read form
+`pattern`), using validation patterns from `shared`, which are checked against the
+backend's schema so frontend and backend agree ([monorepo.md](monorepo.md) MONO-16). Read form
 values with a single helper (`getFormData`). Wrap native inputs in a base component
 (`BaseInput`) so defaults are applied once.
 
@@ -160,13 +161,13 @@ action creators own the side effect — fetch, then dispatch — so components n
 export async function fetchProject({
   dispatch,
   projectID,
-}: BaseAction & { projectID: string }) {
+}: BaseAction & { projectID: ProjectID }) {
   dispatch({ type: REQUEST_PROJECT });
-  const responseData = await safeFetch.call(
+  const responseData = await safeFetch.call<ProjectResponse>(
     { name: fetchProject.name },
     { requestPathname: `/api/projects/${projectID}`, fetchOpts: { method: 'GET' } },
   );
-  return setProject({ dispatch, project: responseData.project });
+  return setProject({ dispatch, project: responseData.data });
 }
 ```
 
@@ -222,6 +223,14 @@ navigate in response to a user action.
 **REACT-28 — Make every HTTP call through one fetch wrapper (`safeFetch`)** that resolves
 paths under `/api/...` against a single base URL constant. Give each call a name for its
 error messages: `safeFetch.call({ name: fn.name }, { ... })`.
+
+- Type each call's result with the generated response type
+  (`safeFetch.call<ProjectResponse>(...)`) and each request body with the generated
+  request type ([monorepo.md](monorepo.md) MONO-15). Successful bodies are wrapped in a
+  `data` envelope ([python/fastapi.md](python/fastapi.md) FAPI-12).
+- A non-2xx response becomes a tagged `Error` carrying the status and the API's `detail`
+  (FAPI-13, and FAPI-23 for a 422's list of errors), so callers can show the message the
+  backend wrote for the client.
 
 **REACT-29 — Put fetch options on the `RequestInit` object, not in headers:**
 `{ method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' } }`.
