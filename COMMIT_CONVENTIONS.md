@@ -50,7 +50,7 @@ The scope is required and names the part of the repository the commit touches:
 | Scope       | Area                                                     |
 | ----------- | -------------------------------------------------------- |
 | `frontend`  | the React app (`frontend/`)                              |
-| `backend`   | the NestJS app (`backend/`)                              |
+| `backend`   | the FastAPI app (`backend/`)                             |
 | `shared`    | the shared package (`shared/`)                           |
 | `standards` | coding standards (`docs/standards/`)                     |
 | `docs`      | other documentation (`docs/`, READMEs)                   |
