@@ -192,5 +192,5 @@ a second linter.
 
 **FMT-14 — Use the Oxc editor extension** for format-on-save and inline lint errors, and
 disable the Prettier and ESLint extensions for this workspace. Commit shared editor
-settings as `*.example.json` files (`.vscode/settings.example.json`), and keep personal
-settings untracked. You MAY commit `launch.json` for shared debug configurations.
+settings directly in `.vscode/settings.json`. You MAY commit `launch.json` for shared
+debug configurations.
