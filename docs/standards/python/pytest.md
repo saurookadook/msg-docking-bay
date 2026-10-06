@@ -190,9 +190,11 @@ def test_db_session() -> Iterator[Session]:
 
     with db_session_manager.engine.connect() as db_connection:
         with db_connection.begin() as transaction:
-            yield scoped(bind=db_connection, join_transaction_mode="create_savepoint")
-            transaction.rollback()
-    scoped.remove()
+            try:
+                yield scoped(bind=db_connection, join_transaction_mode="create_savepoint")
+            finally:
+                scoped.remove()
+                transaction.rollback()
 ```
 
 - The test database name is set before any module reads configuration, at the top of the
