@@ -118,7 +118,7 @@ async def project_events(
 ) -> None:
     """Relay task updates for one project to everyone viewing it."""
     await websocket.accept()
-    connection_manager.join(project_id, user.user_id, websocket)
+    connection_id = connection_manager.join(project_id, websocket)
     try:
         while True:
             try:
@@ -133,7 +133,7 @@ async def project_events(
     except WebSocketDisconnect:
         pass
     finally:
-        connection_manager.leave(project_id, user.user_id)
+        connection_manager.leave(project_id, connection_id)
 ```
 
 - Handlers are named `handle_<event>` and dispatched through a registry dict (PY-35).
@@ -160,7 +160,12 @@ async def project_events(
   with the user's cookie. On failure it closes the socket with
   `status.WS_1008_POLICY_VIOLATION` before `accept()`.
 - `api/websockets/connection_manager.py` holds one manager per process, with a private
-  map `_rooms: dict[UUID, dict[UUID, WebSocket]]` (project ID → user ID → socket).
+  map `_rooms: dict[UUID, dict[UUID, WebSocket]]` (project ID → connection ID → socket).
+- `join` generates the connection ID with `uuid4()` and returns it, and `leave` takes it,
+  so each socket — one per browser tab — is tracked and removed on its own. Never key a
+  room by user ID: a user with the project open in two tabs would overwrite one socket
+  with the other, and either tab's disconnect would drop both. Never take the ID from the
+  client either; a tab ID kept in `sessionStorage` is copied when the tab is duplicated.
 - The map lives in one process. Uvicorn workers do not share memory, so a broadcast
   reaches only clients connected to the same worker. Run the backend with one worker
   (`UVICORN_WORKERS=1`) and one replica until broadcasts go through a shared channel
@@ -213,6 +218,7 @@ code 1008 (WS-8) is not retried.
 `send_json` and `receive_json`, against the rolled-back test database, with `WSSessionFactoryDep`'s provider overridden
 next to `api_db_session` ([python/pytest.md](python/pytest.md) PYTEST-10, PYTEST-14);
 test each `handle_<event>`
-function and the `ConnectionManager` directly as well. Frontend tests use MSW
+function and the `ConnectionManager` directly as well, including one user joined from two
+connections, where the first one's `leave` keeps the second in the room. Frontend tests use MSW
 `ws.link(url)` handlers in `__mocks__/`, with messages typed by the generated types
 ([testing.md](testing.md)).
