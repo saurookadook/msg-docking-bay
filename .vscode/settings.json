@@ -1,0 +1,75 @@
+{
+    //---------------------  AI Co-Authors  -------------------------
+    // Co-Authored-By: Claude <noreply@anthropic.com>
+    // Co-authored-by: Copilot <copilot@github.com>
+    //----------------------------------------------------------------
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnType": false, // required
+    "editor.formatOnPaste": false, // optional
+    "editor.formatOnSave": true, // optional
+    "editor.formatOnSaveMode": "file", // required to format on save
+    // "files.autoSave": "onFocusChange", // optional but recommended
+    "editor.tabSize": 2,
+    // ------ Linting and formatting (Oxc extension; configs are ./frontend/.oxlintrc.json and ./frontend/.oxfmtrc.json)
+    "eslint.enable": false,
+    "oxc.enable.oxlint": true,
+    "oxc.enable.oxfmt": true,
+    "oxc.fmt.configPath": "./frontend/.oxfmtrc.json", // apply the frontend config to every file in the workspace
+    "oxc.requireConfig": true,
+    // "oxc.path.node": "${userHome}/.nvm/versions/node/v22.23.2/bin/node",
+    "oxc.path.oxfmt": "frontend/node_modules/oxfmt/dist/cli.js",
+    "oxc.path.oxlint": "frontend/node_modules/oxlint/dist/cli.js",
+    "path-autocomplete.pathMappings": {
+        // path mappings for things like aliases
+    },
+    "[typescriptreact]": {
+        "editor.tabSize": 2
+    },
+    // ------ CSS
+    "[css]": {
+        "editor.tabSize": 2
+    },
+    "[scss]": {
+        "editor.tabSize": 2
+    },
+    // ------ Python
+    "[python]": {
+        "editor.tabSize": 4
+    },
+    "flake8.args": [
+        "--max-line-length=120",
+        "--per-file-ignores='__init__.py: F401'"
+    ],
+    "python.analysis.extraPaths": [
+        "backend/.venv/lib/python3.12/site-packages",
+    ],
+    "python.analysis.typeCheckingMode": "standard",
+    "[sql]": {
+        "editor.formatOnSave": false
+    },
+    // ------ JSON
+    "json.schemaDownload.trustedDomains": {
+        "https://schemastore.azurewebsites.net/": true,
+        "https://raw.githubusercontent.com/microsoft/vscode/": true,
+        "https://raw.githubusercontent.com/devcontainers/spec/": true,
+        "https://www.schemastore.org/": true,
+        "https://json.schemastore.org/": true,
+        "https://json-schema.org/": true,
+        "https://developer.microsoft.com/json-schemas/": true,
+        "https://railway.com/railway.schema.json": true
+    },
+    "[json]": {
+        "editor.tabSize": 4
+    },
+    "[jsonc]": {
+        "editor.tabSize": 4
+    },
+    "[yaml]": {
+        "editor.detectIndentation": false,
+        "editor.tabSize": 2
+    },
+    "[yml]": {
+        "editor.detectIndentation": false,
+        "editor.tabSize": 2
+    }
+}
