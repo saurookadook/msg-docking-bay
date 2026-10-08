@@ -40,7 +40,7 @@ export const JOIN_PROJECT = 'join-project' satisfies ClientMessage['event'];
 export const UPDATE_TASK = 'update-task' satisfies ClientMessage['event'];
 export const SEND_PROJECT = 'send-project' satisfies ServerMessage['event'];
 export const SEND_TASK = 'send-task' satisfies ServerMessage['event'];
-```
+export const SEND_ERROR = 'send-error' satisfies ServerMessage['event'];
 
 Both sides MUST use these names. Never write an event name as a string literal anywhere
 else.
