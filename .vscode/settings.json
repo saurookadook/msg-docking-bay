@@ -32,18 +32,27 @@
     "[scss]": {
         "editor.tabSize": 2
     },
-    // ------ Python
+    // ------ Python (Ruff extension formats and lints, reading backend/pyproject.toml)
     "[python]": {
-        "editor.tabSize": 4
+        "editor.tabSize": 4,
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
     },
-    "flake8.args": [
-        "--max-line-length=120",
-        "--per-file-ignores='__init__.py: F401'"
-    ],
+    "ruff.importStrategy": "fromEnvironment", // the locked Ruff in backend/.venv, as CI runs it
+    "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+    // Pylance reads [tool.pyright] only from a pyproject.toml at the workspace root, so
+    // mirror backend/pyproject.toml's table here and keep the two in sync (PY-9).
     "python.analysis.extraPaths": [
-        "backend/.venv/lib/python3.12/site-packages",
+        "./backend"
     ],
-    "python.analysis.typeCheckingMode": "standard",
+    "python.analysis.typeCheckingMode": "strict",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportImplicitOverride": "error",
+        "reportUnnecessaryTypeIgnoreComment": "error"
+    },
     "[sql]": {
         "editor.formatOnSave": false
     },
