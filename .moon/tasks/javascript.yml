@@ -23,7 +23,11 @@ tasks:
     deps: ['^:build']
     inputs: ['@group(sources)', '@group(configs)', '.oxlintrc.json']
     options:
-      affectedFiles: true
+      # Pass only JS/TS files: given only package.json or tsconfig.json, oxlint finds
+      # nothing to lint and exits 1 (MTASK-6). oxfmt formats JSON, so format passes all.
+      affectedFiles:
+        pass: 'args'
+        filter: ['**/*.{ts,tsx,js,jsx,mjs,cjs}']
   typecheck:
     command: 'tsc'
     args: ['--build', '--noEmit']
