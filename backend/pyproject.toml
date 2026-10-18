@@ -1,0 +1,97 @@
+[project]
+name = "msg-docking-bay-backend"
+version = "0.1.0"
+description = "The msg-docking-bay FastAPI service."
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]>=0.143.0,<0.144",
+    "pydantic>=2.14.0,<2.15",
+    "rich>=15.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.13.1",
+    "pyright[nodejs]>=1.1.414",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.16.0",
+    "pytest-sugar>=1.1.1",
+    "pytest-xdist>=3.8.0",
+    "ruff>=0.16.10",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["api", "config", "utils"]
+
+[tool.coverage.run]
+omit = [
+    "**/_tests/**",
+    "_factories/**",
+    "_mocks/**",
+    ".venv/**",
+    "conftest.py",
+]
+
+[tool.ruff]
+line-length = 88                 # formatter width, inside PEP 8's 99-column allowance
+
+[tool.ruff.lint]
+extend-select = [
+    "ANN",                       # annotations present (PY-18)
+    "B",                         # likely bugs, such as mutable defaults
+    "D", "D401",                 # docstrings (PY-29), imperative summary (PEP 257)
+    "E501", "W505",              # code and comment/docstring line length
+    "G004",                      # no f-strings in log calls (PY-40)
+    "I",                         # import order (PY-12)
+    "N",                         # PEP 8 naming, including the Error suffix (PY-15)
+    "RUF",
+    "UP",                        # current syntax: `X | None`, built-in generics
+    # PEP 8 recommendations that Ruff 0.16 dropped from its defaults:
+    "E402", "E711", "E712", "E713", "E714", "E721", "E731", "E741", "F403", "F405",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]         # explicit re-exports (PY-13)
+"**/_tests/**" = ["D"]           # test docstrings follow pytest.md PYTEST-8
+"**/conftest.py" = ["D"]
+"_factories/**" = ["D"]
+"_mocks/**" = ["D"]
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 99             # PEP 8's ceiling, for lines the formatter cannot split
+max-doc-length = 72              # PEP 8's limit for comments and docstrings
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true        # pass-through **kwargs (httpx.md HTTPX-4)
+
+[tool.ruff.lint.flake8-type-checking]
+# Classes whose annotations are read at runtime (PY-14). Ruff does not follow
+# inheritance across modules, so list each project base class as well.
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "api.models.base.BaseResponseModel",
+]
+# Pydantic also evaluates validator and serializer signatures at runtime.
+runtime-evaluated-decorators = [
+    "pydantic.field_serializer",
+    "pydantic.field_validator",
+    "pydantic.model_serializer",
+    "pydantic.model_validator",
+    "pydantic.validate_call",
+]
+
+[tool.pyright]
+pythonVersion = "3.14"
+typeCheckingMode = "strict"
+venvPath = "."
+venv = ".venv"
+reportImplicitOverride = "error"              # @override on every override (PY-44)
+reportUnnecessaryTypeIgnoreComment = "error"  # stale suppressions fail (PY-10)
