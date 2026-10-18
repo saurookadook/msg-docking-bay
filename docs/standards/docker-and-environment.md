@@ -76,8 +76,7 @@ Buildx installed; never the legacy `docker-compose` v1 binary.
 **ENV-6 — Each runnable workspace and each piece of infrastructure is a Compose
 service**, named to match the hostname used in env vars and proxy upstreams: `frontend`,
 `backend`, `postgres`, `proxy`. Core services have no `profiles`, so
-`docker compose up` starts the stack. Put optional services under a profile instead of
-adding an aggregate service:
+`docker compose up` starts the stack. Put optional services under a profile:
 
 | Service              | Profile | Runs                                                                 |
 | -------------------- | ------- | -------------------------------------------------------------------- |
@@ -89,6 +88,21 @@ the owner role's credentials, so `docker compose run --rm backend-migrations upg
 and `... revision --autogenerate -m "..."` work as written in
 [python/alembic.md](python/alembic.md). Running a profiled service by name enables its
 profile automatically.
+
+The stack MAY have one aggregate service, `all`, that starts the full-stack environment
+by name (`docker compose up --build --watch --attach-dependencies all`):
+
+- It runs a pinned minimal image (ENV-24) and does nothing itself; its `depends_on` names
+  the entry point with `condition: service_healthy`, so the dependency chain (ENV-11)
+  starts every core service in order.
+- It depends only on core services, never on a profiled one, and has no profile itself,
+  so a plain `docker compose down` removes it.
+- It stays running (`exec sleep infinity`, with `init: true` so it stops on a signal),
+  because `docker compose up all` ends, and Watch and the attached logs with it, as soon
+  as `all` exits. It is the one long-running service without a healthcheck: nothing
+  depends on it.
+- It is a convenience, not a requirement: `docker compose up` alone still starts the
+  stack, and Ctrl-C on `up all` stops only `all`.
 
 **ENV-7 — Services load configuration with `env_file`.** Compose also reads `.env` to
 interpolate `${VAR}` in `compose.yaml`, but that alone passes nothing to a container. Use
