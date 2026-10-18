@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Response as MirageResponse, type Server } from 'miragejs';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -52,6 +53,53 @@ describe('HealthCheck', () => {
       expect(
         within(healthCheckSection).queryByRole('definition'),
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when the page is left and reopened while a request is in progress', () => {
+    it("ignores the earlier request's late result", async () => {
+      /* START TEST SETUP */
+      // NOTE: Mirage awaits a handler's returned promise, so the first request stays
+      // pending until the test releases it, after the second request has finished.
+      let releaseStaleRequest = () => {};
+      const staleRequestReleased = new Promise<void>((resolve) => {
+        releaseStaleRequest = resolve;
+      });
+      let requestCount = 0;
+      server = makeMirageServer({
+        environment: 'test',
+        overrides: (mirageServer) => {
+          mirageServer.get('/health-check', async () => {
+            requestCount += 1;
+            if (requestCount > 1) {
+              return mockHealthCheckResponse;
+            }
+            await staleRequestReleased;
+            return new MirageResponse(503, {}, { detail: mockHealthCheckErrorDetail });
+          });
+        },
+      });
+      const user = userEvent.setup();
+      renderWithProviders({ initialEntries: ['/health-check'] });
+      await within(await findHealthCheckSection()).findByRole('status');
+      /* END TEST SETUP */
+
+      await user.click(screen.getByRole('link', { name: 'Home' }));
+      await user.click(screen.getByRole('link', { name: 'Health check' }));
+
+      const healthCheckSection = await findHealthCheckSection();
+      expect(
+        await within(healthCheckSection).findByRole('definition'),
+      ).toHaveTextContent(mockHealthCheckResponse.data.status);
+
+      releaseStaleRequest();
+
+      await expect(
+        within(healthCheckSection).findByRole('alert', {}, { timeout: 250 }),
+      ).rejects.toThrow();
+      expect(within(healthCheckSection).getByRole('definition')).toHaveTextContent(
+        mockHealthCheckResponse.data.status,
+      );
     });
   });
 

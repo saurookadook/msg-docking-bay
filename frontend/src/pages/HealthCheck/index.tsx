@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { fetchHealthCheck, useAppStore } from '@/store';
+import { fetchHealthCheck, useAppStore, type AppDispatch } from '@/store';
 import { sharedLog } from '@/utils';
 
 import './styles.css';
@@ -13,9 +13,22 @@ export function HealthCheck() {
     appState.health;
 
   useEffect(() => {
-    void fetchHealthCheck({ dispatch: appDispatch }).catch((reason: unknown) =>
+    // NOTE: the store outlives this page, so a request still pending after leaving and
+    // returning must not overwrite the newer request's result or loading flag.
+    let isActive = true;
+    const guardedDispatch: AppDispatch = (action) => {
+      if (isActive) {
+        appDispatch(action);
+      }
+    };
+
+    void fetchHealthCheck({ dispatch: guardedDispatch }).catch((reason: unknown) =>
       logger.error(reason),
     );
+
+    return () => {
+      isActive = false;
+    };
   }, [appDispatch]);
 
   return (
