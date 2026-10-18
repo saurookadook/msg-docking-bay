@@ -35,6 +35,10 @@ APP_DOMAIN=app.example.dev
 ENVIRONMENT=dev
 LOG_LEVEL=DEBUG
 
+PROXY_BIND_ADDRESS=127.0.0.1
+PROXY_HTTP_PORT=80
+PROXY_HTTPS_PORT=443
+
 FRONTEND_HOST=frontend
 FRONTEND_PORT=5173
 
@@ -169,10 +173,33 @@ backend:
 
 `urlopen` raises on a non-2xx response, so the check fails without parsing anything.
 
-**ENV-12 — Only the proxy publishes host ports, and in development it binds them to
-loopback** (`"127.0.0.1:443:8443"`). Docker publishes on every interface by default. Other
-services are reached by service name. If you need a local database GUI, publish
-`127.0.0.1:5432:5432` only while you use it (PG-18).
+**ENV-12 — Only the proxy publishes host ports, on an address and ports set in `.env`;
+the address defaults to loopback:**
+
+```yaml
+proxy:
+  ports:
+    - "${PROXY_BIND_ADDRESS}:${PROXY_HTTP_PORT}:8080"
+    - "${PROXY_BIND_ADDRESS}:${PROXY_HTTPS_PORT}:8443"
+```
+
+`.env.example` sets `PROXY_BIND_ADDRESS=127.0.0.1` and ports 80 and 443. Docker publishes
+on every interface when no address is given, so the address is always written.
+
+- Docker Desktop on macOS publishes ports below 1024 on `127.0.0.1` only through its
+  privileged-port helper (**Settings → Advanced → Allow privileged port mapping**).
+  Without it, a developer sets free ports above 1024 in their own `.env` (8080 and 8443)
+  and browses to `https://APP_DOMAIN:8443`, or binds `0.0.0.0`.
+- A developer MAY set `PROXY_BIND_ADDRESS=0.0.0.0` in their own `.env`, to reach the stack
+  from another device or to publish 80 and 443 without the helper. That puts the dev
+  servers, debug output and any unauthenticated endpoints on the local network, so the
+  template keeps loopback and the comment beside it says so.
+- Two stacks cannot publish the same host port. A browser that reaches another project's
+  proxy on 443 reports `ERR_CERT_COMMON_NAME_INVALID`, because that proxy serves its own
+  certificate; check the port before suspecting the certificate.
+
+Other services are reached by service name and never publish a port. If you need a local
+database GUI, publish `127.0.0.1:5432:5432` only while you use it (PG-18).
 
 **ENV-13 — PostgreSQL runs with separate roles and file-based passwords: MUST in
 production, SHOULD in development.** The `postgres` image takes its superuser password
@@ -622,7 +649,22 @@ location /ws/ {
 
 **ENV-38 — The development proxy SHOULD run as `nginxinc/nginx-unprivileged`**, listening on 8080 and
 8443 inside the container, so it can run under ENV-25. Set `server_tokens off;`, allow only
-TLS 1.2 and 1.3, and mount certificates read-only.
+TLS 1.2 and 1.3, and mount certificates read-only. The HTTP server redirects to HTTPS on
+the published port (ENV-12), which it learns from `PROXY_HTTPS_PORT` because it only sees
+8443, and leaves the port out of the URL when it is 443:
+
+```nginx
+map "${PROXY_HTTPS_PORT}" $https_port_suffix {
+  443     "";
+  default ":${PROXY_HTTPS_PORT}";
+}
+
+server {
+  listen 8080;
+  server_name ${APP_DOMAIN};
+  return 301 https://$host$https_port_suffix$request_uri;
+}
+```
 
 **ENV-39 — TLS certificates are generated or renewed by tooling, never committed.**
 Locally, a setup script runs `mkcert` into a git-ignored `certs/` directory. Never mount
@@ -635,7 +677,11 @@ VPS edge renews via ACME (certbot or Caddy). Never renew certificates by hand.
 Derive them from configuration (`APP_DOMAIN`, `window.location`, `EnvVars`) and route
 traffic through the proxy. The Vite dev server sets `server.host: true`,
 `server.strictPort: true`, and `server.allowedHosts: [APP_DOMAIN]`, never
-`allowedHosts: true`. The backend's CORS and trusted-host lists are built from
+`allowedHosts: true`. Because the browser reaches Vite only through the proxy, it also
+sets `server.hmr.clientPort: Number(PROXY_HTTPS_PORT)`, so the HMR socket connects to the
+proxy's published port rather than Vite's. Apply these only when serving behind the proxy
+(`command === 'serve'`, not Vitest or Storybook), and fail at startup if `APP_DOMAIN` or
+`PROXY_HTTPS_PORT` is unset. The backend's CORS and trusted-host lists are built from
 `APP_DOMAIN` (FAPI-17).
 
 ---
