@@ -1,0 +1,12 @@
+# NOTE: frontend/ is a standalone pnpm project; this file only holds pnpm settings.
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@vitest/coverage-v8@5.0.4'
+  - '@vitest/mocker@5.0.4'
+  - '@vitest/spy@5.0.4'
+  - cssnano-preset-default@9.7.0
+  - cssnano@9.7.0
+  - postcss-merge-rules@9.1.5
+  - postcss-minify-params@9.1.0
+  - vitest@5.0.4

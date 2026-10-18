@@ -1,0 +1,21 @@
+{
+    "$schema": "./node_modules/oxfmt/configuration_schema.json",
+    "ignorePatterns": ["CLAUDE.md"],
+    "arrowParens": "always",
+    "bracketSameLine": false,
+    "printWidth": 88,
+    "proseWrap": "always",
+    "semi": true,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "all",
+    "useTabs": false,
+    "sortImports": {
+        "partitionByNewline": true,
+        "newlinesBetween": false
+    },
+    "overrides": [
+        { "files": ["*.json"], "options": { "tabWidth": 4, "trailingComma": "none" } },
+        { "files": ["*.css"], "options": { "tabWidth": 4 } }
+    ]
+}

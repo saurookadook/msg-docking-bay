@@ -6,7 +6,7 @@ sides meet.
 
 | Workspace  | Runner         | Environment | Libraries                                                          |
 | ---------- | -------------- | ----------- | ------------------------------------------------------------------ |
-| `frontend` | Vitest         | jsdom       | Testing Library (`react`, `user-event`, `jest-dom`), MSW           |
+| `frontend` | Vitest         | jsdom       | Testing Library (`react`, `user-event`, `jest-dom`), MirageJS, Storybook |
 | `shared`   | Jest + ts-jest | node        | —                                                                  |
 | `backend`  | pytest         | Python      | see [python/pytest.md](python/pytest.md) PYTEST-1; a real PostgreSQL test database |
 
@@ -20,10 +20,12 @@ dedicated `backend-test` Compose service against the test database
 
 **TEST-1 — Test files sit next to the code they test and are named `*.test.ts(x)`**
 (`utils/safeFetch.test.ts`, `pages/ProjectDetails/index.test.tsx`). In `shared`, tests
-MAY be grouped in a `__tests__/` folder inside the module they cover.
+MAY be grouped in a `__tests__/` folder inside the module they cover. A page or component
+with a Storybook story keeps it beside the test as `index.stories.tsx`.
 
 **TEST-2 — Fixtures live in `__mocks__/` as `<entity>Mocks.ts`** (`userMocks.ts`,
-`projectMocks.ts`, `commonMocks.ts`).
+`projectMocks.ts`, `commonMocks.ts`). The frontend's mock API server,
+`__mocks__/mirageServer.ts`, serves these fixtures to both tests and stories (TEST-18).
 - Fixture values are named `mock<Thing>` (`mockFirstUser`, `mockNow`).
 - Factories are named `create<Thing>Mock` (`createTaskMock`).
 - Lookups are named `find<Thing>Mock`.
@@ -72,9 +74,9 @@ act and assert steps are easy to find.
 placeholder assertion. A skipped test MUST have a `// TODO:` saying why it is skipped.
 
 **TEST-8 — Tests MUST be independent of each other.** Reset state in `beforeEach` or
-`afterEach` (`cleanup()`, `vi.clearAllMocks()`, `server.resetHandlers()`). Release
-resources in `afterAll`: close the MSW server, restore spies, and switch back to real
-timers.
+`afterEach` (`cleanup()`, `vi.clearAllMocks()`). Start a fresh Mirage server for each
+test and call `server.shutdown()` in `afterEach`, so route overrides never leak between
+tests. Release resources in `afterAll`: restore spies and switch back to real timers.
 
 ---
 
@@ -94,8 +96,8 @@ the API no longer returns. Never type a mock as `any` or cast it with `as` to ma
 **TEST-11 — Fake timers MUST leave the event loop running.** In `shared` (Jest):
 `jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'], now: mockNow })`. In
 `frontend` (Vitest), fake only what the test needs, `vi.useFakeTimers({ toFake:
-['setTimeout', 'clearTimeout', 'Date'], now: mockNow })`, so promises and MSW handlers
-still resolve.
+['setTimeout', 'clearTimeout', 'Date'], now: mockNow })`, so promises and Mirage
+handlers still resolve.
 
 **TEST-12 — Compare objects that carry generated values with asymmetric matchers**
 (`project_id: expect.toBeUUID()`, `created_at: expect.toBeISODateString()`; TEST-19),
@@ -127,10 +129,27 @@ store provider with an `initialState`, and in a memory router built from the app
 dispatch store actions, render a small helper component in the test file that dispatches
 them.
 
-**TEST-18 — Mock the network at the boundary.** Mock HTTP with
-`vi.spyOn(window, 'fetch').mockImplementation(createFetchMock())` or MSW `http` handlers,
-and mock WebSockets with MSW `ws` handlers (`server.listen()`, `resetHandlers()`,
-`close()`). Restore spies in `afterAll`.
+**TEST-18 — Mock the network at the boundary.** Mock HTTP with the MirageJS server from
+`__mocks__/mirageServer.ts`: `makeMirageServer({ environment: 'test' })` answers every
+API route with its fixture, and a test changes a route through `overrides`, with paths
+relative to the `/api` namespace:
+
+```ts
+server = makeMirageServer({
+  environment: 'test',
+  overrides: (mirageServer) => {
+    mirageServer.get('/health-check', () => new MirageResponse(503, {}, { detail }));
+  },
+});
+```
+
+In the `test` environment an unhandled request throws, so a test cannot reach a real
+service by accident (TEST-13). Storybook starts the same server for each story in
+`.storybook/preview.tsx`, taking overrides from the story's `parameters.mirage`. Import
+Mirage's `Response` as `MirageResponse` so it does not shadow the global.
+
+Mirage cannot mock WebSockets. Until that is decided, WebSocket tests follow
+[websockets.md](websockets.md).
 
 ---
 
