@@ -90,6 +90,7 @@ services:
     env_file: [.env]
     environment:
       DATABASE_PASSWORD_FILE: /run/secrets/db_app_password
+      PORT: ${UVICORN_PORT} # `fastapi dev` reads PORT, not UVICORN_PORT (ENV-19)
     secrets: [db_app_password]
     depends_on:
       postgres:

@@ -312,7 +312,10 @@ Declare each base image once, as an `ARG` before the first `FROM`.
 - The frontend's dev and test stages set `ENTRYPOINT ["pnpm", "frontend:base"]` and
   `CMD ["start:dev"]`, so `docker compose run frontend <script>` works for any script.
   The service sets `init: true`, because `pnpm` is PID 1.
-- The backend's dev stage runs `fastapi dev` bound to `0.0.0.0` (FAPI-2), and its test
+- The backend's dev stage runs `fastapi dev` bound to `0.0.0.0` (FAPI-2). `fastapi dev`
+  ignores `UVICORN_*` variables but reads `PORT`, so the stage sets `ENV PORT=8000`, its
+  `CMD` passes no `--port`, and the Compose service sets `PORT: ${UVICORN_PORT}`. The
+  server then listens where the healthcheck and the proxy look. Its test
   stage runs `pytest -c pytest.ci.ini` (PYTEST-22). Neither sets an `ENTRYPOINT`, so
   `docker compose run --rm backend <command>` runs any command in the environment
   (`python -m scripts.seed_db`, `alembic heads`); the root `backend:run` script wraps it

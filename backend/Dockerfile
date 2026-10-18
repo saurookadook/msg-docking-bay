@@ -26,10 +26,11 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project
 COPY . .
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked
+# `fastapi dev` ignores UVICORN_* variables but reads its port from PORT, which Compose
+# sets from UVICORN_PORT so the server, healthcheck, and proxy agree (ENV-19).
+ENV PORT=8000
 EXPOSE 8000
-# `fastapi dev` does not read UVICORN_* variables, so the port is given here; keep it
-# equal to UVICORN_PORT, which the healthcheck and the proxy use.
-CMD ["fastapi", "dev", "api/app/main.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["fastapi", "dev", "api/app/main.py", "--host", "0.0.0.0"]
 
 FROM backend-dev AS backend-test
 CMD ["pytest", "-c", "pytest.ci.ini"]

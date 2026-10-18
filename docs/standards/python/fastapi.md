@@ -55,7 +55,8 @@ CMD ["uvicorn", "api.app.main:app", "--no-server-header"]
   (`UVICORN_WORKERS=1`). On a single host, set the worker count there. Every worker has
   its own thread pool, database pool, lifespan, and cron scheduler (FAPI-19).
 - Locally, run `uv run fastapi dev api/app/main.py`, which reloads on change
-  (`--reload` and `--workers` cannot be combined).
+  (`--reload` and `--workers` cannot be combined). `fastapi dev` ignores `UVICORN_*`
+  variables; set its port with `PORT` (or `--port`), not `UVICORN_PORT`.
 
 The app entry point is `api.app.main:app` in every environment.
 
