@@ -1,0 +1,27 @@
+#health-check {
+    display: grid;
+    gap: var(--space-3);
+
+    & dl {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: var(--space-2) var(--space-3);
+        padding: var(--space-3);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-1);
+    }
+
+    & dt {
+        color: var(--color-text-muted);
+    }
+
+    & .health-check-status {
+        color: var(--color-success);
+        font-weight: 600;
+    }
+
+    & .health-check-error {
+        color: var(--color-danger);
+    }
+}
