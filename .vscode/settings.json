@@ -20,7 +20,7 @@
     "oxc.path.oxfmt": "frontend/node_modules/oxfmt/dist/cli.js",
     "oxc.path.oxlint": "frontend/node_modules/oxlint/dist/cli.js",
     "path-autocomplete.pathMappings": {
-        // path mappings for things like aliases
+        "@": "${folder}/frontend/src"
     },
     "[typescriptreact]": {
         "editor.tabSize": 2
