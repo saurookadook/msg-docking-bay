@@ -4,9 +4,12 @@ version = "0.1.0"
 description = "The msg-docking-bay FastAPI service."
 requires-python = ">=3.14"
 dependencies = [
+    "alembic>=1.20,<1.21",
     "fastapi[standard]>=0.143.0,<0.144",
+    "psycopg[binary]>=3.3",
     "pydantic>=2.14.0,<2.15",
     "rich>=15.0.0",
+    "sqlalchemy>=2.1.5,<2.2",
 ]
 
 [dependency-groups]
