@@ -1,5 +1,5 @@
 import { Response as MirageResponse, type Server } from 'miragejs';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   mockHealthCheckErrorDetail,
@@ -22,6 +22,10 @@ describe('safeFetch', () => {
 
   afterEach(() => {
     server.shutdown();
+  });
+
+  afterAll(() => {
+    vi.restoreAllMocks();
   });
 
   describe("'call' method", () => {
@@ -62,6 +66,28 @@ describe('safeFetch', () => {
       });
 
       await expect(callHealthCheck()).rejects.toThrow('Expected a JSON body');
+    });
+
+    it('throws with the original as cause when the body cannot be read', async () => {
+      /* START TEST SETUP */
+      server = makeMirageServer({ environment: 'test' });
+      const bodyReadError = new TypeError('terminated');
+      // NOTE: Mirage cannot fail a body partway through, and its `Response` polyfill does
+      // not read streams, so this one response rejects when its body is read.
+      const unreadableResponse = new Response('{}');
+      vi.spyOn(unreadableResponse, 'text').mockRejectedValueOnce(bodyReadError);
+      vi.spyOn(window, 'fetch').mockResolvedValueOnce(unreadableResponse);
+      /* END TEST SETUP */
+
+      const callError: unknown = await callHealthCheck().catch(
+        (error: unknown) => error,
+      );
+
+      expect(callError).toBeInstanceOf(Error);
+      expect(callError).toMatchObject({
+        message: expect.stringContaining("ERROR reading '/api/health-check'"),
+        cause: bodyReadError,
+      });
     });
   });
 });

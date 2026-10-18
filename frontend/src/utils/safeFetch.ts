@@ -46,8 +46,8 @@ function extractDetail(body: unknown): unknown {
  * `BASE_API_URL` (REACT-28).
  * @returns the parsed JSON body, typed as `T`
  * @note On failure it logs at `error` level and throws: a `SafeFetchError` for a non-2xx
- * response, and an `Error` (with the original as `cause`) when the request fails or a
- * successful response is not JSON.
+ * response, and an `Error` (with the original as `cause`) when the request fails, its
+ * body cannot be read, or a successful response is not JSON.
  * @example
  * ```ts
  * const responseData = await safeFetch.call<HealthCheckResponse>(
@@ -74,7 +74,18 @@ async function call<T>(
     }
   })();
 
-  const responseText = await response.text();
+  // NOTE: `fetch` resolves once headers arrive; reading the body can still fail.
+  const responseText = await (async function () {
+    try {
+      return await response.text();
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`[${name}] : response body from '${requestURL}' was not read`, err);
+      throw new Error(`[${name}] : ERROR reading '${requestURL}' - ${err.message}`, {
+        cause: err,
+      });
+    }
+  })();
   const parsedBody = safeParseJSON(responseText);
 
   if (!response.ok) {
