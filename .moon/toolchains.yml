@@ -1,0 +1,23 @@
+$schema: './cache/schemas/toolchains.json'
+
+# Tool versions come from .prototools only (MWS-3); this file holds behaviour.
+proto:
+  version: '0.63.1'
+
+javascript:
+  packageManager: 'pnpm'
+  inferTasksFromScripts: false
+node: {}
+pnpm: {}
+typescript:
+  # frontend/ is the only TypeScript project and the pnpm root, so there are no
+  # cross-project references to sync, and no repository-root tsconfig.json to create.
+  syncProjectReferences: false
+  createMissingConfig: false
+  routeOutDirToCache: false
+
+unstable_python:
+  packageManager: 'uv'
+  venvName: '.venv'
+unstable_uv:
+  syncArgs: ['--locked']

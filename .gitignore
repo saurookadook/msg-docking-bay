@@ -161,6 +161,10 @@ __pycache__/
 .coverage
 htmlcov/
 
+# moon (only the cache and Docker scaffolds; the config in .moon/ is committed)
+.moon/cache/
+.moon/docker/
+
 # Local environment: generated secrets (scripts/setup-local.sh). mkcert certificates are
 # ignored by nginx-reverse-proxy/certs/.gitignore.
 .docker/
