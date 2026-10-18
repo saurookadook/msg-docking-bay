@@ -72,6 +72,7 @@ storybook-static
 .env
 .env.*
 !.env.example
+!.env.test.example
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -159,3 +160,7 @@ __pycache__/
 .ruff_cache/
 .coverage
 htmlcov/
+
+# Local environment: generated secrets (scripts/setup-local.sh). mkcert certificates are
+# ignored by nginx-reverse-proxy/certs/.gitignore.
+.docker/
