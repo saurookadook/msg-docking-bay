@@ -65,6 +65,9 @@ web_modules/
 # Yarn Integrity file
 .yarn-integrity
 
+# Storybook build output
+storybook-static
+
 # dotenv environment variable files
 .env
 .env.*
@@ -148,5 +151,11 @@ vite.config.ts.timestamp-*
 # Turbo Repo
 .turbo
 
-# Storybook build output
-storybook-static
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
