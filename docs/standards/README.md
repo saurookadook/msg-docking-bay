@@ -38,7 +38,7 @@ The backend's own standards are in [python/](python/README.md):
 | [nodejs.md](nodejs.md)                                 | Runtime, pnpm, modules, env vars, async, crypto                  |
 | [react.md](react.md)                                   | Components, state store, hooks, routing, client-side data access |
 | [css.md](css.md)                                       | CSS / SCSS: file layout, nesting, tokens, selectors              |
-| [testing.md](testing.md)                               | Vitest, Jest, Testing Library, MSW, fixtures, custom matchers    |
+| [testing.md](testing.md)                               | Vitest, Jest, Testing Library, Mirage, fixtures, custom matchers |
 | [logging-and-errors.md](logging-and-errors.md)         | Shared logger, log levels, error messages, error wrapping        |
 | [formatting-and-linting.md](formatting-and-linting.md) | oxfmt, oxlint, suppression comments                              |
 

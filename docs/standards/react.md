@@ -24,6 +24,7 @@ src/
     ProjectDetails/
       index.tsx           page component
       index.test.tsx
+      index.stories.tsx   Storybook stories
       styles.css
       components/         components used only by this page
         TaskList/
@@ -42,7 +43,7 @@ A component used by one page lives in that page's `components/` folder. Move it 
 `src/components/` only when a second page needs it.
 
 **REACT-2 — Each component gets its own `PascalCase` folder** containing `index.tsx`,
-plus `styles.css` and `index.test.tsx` when needed. Every `components/` folder has an
+plus `styles.css`, `index.test.tsx`, and `index.stories.tsx` when needed. Every `components/` folder has an
 `index.ts` barrel.
 
 ---
