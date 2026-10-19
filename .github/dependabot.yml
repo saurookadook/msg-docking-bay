@@ -1,0 +1,31 @@
+# Every ecosystem that holds a version pin (ENV-24). .prototools is not supported by
+# Dependabot; update it by hand (or adopt Renovate) together with .nvmrc,
+# backend/.python-version, and the moon versionConstraint.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule: { interval: "weekly" }
+    cooldown: { default-days: 7 }
+    groups:
+      npm-minor-and-patch: { update-types: ["minor", "patch"] }
+  - package-ecosystem: "uv"
+    directory: "/backend"
+    schedule: { interval: "weekly" }
+    cooldown: { default-days: 7 }
+    groups:
+      uv-minor-and-patch: { update-types: ["minor", "patch"] }
+  - package-ecosystem: "docker"
+    directories: ["/backend", "/frontend"]
+    schedule: { interval: "weekly" }
+    cooldown: { default-days: 7 }
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule: { interval: "weekly" }
+    cooldown: { default-days: 7 }
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule: { interval: "weekly" }
+    cooldown: { default-days: 7 }
+    groups:
+      actions-minor-and-patch: { update-types: ["minor", "patch"] }

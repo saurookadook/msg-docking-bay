@@ -1,0 +1,69 @@
+# The development entry point (ENV-36 to ENV-38). The nginx image renders this file with
+# envsubst into /etc/nginx/conf.d/ at startup; only ${UPPER_CASE} environment variables
+# are replaced, so NGINX's own $variables pass through.
+
+server_tokens off;
+
+# Upgrade only requests that ask for it; keep plain HTTP/1.1 requests on `close`.
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+
+# Docker's embedded DNS. With the upstream in a variable, NGINX re-resolves service names,
+# so a restarted container with a new address is still reachable.
+resolver 127.0.0.11 valid=10s ipv6=off;
+
+# The HTTPS port as it appears in a URL: nothing for the default 443.
+map "${PROXY_HTTPS_PORT}" $https_port_suffix {
+  443     "";
+  default ":${PROXY_HTTPS_PORT}";
+}
+
+server {
+  listen 8080;
+  listen [::]:8080;
+  server_name ${APP_DOMAIN};
+
+  return 301 https://$host$https_port_suffix$request_uri;
+}
+
+server {
+  listen 8443 ssl;
+  listen [::]:8443 ssl;
+  http2 on;
+  server_name ${APP_DOMAIN};
+
+  ssl_certificate     /etc/nginx/certs/local.pem;
+  ssl_certificate_key /etc/nginx/certs/local-key.pem;
+  ssl_protocols       TLSv1.2 TLSv1.3;
+
+  client_max_body_size 10m;
+
+  set $backend_upstream  ${BACKEND_HOST}:${UVICORN_PORT};
+  set $frontend_upstream ${FRONTEND_HOST}:${FRONTEND_PORT};
+
+  location /api {
+    include /etc/nginx/snippets/proxy-headers.conf;
+    proxy_pass http://$backend_upstream;
+  }
+
+  # FastAPI's WebSocket routes; NGINX would otherwise close an idle socket after 60 s
+  # (ENV-37).
+  location /ws/ {
+    include /etc/nginx/snippets/proxy-headers.conf;
+    proxy_pass http://$backend_upstream;
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_read_timeout 1h;
+  }
+
+  # The Vite dev server, including its HMR WebSocket.
+  location / {
+    include /etc/nginx/snippets/proxy-headers.conf;
+    proxy_pass http://$frontend_upstream;
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_read_timeout 1h;
+  }
+}

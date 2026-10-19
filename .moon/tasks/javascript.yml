@@ -1,0 +1,42 @@
+$schema: '../cache/schemas/tasks.json'
+
+inheritedBy:
+  toolchains: { or: ['javascript', 'typescript'] }
+
+fileGroups:
+  sources: ['src/**/*']
+  tests: ['src/**/*.test.ts', 'src/**/*.test.tsx']
+  configs: ['package.json', 'tsconfig*.json', '*.config.ts', '*.config.js']
+
+# frontend/ is its own pnpm root, so the oxfmt and oxlint configs live in the project,
+# not at the workspace root.
+tasks:
+  format:
+    command: 'oxfmt'
+    args: ['--check']
+    inputs: ['@group(sources)', '@group(configs)', '.oxfmtrc.json']
+    options:
+      affectedFiles: true
+  lint:
+    command: 'oxlint'
+    args: ['--type-aware', '--deny-warnings']
+    deps: ['^:build']
+    inputs: ['@group(sources)', '@group(configs)', '.oxlintrc.json']
+    options:
+      # Pass only JS/TS files: given only package.json or tsconfig.json, oxlint finds
+      # nothing to lint and exits 1 (MTASK-6). oxfmt formats JSON, so format passes all.
+      affectedFiles:
+        pass: 'args'
+        filter: ['**/*.{ts,tsx,js,jsx,mjs,cjs}']
+  typecheck:
+    command: 'tsc'
+    args: ['--build', '--noEmit']
+    deps: ['^:build']
+    inputs: ['@group(sources)', '@group(configs)']
+  format-write:
+    command: 'oxfmt'
+    preset: 'utility'
+  lint-fix:
+    command: 'oxlint'
+    args: ['--type-aware', '--fix']
+    preset: 'utility'

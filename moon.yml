@@ -1,0 +1,25 @@
+$schema: './.moon/cache/schemas/project.json'
+
+layer: 'automation'
+project:
+  title: 'Repository root'
+  description: 'Local environment tasks: setup and the Docker Compose stack.'
+  owner: 'team-platform'
+
+workspace:
+  inheritedTasks:
+    include: []
+
+tasks:
+  setup:
+    command: 'scripts/setup-local.sh'
+    inputs: []  # one-off side effects; depends on no tracked file's content
+    preset: 'utility'
+  dev:
+    command: 'docker'
+    args: ['compose', 'up', '--build', '--watch', '--attach-dependencies', 'all']
+    preset: 'server'
+  down:
+    command: 'docker'
+    args: ['compose', 'down']
+    preset: 'utility'

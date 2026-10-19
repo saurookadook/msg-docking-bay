@@ -1,0 +1,231 @@
+# The local development stack (docs/standards/docker-and-environment.md). Start it with
+# `moon run root:dev` (`docker compose up --build --watch --attach-dependencies all`) after
+# scripts/setup-local.sh. Only the proxy publishes ports, on PROXY_BIND_ADDRESS;
+# https://${APP_DOMAIN} is the entry point.
+name: msg-docking-bay
+
+x-logging: &logging
+  # The default json-file driver never rotates (ENV-34).
+  driver: local
+
+services:
+  # Starts the full-stack local environment, and nothing optional:
+  # `docker compose up --build --watch --attach-dependencies all` (`moon run root:dev`).
+  # It waits for the proxy, which waits for the backend and frontend, which wait for
+  # postgres. Profiled services (`test`, `tools`) are never started by it. It stays up
+  # because `docker compose up all` ends, and with it Watch and the logs, once `all` exits.
+  all:
+    image: alpine:3.24.2@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+    command: ["sh", "-c", "echo 'The full stack is up and healthy.' && exec sleep infinity"]
+    init: true # stop at once on Ctrl-C; sleep ignores SIGTERM as PID 1
+    depends_on:
+      proxy:
+        condition: service_healthy
+    logging: *logging
+
+  # Copies the TLS key and the database passwords into volumes, owned by the user that
+  # reads each one (ENV-13, ENV-39). setup-local.sh creates them 0600 for the host user,
+  # and a bind mount on native Linux keeps that owner, so the proxy (UID 101) and the
+  # postgres user (UID 999) could not read them. Runs on every `up`, so a regenerated
+  # key or password replaces the old copy. The UIDs are the images' own; re-check them
+  # when either image changes.
+  secrets-init:
+    image: alpine:3.24.2@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+    command:
+      - sh
+      - -euc
+      - |
+        install -o 101 -g 101 -m 0444 /in/certs/local.pem /out/proxy-certs/local.pem
+        install -o 101 -g 101 -m 0400 /in/certs/local-key.pem /out/proxy-certs/local-key.pem
+        for secret in postgres_password db_owner_password db_app_password; do
+          install -o 999 -g 999 -m 0400 "/in/secrets/$$secret" "/out/postgres-secrets/$$secret"
+        done
+    volumes:
+      - ./nginx-reverse-proxy/certs:/in/certs:ro
+      - ./.docker/secrets:/in/secrets:ro
+      - proxy-certs:/out/proxy-certs
+      - postgres-secrets:/out/postgres-secrets
+    network_mode: none
+    # Root, to read the host user's files and hand them to another user; nothing else.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+
+  proxy:
+    image: nginxinc/nginx-unprivileged:1.30.6-trixie@sha256:455cebcadcac0b597cdeaab077d93fb8ad59a98f7ed001dcf8f8693154b5d3d3
+    environment:
+      # Read by the image's envsubst step, which renders templates/ into conf.d/.
+      APP_DOMAIN: ${APP_DOMAIN}
+      BACKEND_HOST: ${BACKEND_HOST}
+      FRONTEND_HOST: ${FRONTEND_HOST}
+      FRONTEND_PORT: ${FRONTEND_PORT}
+      PROXY_HTTPS_PORT: ${PROXY_HTTPS_PORT}
+      UVICORN_PORT: ${UVICORN_PORT}
+      NGINX_ENVSUBST_FILTER: ^(APP_DOMAIN|BACKEND_HOST|FRONTEND_HOST|FRONTEND_PORT|PROXY_HTTPS_PORT|UVICORN_PORT)$
+    ports:
+      # 127.0.0.1 unless .env opts into the network (ENV-12).
+      - "${PROXY_BIND_ADDRESS}:${PROXY_HTTP_PORT}:8080"
+      - "${PROXY_BIND_ADDRESS}:${PROXY_HTTPS_PORT}:8443"
+    volumes:
+      - ./nginx-reverse-proxy/templates:/etc/nginx/templates:ro
+      - ./nginx-reverse-proxy/snippets:/etc/nginx/snippets:ro
+      - proxy-certs:/etc/nginx/certs:ro # from secrets-init, readable by UID 101
+    depends_on:
+      secrets-init:
+        condition: service_completed_successfully
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, --output, /dev/null, "http://127.0.0.1:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+
+  frontend:
+    build:
+      context: ./frontend
+      target: frontend-dev
+    env_file: [.env]
+    init: true # pnpm is PID 1 (ENV-19)
+    develop:
+      watch:
+        - { action: sync, path: ./frontend/src, target: /app/src }
+        - { action: sync, path: ./frontend/index.html, target: /app/index.html }
+        - { action: rebuild, path: ./frontend/package.json }
+        - { action: rebuild, path: ./frontend/pnpm-lock.yaml }
+        - { action: rebuild, path: ./frontend/vite.config.ts }
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - 'fetch(`http://127.0.0.1:$${process.env.FRONTEND_PORT}/`).then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))'
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+
+  backend:
+    build:
+      context: ./backend
+      target: backend-dev
+    env_file: [.env]
+    environment:
+      DATABASE_PASSWORD_FILE: /run/secrets/db_app_password
+      # `fastapi dev` ignores UVICORN_* variables; these are the names it reads (ENV-19).
+      PORT: ${UVICORN_PORT}
+      FORWARDED_ALLOW_IPS: ${UVICORN_FORWARDED_ALLOW_IPS}
+    secrets: [db_app_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+    develop:
+      watch:
+        - { action: sync, path: ./backend, target: /app, ignore: [.venv/] }
+        - { action: rebuild, path: ./backend/pyproject.toml }
+        - { action: rebuild, path: ./backend/uv.lock }
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - 'import os, urllib.request; urllib.request.urlopen(f"http://127.0.0.1:{os.environ[''UVICORN_PORT'']}/api/health-check", timeout=2)'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    stop_grace_period: 30s # above UVICORN_TIMEOUT_GRACEFUL_SHUTDOWN (ENV-33)
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+
+  # `docker compose run --rm backend-migrations upgrade head` (`moon run backend:migrate`).
+  # Connects as the owner role, which alone may change the schema (PG-13).
+  backend-migrations:
+    extends: backend
+    profiles: [tools]
+    entrypoint: ["alembic"]
+    # Mounted, not baked in: Alembic must see current models and revisions, and a new
+    # revision must land on the host. The environment is in /opt/venv, outside /app.
+    volumes:
+      - ./backend:/app
+    environment:
+      DATABASE_USER: ${DATABASE_OWNER_USER}
+      DATABASE_PASSWORD_FILE: /run/secrets/db_owner_password
+    secrets: [db_owner_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+
+  # Run through scripts/backend-test.sh (`moon run backend:test`), as its own Compose
+  # project against the test database (ENV-4, ENV-8). The suite migrates and downgrades
+  # that database itself, so it connects as the owner role (PG-13).
+  backend-test:
+    extends: backend
+    profiles: [test]
+    build:
+      target: backend-test
+    env_file: [.env.test]
+    environment:
+      DATABASE_USER: ${DATABASE_OWNER_USER}
+      DATABASE_PASSWORD_FILE: /run/secrets/db_owner_password
+    secrets: [db_owner_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+
+  postgres:
+    image: postgres:18.6-trixie@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      # Read by postgres/initdb/ to name the roles of PG-13.
+      DATABASE_OWNER_USER: ${DATABASE_OWNER_USER}
+      DATABASE_USER: ${DATABASE_USER}
+    volumes:
+      # PostgreSQL 18 keeps its data in a versioned folder under this path (PG-16).
+      - postgres-data:/var/lib/postgresql
+      - ./postgres/initdb:/docker-entrypoint-initdb.d:ro
+      # From secrets-init, not Compose secrets: the entrypoint and initdb/ read them as
+      # the postgres user, which cannot read the host files on native Linux.
+      - postgres-secrets:/run/secrets:ro
+    depends_on:
+      secrets-init:
+        condition: service_completed_successfully
+    # No published port (PG-18). For a local GUI, uncomment while you use it:
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+    shm_size: 128mb
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 2s
+      timeout: 5s
+      retries: 15
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+
+# Generated by scripts/setup-local.sh; git-ignored (ENV-10, ENV-13). Only services that
+# run as root use these; the others read copies from secrets-init.
+secrets:
+  db_owner_password:
+    file: ./.docker/secrets/db_owner_password
+  db_app_password:
+    file: ./.docker/secrets/db_app_password
+
+volumes:
+  postgres-data:
+  proxy-certs:
+  postgres-secrets:

@@ -154,7 +154,9 @@ ALTER DEFAULT PRIVILEGES FOR ROLE app_owner IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO app;
 ```
 
-Passwords come from secret files, as in ENV-13. Migrations connect as `app_owner`: the
+Passwords come from secret files, as in ENV-13. The image's entrypoint and init
+scripts read them as the `postgres` user, so the `postgres` service mounts the
+`secrets-init` copies at `/run/secrets` rather than Compose secrets. Migrations connect as `app_owner`: the
 `backend-migrations` service locally (ENV-6) and the release step in production
 (ALEM-13). The test suite migrates its own database and runs the downgrade round trip
 (PYTEST-10, ALEM-14), so `backend-test` connects to the test database as the owner role.

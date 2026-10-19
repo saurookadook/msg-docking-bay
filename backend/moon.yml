@@ -1,0 +1,28 @@
+$schema: '../.moon/cache/schemas/project.json'
+
+language: 'python'
+layer: 'application'
+stack: 'backend'
+project:
+  title: 'Backend'
+  description: 'FastAPI service for msg-docking-bay, on PostgreSQL.'
+  owner: 'team-api'
+
+tasks:
+  # The suite needs PostgreSQL, so it runs in the backend-test Compose service, in a
+  # Compose project of its own (ENV-4, ENV-29), never on the host.
+  test:
+    command: 'scripts/backend-test.sh'
+    inputs: []  # cache is off; every run rebuilds the image and starts a fresh database
+    options:
+      cache: false
+      mutex: 'compose-test-db'
+      runFromWorkspaceRoot: true
+      # CI runs the Compose test job directly, not through moon (MCI-1).
+      runInCI: false
+  migrate:
+    command: 'docker'
+    args: ['compose', 'run', '--rm', 'backend-migrations', 'upgrade', 'head']
+    preset: 'utility'
+    options:
+      runFromWorkspaceRoot: true

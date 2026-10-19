@@ -1,0 +1,22 @@
+$schema: './cache/schemas/workspace.json'
+
+# Same version as `moon` in .prototools; upgrade both together (MWS-2).
+versionConstraint: '>=2.6.2 <2.7.0'
+
+projects:
+  globs: ['*/moon.yml']
+  sources:
+    root: '.'
+  globFormat: 'source-path'
+
+vcs:
+  client: 'git'
+  defaultBranch: 'main'
+  # Each developer installs hooks with `moon sync vcs-hooks` (MWS-17).
+  sync: false
+  hooks:
+    pre-commit:
+      - 'moon run :lint :format --affected --status=staged'
+
+constraints:
+  enforceLayerRelationships: true

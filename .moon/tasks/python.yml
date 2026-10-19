@@ -1,0 +1,44 @@
+$schema: '../cache/schemas/tasks.json'
+
+inheritedBy:
+  # Matches the `unstable_python` toolchain: moon 2.6.2 compares IDs without the
+  # `unstable_` prefix, and `['unstable_python']` matches nothing (checked; MLANG-10).
+  toolchains: ['python']
+
+# Every .py file, tests included: moon applies a negated glob to a task's whole input
+# list, so excluding tests here would also hide them from format and lint.
+fileGroups:
+  python-sources: ['**/*.py']
+  python-configs: ['pyproject.toml', 'uv.lock']
+
+tasks:
+  format:
+    command: 'uv'
+    args: ['run', 'ruff', 'format', '--check']
+    inputs: ['@group(python-sources)', '@group(python-configs)']
+    options:
+      # Pass only .py files: Ruff parses any file it is given as Python, so uv.lock fails.
+      # Config files stay inputs, and when no .py file is affected moon passes `.` (MTASK-6).
+      affectedFiles:
+        pass: 'args'
+        filter: ['**/*.py']
+  lint:
+    command: 'uv'
+    args: ['run', 'ruff', 'check']
+    inputs: ['@group(python-sources)', '@group(python-configs)']
+    options:
+      affectedFiles:
+        pass: 'args'
+        filter: ['**/*.py']
+  typecheck:
+    command: 'uv'
+    args: ['run', 'pyright']
+    inputs: ['@group(python-sources)', '@group(python-configs)']
+  format-write:
+    command: 'uv'
+    args: ['run', 'ruff', 'format']
+    preset: 'utility'
+  lint-fix:
+    command: 'uv'
+    args: ['run', 'ruff', 'check', '--fix']
+    preset: 'utility'

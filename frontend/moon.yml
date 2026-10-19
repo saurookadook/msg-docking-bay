@@ -1,0 +1,34 @@
+$schema: '../.moon/cache/schemas/project.json'
+
+language: 'typescript'
+layer: 'application'
+stack: 'frontend'
+project:
+  title: 'Frontend'
+  description: 'React UI for msg-docking-bay, built with Vite.'
+  owner: 'team-web'
+
+tasks:
+  build:
+    script: 'tsc -b && vite build'
+    deps: ['^:build']
+    inputs: ['@group(sources)', '@group(configs)', 'index.html']
+    outputs: ['dist']
+  # No `dev` task: the dev server runs in the frontend Compose service behind the proxy,
+  # started by `moon run root:dev` (MTASK-1). A host Vite has no APP_DOMAIN from .env,
+  # and the proxy would not reach it.
+  storybook:
+    command: 'storybook'
+    args: ['dev', '-p', '6006']
+    preset: 'server'
+  test:
+    command: 'vitest'
+    args: ['run']
+    deps: ['^:build']
+    inputs: ['@group(sources)', '@group(configs)']
+  test-cov:
+    command: 'vitest'
+    args: ['run', '--coverage']
+    deps: ['^:build']
+    inputs: ['@group(sources)', '@group(configs)']
+    outputs: ['coverage']
