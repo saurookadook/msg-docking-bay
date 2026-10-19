@@ -3,8 +3,8 @@
 # The postgres image runs this once, as the superuser, only while the data folder is
 # empty. Extensions and schema belong in migrations (PG-12), not here.
 #
-# Reads: POSTGRES_DB, DATABASE_OWNER_USER, DATABASE_USER, and the password files
-# mounted as Compose secrets.
+# Reads: POSTGRES_DB, DATABASE_OWNER_USER, DATABASE_USER, and the password files that
+# the secrets-init service copies into /run/secrets for the postgres user.
 set -euo pipefail
 
 owner_password="$(< /run/secrets/db_owner_password)"

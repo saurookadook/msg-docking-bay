@@ -12,5 +12,6 @@ services:
       - full_page_writes=off
     volumes: !override
       - ./postgres/initdb:/docker-entrypoint-initdb.d:ro
+      - postgres-secrets:/run/secrets:ro
     tmpfs:
       - /var/lib/postgresql

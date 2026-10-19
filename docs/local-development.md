@@ -77,9 +77,14 @@ The whole stack runs in Docker Compose behind an NGINX proxy at
 ## How it fits together
 
 - **Configuration.** `.env` (from `.env.example`) feeds every service; `.env.test` is
-  loaded on top of it for tests. Passwords are files in `.docker/secrets/`, mounted as
-  Compose secrets, and read through `*_FILE` variables. `.docker/` and
-  `nginx-reverse-proxy/certs/` are git-ignored.
+  loaded on top of it for tests. Passwords are files in `.docker/secrets/`, read
+  through `*_FILE` variables. `.docker/` and `nginx-reverse-proxy/certs/` are
+  git-ignored.
+- **Secrets and the TLS key.** The setup script writes them readable only by you. On
+  every `up`, the short-lived `secrets-init` service copies them into volumes owned by
+  the container users that read them: the proxy's key and the database passwords. The
+  backend services run as root and mount the passwords as Compose secrets. After
+  regenerating a file, the next `up` picks it up.
 - **Database roles.** On a fresh volume, `postgres/initdb/` creates `app_owner`
   (owns the schema, runs migrations) and `app` (reads and writes rows; the backend's
   role). To start over: `docker compose down -v`.
