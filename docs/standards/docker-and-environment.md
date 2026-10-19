@@ -314,8 +314,9 @@ Declare each base image once, as an `ARG` before the first `FROM`.
   The service sets `init: true`, because `pnpm` is PID 1.
 - The backend's dev stage runs `fastapi dev` bound to `0.0.0.0` (FAPI-2). `fastapi dev`
   ignores `UVICORN_*` variables but reads `PORT`, so the stage sets `ENV PORT=8000`, its
-  `CMD` passes no `--port`, and the Compose service sets `PORT: ${UVICORN_PORT}`. The
-  server then listens where the healthcheck and the proxy look. Its test
+  `CMD` passes no `--port`, and the Compose service sets `PORT: ${UVICORN_PORT}` and
+  `FORWARDED_ALLOW_IPS: ${UVICORN_FORWARDED_ALLOW_IPS}`. The server then listens where
+  the healthcheck and the proxy look, and trusts the proxy's headers. Its test
   stage runs `pytest -c pytest.ci.ini` (PYTEST-22). Neither sets an `ENTRYPOINT`, so
   `docker compose run --rm backend <command>` runs any command in the environment
   (`python -m scripts.seed_db`, `alembic heads`); the root `backend:run` script wraps it
@@ -667,6 +668,18 @@ server {
   server_name ${APP_DOMAIN};
   return 301 https://$host$https_port_suffix$request_uri;
 }
+```
+
+Proxied locations pass the client's `Host` through as `$http_host`, not `$host`, which
+drops the port. The upstream builds absolute URLs (redirects, links) from `Host`, and
+Uvicorn ignores `X-Forwarded-Host` and `X-Forwarded-Port`, so with `$host` a redirect on
+a non-443 `PROXY_HTTPS_PORT` sends the browser to 443. The HTTP-to-HTTPS redirect above
+keeps `$host`, since the port it receives is the HTTP one.
+
+```nginx
+proxy_set_header Host              $http_host;
+proxy_set_header X-Forwarded-Proto $scheme;
+proxy_set_header X-Forwarded-Host  $http_host;
 ```
 
 **ENV-39 — TLS certificates are generated or renewed by tooling, never committed.**

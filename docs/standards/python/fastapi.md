@@ -56,7 +56,10 @@ CMD ["uvicorn", "api.app.main:app", "--no-server-header"]
   its own thread pool, database pool, lifespan, and cron scheduler (FAPI-19).
 - Locally, run `uv run fastapi dev api/app/main.py`, which reloads on change
   (`--reload` and `--workers` cannot be combined). `fastapi dev` ignores `UVICORN_*`
-  variables; set its port with `PORT` (or `--port`), not `UVICORN_PORT`.
+  variables; set its port with `PORT` (or `--port`), not `UVICORN_PORT`, and the
+  proxy's address with `FORWARDED_ALLOW_IPS`, not `UVICORN_FORWARDED_ALLOW_IPS`.
+  Without it, Uvicorn trusts only `127.0.0.1`, ignores the proxy's
+  `X-Forwarded-Proto`, and builds `http://` redirects.
 
 The app entry point is `api.app.main:app` in every environment.
 
