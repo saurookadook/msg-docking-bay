@@ -14,9 +14,9 @@ tasks:
     deps: ['^:build']
     inputs: ['@group(sources)', '@group(configs)', 'index.html']
     outputs: ['dist']
-  dev:
-    command: 'vite'
-    preset: 'server'
+  # No `dev` task: the dev server runs in the frontend Compose service behind the proxy,
+  # started by `moon run root:dev` (MTASK-1). A host Vite has no APP_DOMAIN from .env,
+  # and the proxy would not reach it.
   storybook:
     command: 'storybook'
     args: ['dev', '-p', '6006']
