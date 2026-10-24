@@ -215,9 +215,10 @@ services:
       # Read by postgres/initdb/ to name the roles of PG-13.
       DATABASE_OWNER_USER: ${DATABASE_OWNER_USER}
       DATABASE_USER: ${DATABASE_USER}
-    # No published port (PG-18). For a local GUI, uncomment while you use it:
-    # ports:
-    #   - "127.0.0.1:5432:5432"
+    # Published on this machine only (ENV-12), for a local GUI at 127.0.0.1:6432. Nothing
+    # in the stack connects through it.
+    ports:
+      - "127.0.0.1:6432:5432"
     volumes:
       # PostgreSQL 18 keeps its data in a versioned folder under this path (PG-16).
       - postgres-data:/var/lib/postgresql
