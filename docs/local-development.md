@@ -86,8 +86,9 @@ The whole stack runs in Docker Compose behind an NGINX proxy at
   backend services run as root and mount the passwords as Compose secrets. After
   regenerating a file, the next `up` picks it up.
 - **Database roles.** On a fresh volume, `postgres/initdb/` creates the two roles named
-  in `.env`: `DATABASE_OWNER_USER` (owns the schema, runs migrations) and `DATABASE_USER`
-  (reads and writes rows; the backend's role). To start over: `docker compose down -v`.
+  in `.env`: `DATABASE_OWNER_USER` (owns the schema, runs migrations) and
+  `DATABASE_APP_USER` (reads and writes rows; the backend's role, as `DATABASE_USER`).
+  To start over: `docker compose down -v`.
 - **Proxy.** `nginx-reverse-proxy/templates/default.conf.template` routes `/api` and `/ws/` to the
   backend and everything else, including Vite's HMR socket, to the frontend.
 - **Versions.** `.prototools` pins every tool. `frontend/.nvmrc` and
