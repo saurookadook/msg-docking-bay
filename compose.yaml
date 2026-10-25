@@ -213,8 +213,8 @@ services:
       POSTGRES_DB: ${DATABASE_NAME}
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       # Read by postgres/initdb/ to name the roles of PG-13.
+      DATABASE_APP_USER: ${DATABASE_APP_USER}
       DATABASE_OWNER_USER: ${DATABASE_OWNER_USER}
-      DATABASE_USER: ${DATABASE_USER}
     # Published on this machine only (ENV-12), for a local GUI at 127.0.0.1:6432. Nothing
     # in the stack connects through it.
     ports:

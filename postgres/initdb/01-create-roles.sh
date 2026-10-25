@@ -3,7 +3,7 @@
 # The postgres image runs this once, as the superuser, only while the data folder is
 # empty. Extensions and schema belong in migrations (PG-12), not here.
 #
-# Reads: POSTGRES_DB, DATABASE_OWNER_USER, DATABASE_USER, and each role's password
+# Reads: POSTGRES_DB, DATABASE_OWNER_USER, DATABASE_APP_USER, and each role's password
 # from DATABASE_OWNER_PASSWORD and DATABASE_APP_PASSWORD (Railway's variables) or, when
 # unset, from the files that the secrets-init service copies into /run/secrets for the
 # postgres user (Compose).
@@ -29,7 +29,7 @@ psql --variable=ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_
   --set=db="$POSTGRES_DB" \
   --set=owner="$DATABASE_OWNER_USER" \
   --set=owner_password="$owner_password" \
-  --set=app="$DATABASE_USER" \
+  --set=app="$DATABASE_APP_USER" \
   --set=app_password="$app_password" <<'SQL'
 CREATE ROLE :"owner" LOGIN PASSWORD :'owner_password';
 CREATE ROLE :"app" LOGIN PASSWORD :'app_password';
