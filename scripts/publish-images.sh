@@ -46,7 +46,10 @@ for dir in contexts buildx cli-plugins; do
     ln -s "$user_docker_config/$dir" "$DOCKER_CONFIG/$dir"
   fi
 done
-printf '{"currentContext": "%s"}\n' "$docker_context" >"$DOCKER_CONFIG/config.json"
+# Without an `auths` entry the CLI falls back to the platform's credential helper (the
+# macOS keychain) and would overwrite Docker Desktop's Hub login there. The empty entry
+# keeps the login in this config file, which the trap deletes.
+printf '{"currentContext": "%s", "auths": {"https://index.docker.io/v1/": {}}}\n' "$docker_context" >"$DOCKER_CONFIG/config.json"
 
 docker_username="$(op read "$DOCKER_USERNAME_OP_PATH")"
 op read "$token_op_path" | docker login --username "$docker_username" --password-stdin
