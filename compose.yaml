@@ -192,12 +192,12 @@ services:
     environment:
       DATABASE_USER: ${DATABASE_OWNER_USER}
       DATABASE_PASSWORD_FILE: /run/secrets/db_owner_password
-    secrets: [db_owner_password]
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
       disable: true
+    secrets: [db_owner_password]
 
   # The published database image (postgres/Dockerfile), with postgres/initdb/ baked in.
   # Rebuild after changing an init script; it runs only on an empty data folder.
