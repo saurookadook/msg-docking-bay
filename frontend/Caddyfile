@@ -15,7 +15,8 @@
 		format json
 	}
 
-	handle /api/* {
+	@api path /api /api/* # /api itself is the API's homepage
+	handle @api {
 		reverse_proxy {$BACKEND_UPSTREAM:backend:8000}
 	}
 
