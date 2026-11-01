@@ -1,16 +1,22 @@
 """Migrate with the application's URL and metadata (ALEM-2)."""
 
 from logging.config import fileConfig
+from typing import Final
 
 from alembic import context
 from sqlalchemy import MetaData, create_engine, pool, text
 
-# Import every model module here, and in scripts/db/initialize.py once
-# it exists, so autogenerate can see its table (SQLA-13). Each import
-# only registers the table on BaseDB.metadata; nothing reads the name.
-import models.continuity.db  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from db.base_db import BaseDB
 from db.db_session_manager import DBSessionManager
+from models.continuity.db import ContinuityDB
+from models.work.db import WorkDB
+
+MODELS: Final = (ContinuityDB, WorkDB)
+"""Every model, imported so autogenerate sees its table (SQLA-13).
+
+List each new model here, and in scripts/db/initialize.py once it
+exists; a model that is not imported is missing from the metadata.
+"""
 
 config = context.config
 
