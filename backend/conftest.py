@@ -2,6 +2,7 @@
 
 import os
 from collections.abc import Iterator
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,7 @@ from alembic.config import Config
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from _mocks.temporal import get_mock_utcnow
 from config.env_vars import EnvVarManager
 
 # Set before the app is imported, since importing it configures logging
@@ -59,3 +61,9 @@ def test_app_client(test_db_session: Session) -> Iterator[TestClient]:
         yield TestClient(app, base_url="https://app.dev")
     finally:
         app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def mock_utcnow() -> datetime:
+    """Return the suite's fixed "now" (PYTEST-18)."""
+    return get_mock_utcnow()
