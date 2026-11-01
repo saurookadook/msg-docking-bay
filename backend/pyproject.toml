@@ -14,6 +14,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "factory-boy>=3.3.3",
     "httpx2>=2.13.1",
     "pyright[nodejs]>=1.1.414",
     "pytest>=9.1.1",
