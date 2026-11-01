@@ -10,8 +10,10 @@ services:
       - synchronous_commit=off
       - -c
       - full_page_writes=off
+    # Replaces the development port, so the test database can run beside it.
+    ports: !override
+      - "127.0.0.1:7432:5432"
     volumes: !override
-      - ./postgres/initdb:/docker-entrypoint-initdb.d:ro
       - postgres-secrets:/run/secrets:ro
     tmpfs:
       - /var/lib/postgresql

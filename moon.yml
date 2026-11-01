@@ -3,7 +3,7 @@ $schema: './.moon/cache/schemas/project.json'
 layer: 'automation'
 project:
   title: 'Repository root'
-  description: 'Local environment tasks: setup and the Docker Compose stack.'
+  description: 'Local environment tasks: setup, the Docker Compose stack, and publishing.'
   owner: 'team-platform'
 
 workspace:
@@ -23,3 +23,11 @@ tasks:
     command: 'docker'
     args: ['compose', 'down']
     preset: 'utility'
+  # Builds every production image in docker-bake.hcl and pushes them to Docker Hub in one
+  # login (ENV-41). `moon run <project>:publish` pushes one.
+  publish:
+    command: 'scripts/publish-images.sh'
+    inputs: []  # pushes images; nothing to cache
+    preset: 'utility'
+    options:
+      runInCI: false

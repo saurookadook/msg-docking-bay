@@ -85,12 +85,38 @@ The whole stack runs in Docker Compose behind an NGINX proxy at
   the container users that read them: the proxy's key and the database passwords. The
   backend services run as root and mount the passwords as Compose secrets. After
   regenerating a file, the next `up` picks it up.
-- **Database roles.** On a fresh volume, `postgres/initdb/` creates `app_owner`
-  (owns the schema, runs migrations) and `app` (reads and writes rows; the backend's
-  role). To start over: `docker compose down -v`.
+- **Database roles.** On a fresh volume, `postgres/initdb/` creates the two roles named
+  in `.env`: `DATABASE_OWNER_USER` (owns the schema, runs migrations) and
+  `DATABASE_APP_USER` (reads and writes rows; the backend's role, as `DATABASE_USER`).
+  To start over: `docker compose down -v`.
 - **Proxy.** `nginx-reverse-proxy/templates/default.conf.template` routes `/api` and `/ws/` to the
   backend and everything else, including Vite's HMR socket, to the frontend.
 - **Versions.** `.prototools` pins every tool. `frontend/.nvmrc` and
   `backend/.python-version` repeat the Node and Python pins and must stay equal.
-- **Production images** are not built yet; see
+- **Production images** are the `-prod` stages of `backend/Dockerfile`,
+  `frontend/Dockerfile` (Caddy, `frontend/Caddyfile`), and `postgres/Dockerfile`, listed
+  in `docker-bake.hcl`; see
   [decisions/0001-production-image-build.md](decisions/0001-production-image-build.md).
+
+## Publishing images
+
+CI does not publish yet, so images are pushed from a laptop with the ENV-41 fallback
+script, `scripts/publish-images.sh`:
+
+| Command                     | Pushes                                     |
+| --------------------------- | ------------------------------------------ |
+| `moon run root:publish`     | all three images, in one login             |
+| `moon run backend:publish`  | `<user>/msg-docking-bay-backend`           |
+| `moon run frontend:publish` | `<user>/msg-docking-bay-frontend`          |
+| `moon run postgres:publish` | `<user>/msg-docking-bay-postgres`          |
+
+- **Credentials.** Export `DOCKER_USERNAME_OP_PATH` and `DOCKER_TOKEN_OP_PATH` (or
+  `DOCKER_PASSWORD_OP_PATH`) as `op://` references to your Docker Hub username and a
+  Read & Write access token, and sign in to the 1Password CLI. The script logs in with
+  `docker login --password-stdin` to a throwaway Docker config, deleted when it exits,
+  so Docker Desktop stays signed in.
+- **Tags.** Every image is built for `linux/amd64` and tagged `latest`, which Railway
+  deploys (ENV-30), and `sha-<short>`; with uncommitted changes the SHA tag is
+  `sha-<short>-dirty`.
+- **Not yet checked.** The script does not fetch `origin/main` or check CI (ENV-41), so
+  make sure what you push is what you mean to ship.

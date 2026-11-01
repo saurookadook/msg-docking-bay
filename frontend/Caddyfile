@@ -1,0 +1,33 @@
+{
+	admin off # no admin API in production
+	persist_config off # the filesystem is not persistent
+	auto_https off # Railway terminates TLS
+	log {
+		format json
+	}
+	servers {
+		trusted_proxies static private_ranges 100.0.0.0/8 # Railway's edge
+	}
+}
+
+:{$PORT:8080} {
+	log {
+		format json
+	}
+
+	@api path /api /api/* # /api itself is the API's homepage
+	handle @api {
+		reverse_proxy {$BACKEND_UPSTREAM:backend:8000}
+	}
+
+	handle /ws/* {
+		reverse_proxy {$BACKEND_UPSTREAM:backend:8000}
+	}
+
+	handle {
+		encode gzip
+		root * dist
+		try_files {path} /index.html
+		file_server
+	}
+}

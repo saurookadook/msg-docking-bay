@@ -26,3 +26,11 @@ tasks:
     preset: 'utility'
     options:
       runFromWorkspaceRoot: true
+  # Builds backend-prod and pushes it to Docker Hub (ENV-41); credentials from 1Password.
+  publish:
+    command: 'scripts/publish-images.sh backend'
+    inputs: []  # pushes an image; nothing to cache
+    preset: 'utility'
+    options:
+      runFromWorkspaceRoot: true
+      runInCI: false

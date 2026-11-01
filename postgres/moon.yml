@@ -1,0 +1,18 @@
+$schema: '../.moon/cache/schemas/project.json'
+
+layer: 'configuration'
+stack: 'infrastructure'
+project:
+  title: 'PostgreSQL'
+  description: 'The database image: PostgreSQL with the init scripts baked in.'
+  owner: 'team-platform'
+
+tasks:
+  # Builds postgres-prod and pushes it to Docker Hub (ENV-41); credentials from 1Password.
+  publish:
+    command: 'scripts/publish-images.sh postgres'
+    inputs: []  # pushes an image; nothing to cache
+    preset: 'utility'
+    options:
+      runFromWorkspaceRoot: true
+      runInCI: false

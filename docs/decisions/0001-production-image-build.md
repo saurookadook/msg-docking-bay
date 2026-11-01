@@ -1,7 +1,7 @@
 # 0001 — How production images are built
 
-- **Status:** Open
-- **Date:** 2026-10-18
+- **Status:** Accepted (Option 2)
+- **Date:** 2026-10-18, decided 2026-10-19
 
 ## Context
 
@@ -37,5 +37,17 @@ Two facts complicate MDOCK-1 here:
 
 ## Decision
 
-Not yet made. Decide before the first production image or the CI `publish` job
-(ENV-28, ENV-30) is added. Until then, `-dev` and `-test` stages keep ENV-17.
+**Option 2: ENV-17 for every stage.** `backend/Dockerfile` gains `backend-build` and
+`backend-prod` (ENV-20, ENV-21), and `frontend/Dockerfile` gains `frontend-build` and
+`frontend-prod` (Caddy, ENV-22), with the contexts still `backend/` and `frontend/`. A new
+`postgres/Dockerfile` bakes `postgres/initdb/` into the pinned PostgreSQL image.
+`docker-bake.hcl` records the three targets and their contexts (ENV-28), and
+`scripts/publish-images.sh` pushes them (ENV-41; `moon run <project>:publish`).
+
+## Consequences
+
+- No moon or proto in any image, and no root `.dockerignore`.
+- The image build steps (`pnpm build`, `uv sync --no-dev`) are a second description of
+  what moon's `build` task does; keep them in step.
+- `frontend-prod` copies `Caddyfile` and `/app/dist` from the `frontend/` context, not
+  `frontend/Caddyfile` and `/repo/frontend/dist` as ENV-22's example has it.
