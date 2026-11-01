@@ -31,10 +31,14 @@ tested live. That is why Phase 0 is a verification spike.
 - **Upstream modules follow the standards:** one module per upstream at `ingest/services/<upstream>.py`
   (HTTPX-2, SOUP-1), with an explicit User-Agent and timeout (SOUP-3, HTTPX-3), one module error type
   (HTTPX-4) and no live calls in tests (HTTPX-11, using saved fixtures as in SOUP-14).
-- **Data model**, from the synthesis's "sourced claims on versioned suits" section: `continuity`, `work`,
-  `mobile_suit`, `suit_version`, `spec_claim` (value, unit, source, retrieved_at), `source` (URL,
-  revision ID, license), `appearance`, and an `ingest_run` audit table. The tables store facts plus
-  attribution. Copied prose is avoided to limit share-alike obligations, and no images are ingested.
+- **Data model**, detailed in [`phase-1-catalog-schema.md`](phase-1-catalog-schema.md):
+  - `mobile_suits` with typed lineage edges (`mobile_suit_relations`).
+  - Per-source, per-configuration `spec_sheets`.
+  - Part entities: armaments, equipment, materials, powerplants.
+  - `characters`, `organizations` and `mechanical_designers`, with appearance junctions.
+  - `continuities`, `works` (with `work_relations`), `sources` and `ingest_runs`.
+
+  The tables store facts plus attribution. Copied prose is avoided to limit share-alike obligations, and no images are ingested.
 - **Runtime:** a CLI (`python -m ingest <source> <mode>`), run through an `ingest` Compose service under a
   `profiles: [ingest]` profile and a `moon run ingest:<task>` task. Scheduling comes in the last phase.
 
@@ -61,15 +65,22 @@ Branch `docs/add-ingestion-spike-findings`. Run these from a normal network (the
 - **Checkpoint → commit** `docs(docs): record the data ingestion architecture decision` (adds `docs/decisions/0002-data-ingestion.md`, an ADR covering the separate service, sources, claims model and licensing).
 - **PR 1:** `docs(docs): add ingestion spike findings and ADR`.
 
-### Phase 1: Domain schema (backend)
-Branch: the current `feat/backend-database-setup`, which is empty and matches `main`, or a new branch.
-Read first: `relational-databases.md`, `postgresql.md`, `python/sqlalchemy.md`, `python/alembic.md`.
-- Add the models in `backend/db/models/` on `BaseDB` (`backend/db/base_db.py`): enums for work type, source kind and spec field; units as columns; unique keys on natural identifiers (`fandom_page_id`, `wikidata_qid`); a `source` table with `revision_id`, `license` and `url`.
-- Add an Alembic migration, and extend `backend/db/_tests/test_migrations.py` (upgrade, then downgrade).
-- **Checkpoint → commit** `feat(backend): add continuity, work and mobile suit models`
-- **Checkpoint → commit** `feat(backend): add spec claim, source and ingest run models`
-- **Checkpoint → commit** `feat(backend): add migration for the catalog schema`
-- **PR 2:** `feat(backend): add the catalog database schema`.
+### Phase 1: Catalog schema (backend)
+**Detailed plan: [`phase-1-catalog-schema.md`](phase-1-catalog-schema.md).** Design review replaced the
+original `mobile_suit` → `suit_version` → `spec_claim` sketch:
+- **Mobile suits** are nodes with typed edges (`variant_of`, `developed_from`, `upgrade_of`,
+  `alternate_version_of`). Families come from recursive queries, with no graph extension.
+- **Specs** are typed `spec_sheets`, one per suit, source and configuration, in SI units with a
+  `raw_infobox` JSONB. `spec_claim` was a generic key-value table, which RDB-5 forbids.
+- **Parts and people are entities.** Armaments, equipment, materials, powerplants, characters,
+  organizations and mechanical designers each get a table and junctions. Appearance junctions record
+  which series each one belongs to.
+- **Models live in `backend/models/<entity>/db.py`** (PY-5, SQLA-4), not `backend/db/models/`.
+  Each table's migration is committed with its model (ALEM-4).
+- **Three PRs**, and entities and facades wait until Phase 3:
+  - **PR 2a:** foundations, works and provenance.
+  - **PR 2b:** mobile suits, spec sheets and parts.
+  - **PR 2c:** characters, organizations and designers.
 
 ### Phase 2: Ingest service scaffold
 Branch `feat/add-ingest-service`.
@@ -95,8 +106,15 @@ written permission for any automated access, `api.php` included (see
   follows the Property pages (`headheight` in m, `weight` in t, `poweroutput` in kW, `turntime` in s).
   Unit helpers return `None` for unparseable values (SOUP-9 and SOUP-10). Missing required fields raise
   an error (SOUP-12).
-- A loader does idempotent upserts into `continuity`, `mobile_suit`, `suit_version`, `spec_claim` and
-  `source`, using the dump's revision ID as the attribution anchor.
+- A loader does idempotent upserts into the Phase 1 tables (`continuities`, `mobile_suits`,
+  `mobile_suit_relations`, `spec_sheets` and the part junctions, appearances, `sources`), using the
+  dump's revision ID as the attribution anchor. Pydantic entities and facades for these tables are
+  added here, with the loader as their first caller.
+  - It also reads **character and organization pages**, to fill `characters`, `organizations`, their
+    appearances, and the pilot and organization links. Their infobox fields are unverified: confirm
+    them from the dump.
+  - It resolves `[SERIES]` tags through `work_short_names` and names through the dump's redirect
+    pages. Anything it cannot resolve goes to a review list, whose table is added in this PR.
   - It creates `continuity` rows from the distinct `era` values, such as `Universal Century`,
     `Universal Century (GQ)` and `Ad Stella`.
   - It is scoped by unit `type`. The in-scope list is decided in this PR.
@@ -130,7 +148,7 @@ written permission for any automated access, `api.php` included (see
 Branch `feat/add-wikimedia-ingest`.
 - `ingest/services/wikidata.py` runs SPARQL against query.wikidata.org to get works and cross-IDs (type, dates, QIDs, ANN/AniList IDs, Fandom article ID `P6262`) into `work`. Continuities come from Phase 3a, not from Wikidata.
 - `ingest/services/wikipedia.py` uses the Action API (EN and JA) for series-level facts and page links only, with no copied prose.
-- A linker matches Fandom suits to works and creates `appearance` rows from the infobox "first appearance" and "appearances" fields. Matches it cannot resolve go to a review list and are not guessed. It also sets each work's continuity from the `era` of the Fandom suits that appear in it. Works whose suits span several eras go to the review list.
+- A linker matches Fandom suits to works and creates `mobile_suit_appearances` rows from the infobox "first appearance" and "appearances" fields. Matches it cannot resolve go to a review list and are not guessed. It also sets each work's continuity from the `era` of the Fandom suits that appear in it. Works whose suits span several eras go to the review list.
 - Checkpoints: `feat(ingest): load works and cross-IDs from Wikidata` → `feat(ingest): enrich works from Wikipedia` → `feat(ingest): link mobile suits to their works`.
 - **PR 6:** `feat(ingest): ingest works from Wikimedia`.
 
@@ -143,7 +161,7 @@ Branch `feat/add-ingest-scheduling`.
 - **PR 7:** `feat(ingest): schedule ingestion and surface attribution`. This can be split into ingest and backend PRs if it grows.
 
 ### Later (out of scope now)
-- **MAHQ:** ask Accidental Pilot for permission first. Check `wp-sitemap.xml` and `/wp-json/`. Write `ingest/services/mahq.py` as a polite crawler that adds cross-check `spec_claim`s and flags disagreements for review. The claims model already supports a second source.
+- **MAHQ:** ask Accidental Pilot for permission first. Check `wp-sitemap.xml` and `/wp-json/`. Write `ingest/services/mahq.py` as a polite crawler that adds a second `spec_sheets` row per suit (MAHQ as its own source) and flags disagreements for review. The schema already supports a second source.
 - **Gundam Unofficial:** manual spot checks only, unless Mark Simmons gives permission.
 
 ## Verification
