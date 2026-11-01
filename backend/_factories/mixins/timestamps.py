@@ -1,5 +1,5 @@
 # pyright: reportIncompatibleVariableOverride=false
-"""Factory declarations for the ``TimestampsDB`` columns (PYTEST-11)."""
+"""Factory declarations for the timestamp mixins (PYTEST-11)."""
 
 from typing import Any
 
@@ -11,7 +11,16 @@ from factory.declarations import LazyFunction
 from _mocks.temporal import get_mock_utcnow
 
 
-class TimestampsDBMixinFactory(Factory[Any]):
+class CreatedAtDBMixinFactory(Factory[Any]):
+    """Set ``created_at`` to the fixed instant, for junction tables."""
+
+    class Meta:
+        abstract = True
+
+    created_at = LazyFunction(get_mock_utcnow)
+
+
+class TimestampsDBMixinFactory(CreatedAtDBMixinFactory):
     """Set ``created_at`` and ``updated_at`` to the fixed instant.
 
     List it before ``SQLAlchemyModelFactory`` in a model factory's
@@ -21,5 +30,4 @@ class TimestampsDBMixinFactory(Factory[Any]):
     class Meta:
         abstract = True
 
-    created_at = LazyFunction(get_mock_utcnow)
     updated_at = LazyFunction(get_mock_utcnow)

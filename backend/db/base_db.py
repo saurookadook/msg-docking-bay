@@ -41,8 +41,13 @@ def table_name_for(class_name: str) -> str:
     return f"{singular}s"
 
 
-class BaseDB(DeclarativeBase):
-    """Give every model a UUIDv7 key, a table name, and the type map."""
+class RootDB(DeclarativeBase):
+    """Hold the shared metadata, type map, and table-name rule.
+
+    Models inherit ``BaseDB`` or ``JunctionBaseDB``, never this class
+    directly; both share its one registry, so relationships resolve
+    across them and ``BaseDB.metadata`` holds every table.
+    """
 
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
     type_annotation_map: ClassVar[dict[Any, Any]] = {
@@ -54,12 +59,29 @@ class BaseDB(DeclarativeBase):
         str: postgresql.TEXT,
     }
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        primary_key=True, server_default=func.uuidv7()
-    )
-
     @declared_attr.directive
     @classmethod
     def __tablename__(cls) -> str:
         """Name the table after the model class."""
         return table_name_for(cls.__name__)
+
+
+class BaseDB(RootDB):
+    """Give every entity model a UUIDv7 key (SQLA-2, PG-3)."""
+
+    __abstract__ = True
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, server_default=func.uuidv7()
+    )
+
+
+class JunctionBaseDB(RootDB):
+    """Base a junction or edge table, which has no surrogate key.
+
+    Its primary key is the foreign keys it joins (RDB-2, RDB-11), so
+    each model marks those columns ``primary_key=True``. SQLA-2 gives
+    every model an ``id``; that suits entities only.
+    """
+
+    __abstract__ = True
