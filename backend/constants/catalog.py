@@ -15,3 +15,17 @@ class WorkType(StrEnum):
     VIDEO_GAME = "video_game"
     OTHER = "other"
     """Documentaries, attractions (Gundam the Ride), and the like."""
+
+
+class WorkRelationType(StrEnum):
+    """How one work relates to another, read ``from`` → ``to``.
+
+    ``(Zeta, MSG, sequel_of)`` reads "Zeta is a sequel of MSG".
+    """
+
+    SEQUEL_OF = "sequel_of"
+    COMPILATION_OF = "compilation_of"
+    """A film recut from a TV series, such as Mobile Suit Gundam I."""
+    ADAPTATION_OF = "adaptation_of"
+    REMAKE_OF = "remake_of"
+    SIDE_STORY_OF = "side_story_of"
