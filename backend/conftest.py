@@ -15,7 +15,7 @@ from config.env_vars import EnvVarManager
 # Set before the app is imported, since importing it configures logging
 # from the environment (PYTEST-10).
 os.environ["ENVIRONMENT"] = "test"
-os.environ["DATABASE_NAME"] = "test_app"
+os.environ["DATABASE_NAME"] = "test_msg_docking_bay"
 EnvVarManager().reload()  # the frozen EnvVars is re-validated, never assigned to
 
 # These must follow the environment setup above.
