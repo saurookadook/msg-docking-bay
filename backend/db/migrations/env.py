@@ -5,11 +5,12 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import MetaData, create_engine, pool, text
 
+# Import every model module here, and in scripts/db/initialize.py once
+# it exists, so autogenerate can see its table (SQLA-13). Each import
+# only registers the table on BaseDB.metadata; nothing reads the name.
+import models.continuity.db  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from db.base_db import BaseDB
 from db.db_session_manager import DBSessionManager
-
-# Import every model module here, and in scripts/db/initialize.py once
-# it exists, so autogenerate can see its table (SQLA-13).
 
 config = context.config
 
