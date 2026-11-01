@@ -9,7 +9,9 @@ conclude that Docking Bay's data should come from **dumps and APIs, not HTML cra
   Seeded from a manually downloaded XML dump. The Fandom Terms of Use require written permission for
   any automated access, so `api.php` delta sync waits for that permission (Phase 0).
   Fandom HTML returned 402 (probably Cloudflare), so HTML scraping is out.
-- **Wikidata + Wikipedia**: continuities, works (series, films, OVAs), dates, cross-IDs. Wikidata is CC0
+- **Continuities** come from the Gundam Wiki's infobox `era` values. Wikidata has no confirmed
+  continuity property.
+- **Wikidata + Wikipedia**: works (series, films, OVAs), dates, cross-IDs. Wikidata is CC0
   (still to confirm), Wikipedia is CC BY-SA. Requests need an identified User-Agent (2026 rate limits).
 
 **Scope:** Fandom and Wikimedia only. MAHQ and Gundam Unofficial are left for later (see the end).
@@ -44,10 +46,15 @@ agent: at each checkpoint the agent stops and reports what changed and how it wa
 suggestions.
 
 ### Phase 0: Verification spike (docs only)
+> **Done** (2026-10-31): see [`ingestion-spike.md`](../research/notes/ingestion-spike.md). The Fandom Terms
+> of Use require written permission for automated access. **Every Fandom API step in this plan is gated
+> on that permission being on file in `docs/research/notes/fandom/`.** Without it, use only manually
+> downloaded dumps.
+
 Branch `docs/add-ingestion-spike-findings`. Run these from a normal network (the research sandbox could not reach any of these hosts).
 1. Check gundam.fandom.com `robots.txt` and the Fandom ToS scraping clause. Check `api.php?meta=siteinfo&siprop=rightsinfo` for the license.
 2. Run `action=parse&page=RX-78-2_Gundam&prop=wikitext` to get the infobox template name and its parameters. Sample about 10 suits across timelines.
-3. Check whether a Special:Statistics dump is available and how fresh it is. If none is available, fall back to a full API crawl at about 1 req/s.
+3. Check whether a Special:Statistics dump is available and how fresh it is. If none is available, request one through Special:Contact or the wiki's admins and stop. Make no API requests without written permission.
 4. Look up Wikimedia's numeric rate limits for identified clients. Run a Wikidata SPARQL test that counts Gundam works and timelines. Confirm the CC0 license.
 5. Save sample responses as test fixtures for later phases.
 - **Checkpoint → commit** `docs(docs): record ingestion verification spike findings` (adds `docs/research/notes/ingestion-spike.md`).
@@ -88,9 +95,12 @@ written permission for any automated access, `api.php` included (see
   follows the Property pages (`headheight` in m, `weight` in t, `poweroutput` in kW, `turntime` in s).
   Unit helpers return `None` for unparseable values (SOUP-9 and SOUP-10). Missing required fields raise
   an error (SOUP-12).
-- A loader does idempotent upserts into `mobile_suit`, `suit_version`, `spec_claim` and `source`,
-  using the dump's revision ID as the attribution anchor. It is scoped by unit `type` (in-scope list
-  decided in this PR).
+- A loader does idempotent upserts into `continuity`, `mobile_suit`, `suit_version`, `spec_claim` and
+  `source`, using the dump's revision ID as the attribution anchor.
+  - It creates `continuity` rows from the distinct `era` values, such as `Universal Century`,
+    `Universal Century (GQ)` and `Ad Stella`.
+  - It is scoped by unit `type`. The in-scope list is decided in this PR.
+  - It records the newest revision timestamp in the dump as the Fandom **sync watermark**, for 3b.
 - Checkpoints: `build(deps): add mwparserfromhell and py7zr to ingest` → `feat(ingest): parse Gundam
   Wiki infoboxes into spec claims` → `feat(ingest): load a Gundam Wiki dump into the catalog`.
 - **PR 4:** `feat(ingest): seed mobile suits from a Gundam Wiki dump`.
@@ -98,21 +108,31 @@ written permission for any automated access, `api.php` included (see
 **3b. API delta sync. Only after Fandom's written permission is on file.** Branch
 `feat/add-fandom-api-sync`.
 - Record the permission in `docs/research/notes/fandom/`, and record any conditions it sets.
-- `ingest/services/fandom_api.py` uses one httpx client (HTTPX-8), serial at about 1 req/s. It reads
-  `list=recentchanges` from the last run's timestamp, uses batched `prop=revisions` for changed pages,
-  and can add SMW `action=ask` for normalized values. It reuses the 3a parser and loader.
+- `ingest/services/fandom_api.py` uses one httpx client (HTTPX-8), serial at about 1 req/s. It reuses
+  the 3a parser and loader, and can add SMW `action=ask` for normalized values.
+- **Watermark:** the cursor is the newest *upstream* revision timestamp seen. It is stored per source,
+  separately from local run times. A dump load sets it; it is never set to "now".
+- **Baseline:** run this once when API access is enabled. Compare the current revision IDs of every
+  in-scope page against the stored ones (batched `prop=info|revisions`, about 80 calls). Re-fetch pages
+  that differ, and add new pages in `Category:Mobile Weapons`. The baseline is needed because the dump
+  is 14 months old.
+- **Delta:** after the baseline, read `list=recentchanges` from the watermark and re-fetch the changed
+  pages in batches with `prop=revisions`.
+- **Re-baseline:** if the watermark is older than the wiki's recent-changes retention
+  (`$wgRCMaxAge`, 90 days by default; check it at the start of this PR), run the baseline again
+  instead of the delta.
 - Without permission, this phase becomes "re-run 3a on each fresh dump" and needs no new code.
-- Checkpoints: `feat(ingest): add the Gundam Wiki API client` → `feat(ingest): sync changed Gundam
-  Wiki pages since the last run`.
+- Checkpoints: `feat(ingest): add the Gundam Wiki API client` → `feat(ingest): baseline Gundam Wiki
+  pages against current revisions` → `feat(ingest): sync Gundam Wiki changes since the watermark`.
 - **PR 5:** `feat(ingest): sync Gundam Wiki changes through the MediaWiki API`.
 
 ### Phase 4: Wikimedia ingestion
 Branch `feat/add-wikimedia-ingest`.
-- `ingest/services/wikidata.py` runs SPARQL against query.wikidata.org to get works (type, dates, timeline/continuity, QIDs, ANN/AniList IDs) into `continuity` and `work`.
+- `ingest/services/wikidata.py` runs SPARQL against query.wikidata.org to get works and cross-IDs (type, dates, QIDs, ANN/AniList IDs, Fandom article ID `P6262`) into `work`. Continuities come from Phase 3a, not from Wikidata.
 - `ingest/services/wikipedia.py` uses the Action API (EN and JA) for series-level facts and page links only, with no copied prose.
-- A linker matches Fandom suits to works and creates `appearance` rows from the infobox "first appearance" and "appearances" fields. Matches it cannot resolve go to a review list and are not guessed.
-- Checkpoints: `feat(ingest): load works and continuities from Wikidata` → `feat(ingest): enrich works from Wikipedia` → `feat(ingest): link mobile suits to their works`.
-- **PR 6:** `feat(ingest): ingest works and timelines from Wikimedia`.
+- A linker matches Fandom suits to works and creates `appearance` rows from the infobox "first appearance" and "appearances" fields. Matches it cannot resolve go to a review list and are not guessed. It also sets each work's continuity from the `era` of the Fandom suits that appear in it. Works whose suits span several eras go to the review list.
+- Checkpoints: `feat(ingest): load works and cross-IDs from Wikidata` → `feat(ingest): enrich works from Wikipedia` → `feat(ingest): link mobile suits to their works`.
+- **PR 6:** `feat(ingest): ingest works from Wikimedia`.
 
 ### Phase 5: Operations and attribution
 Branch `feat/add-ingest-scheduling`.
