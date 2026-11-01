@@ -10,8 +10,9 @@ from db.base_db import BaseDB
 from db.db_session_manager import DBSessionManager
 from models.continuity.db import ContinuityDB
 from models.work.db import WorkDB
+from models.work_short_name.db import WorkShortNameDB
 
-MODELS: Final = (ContinuityDB, WorkDB)
+MODELS: Final = (ContinuityDB, WorkDB, WorkShortNameDB)
 """Every model, imported so autogenerate sees its table (SQLA-13).
 
 List each new model here, and in scripts/db/initialize.py once it
