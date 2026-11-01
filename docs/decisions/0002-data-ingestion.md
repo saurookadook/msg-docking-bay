@@ -62,8 +62,15 @@ The rules for data:
 - **Spec values are stored as claims.** Each claim has a value, a unit, a source and a retrieved-at
   time, and belongs to a suit *version*.
 - **Every claim points to a `source` row** that holds the URL, the revision ID and the license.
-- **No images and no copied prose are ingested**, which keeps the CC BY-SA share-alike obligation
-  confined to attribution.
+- **Facts-only boundary:**
+  - Normalized facts are stored as data: numbers with units, names, model numbers, dates, and links
+    between entities.
+  - No images and no article prose are ingested.
+  - This keeps the amount of CC BY-SA text small. It does not remove the license's obligations.
+- **Retained text keeps its license.** Any raw wikitext value or note kept beside a normalized fact,
+  such as `1.1~after magnet coating upgrade`, keeps its source article's CC BY-SA terms. Attribution
+  and a license link are always required, and ShareAlike applies when that text is redistributed. The
+  `source` row's license field records which terms apply. (General reading, not legal advice.)
 
 ## Consequences
 
