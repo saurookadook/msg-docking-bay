@@ -74,6 +74,24 @@ and mapping/constraint tests that run against real PostgreSQL. Pydantic entities
 - **Inherited columns:** `id` (uuidv7) comes from `BaseDB`, in `backend/db/base_db.py`.
   `created_at` and `updated_at` come from the new `models/mixins/db.py` `TimestampsDB` (SQLA-7).
   Junction tables get `created_at` only (RDB-17).
+- **Junction tables have no surrogate `id`.** *Added during implementation:* `BaseDB` gave every
+  model an `id`, so a junction table could not make its foreign-key tuple the primary key
+  (RDB-2, RDB-11). `backend/db/base_db.py` now has three classes:
+  - `RootDB` holds the shared metadata, naming convention, type map and `__tablename__` rule.
+  - `BaseDB(RootDB)` adds the UUIDv7 `id`, for entity tables.
+  - `JunctionBaseDB(RootDB)` adds nothing, for junction and edge tables. They are declared as
+    `class <Entity>DB(JunctionBaseDB, CreatedAtDB)`, with `primary_key=True` on each key column.
+    The key columns are in alphabetical order (SQLA-6), and that order is the key's order.
+    So the column that leads alphabetically leads the key, and the foreign key that doesn't lead
+    needs `index=True` (RDB-18). For example, `spec_sheet_armaments` would key on
+    (`armament_id`, `mount`, `spec_sheet_id`) and index `spec_sheet_id`, not the order the PR B
+    table lists. Check each PR B and PR C junction against this, or declare a
+    `PrimaryKeyConstraint` in `__table_args__` when the key needs a different order.
+
+  Their factories use `CreatedAtDBMixinFactory` and set no `id`. Every model shares one
+  `MetaData`, so `BaseDB.metadata` still covers every table. The three-way links
+  `mobile_suit_pilots` and `mobile_suit_organizations` stay on `BaseDB`, the deliberate deviation
+  above.
 - **Foreign keys:**
   - Every foreign key states `ondelete` (RDB-15).
   - Every foreign key has `index=True`, unless it leads a primary key or unique constraint (RDB-18,
@@ -114,7 +132,7 @@ Notation: `?` marks a nullable column. *E* marks an enum.
 | `continuities` | name, slug, `parent_continuity_id?` → self (SET NULL), CHECK not self |
 | `works` | title, `title_ja?`, slug, `work_type` *E* (tv_series, film, ova, ona, manga, novel, video_game, other), `continuity_id?` (SET NULL), `start_date?`/`end_date?` date with CHECK end ≥ start, `parent_work_id?` → self (SET NULL, CHECK not self), `wikidata_qid?` (unique, CHECK `^Q[0-9]+$`), `anilist_id?`/`ann_id?` int unique, `fandom_page_title?` unique |
 | `work_short_names` | `id` from `BaseDB`, `short_name` UNIQUE (CHECK non-empty and trimmed), `work_id` (CASCADE, indexed). A natural key is a unique constraint, not the primary key (RDB-11, RDB-13), so the plan's original `PK short_name` was changed during implementation |
-| `work_relations` | PK (`from_work_id`, `to_work_id`, `relation_type` *E*: sequel_of, compilation_of, adaptation_of, remake_of, side_story_of), CASCADE, CHECK from ≠ to, index `to_work_id`, `created_at` |
+| `work_relations` | On `JunctionBaseDB`. PK (`from_work_id`, `relation_type` *E*: sequel_of, compilation_of, adaptation_of, remake_of, side_story_of, `to_work_id`), read "from is a *type* of to", CASCADE, CHECK from ≠ to, index `to_work_id`, `created_at` |
 | `sources` | `kind` *E* (fandom_page, wikidata_item, wikipedia_page), `external_id`, UNIQUE (kind, external_id), `url`, `license` *E* (cc_by_sa_3_0, cc_by_sa_4_0, cc0_1_0), `revision_id?` bigint, `retrieved_at` |
 | `ingest_runs` | `source_kind` (same enum type as `sources.kind`), `status` *E* (running, succeeded, failed), `started_at`, `finished_at?` (CHECK ≥ started_at), `watermark_at?`, `pages_seen`/`rows_written`/`error_count` int default 0, CHECK ≥ 0, `error_summary?` (sqlstate and constraint names only), index (source_kind, status, started_at) |
 
@@ -159,7 +177,8 @@ Branch: the current `feat/backend-database-setup`.
 2. **Test support** (Checkpoint → `test(backend): add factory base classes and fixed instants`):
    - `_mocks/temporal.py` (`get_mock_utcnow()` = 2026-04-20T11:15:00Z, PYTEST-18)
    - `_factories/base_meta.py` (`BaseMetaFactory[T]`)
-   - `_factories/mixins/timestamps.py` (`TimestampsDBMixinFactory`)
+   - `_factories/mixins/timestamps.py` (`TimestampsDBMixinFactory`, plus `CreatedAtDBMixinFactory`
+     for junction tables, added with `work_relations`)
    - a `mock_utcnow` fixture in `backend/conftest.py`
    - every new folder gets an `__init__.py`
 3. **Layout and helpers** (Checkpoint → `feat(backend): add the timestamps mixin, enum helpers and
