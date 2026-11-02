@@ -23,7 +23,12 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 INGEST_RUN_STATUS_VALUES = ["running", "succeeded", "failed"]
-SOURCE_KIND_VALUES = ["fandom_page", "wikidata_item", "wikipedia_page"]
+SOURCE_KIND_VALUES = [
+    "fandom_page",
+    "wikidata_item",
+    "wikipedia_en_page",
+    "wikipedia_ja_page",
+]
 
 
 def upgrade() -> None:

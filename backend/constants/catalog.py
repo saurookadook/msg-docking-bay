@@ -32,14 +32,20 @@ class WorkRelationType(StrEnum):
 
 
 class SourceKind(StrEnum):
-    """The kind of upstream page a catalog fact came from."""
+    """The kind of upstream page a catalog fact came from.
+
+    One kind per wiki: page IDs are unique only within a wiki, and each
+    wiki needs its own sync watermark in ``ingest_runs``.
+    """
 
     FANDOM_PAGE = "fandom_page"
     """A Gundam Wiki article, keyed by its page ID."""
     WIKIDATA_ITEM = "wikidata_item"
     """A Wikidata item, keyed by its QID."""
-    WIKIPEDIA_PAGE = "wikipedia_page"
+    WIKIPEDIA_EN_PAGE = "wikipedia_en_page"
     """An English Wikipedia article, keyed by its page ID."""
+    WIKIPEDIA_JA_PAGE = "wikipedia_ja_page"
+    """A Japanese Wikipedia article, keyed by its page ID."""
 
 
 class ContentLicense(StrEnum):

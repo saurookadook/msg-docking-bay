@@ -18,7 +18,12 @@ down_revision: str | Sequence[str] | None = "cf9f30ef9574"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
-SOURCE_KIND_VALUES = ["fandom_page", "wikidata_item", "wikipedia_page"]
+SOURCE_KIND_VALUES = [
+    "fandom_page",
+    "wikidata_item",
+    "wikipedia_en_page",
+    "wikipedia_ja_page",
+]
 CONTENT_LICENSE_VALUES = ["cc_by_sa_3_0", "cc_by_sa_4_0", "cc0_1_0"]
 
 

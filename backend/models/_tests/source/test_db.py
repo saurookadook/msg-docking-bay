@@ -75,10 +75,37 @@ class TestSourceDB:
         SourceDBFactory(
             external_id="2167",
             content_license=ContentLicense.CC_BY_SA_4_0,
-            kind=SourceKind.WIKIPEDIA_PAGE,
+            kind=SourceKind.WIKIPEDIA_EN_PAGE,
         )
 
         test_db_session.flush()
+
+    def test_keeps_the_same_page_id_on_two_wikipedias_apart(
+        self, test_db_session: Session
+    ) -> None:
+        """English and Japanese Wikipedia number pages independently."""
+        SourceDBFactory(
+            content_license=ContentLicense.CC_BY_SA_4_0,
+            external_id="2167",
+            kind=SourceKind.WIKIPEDIA_EN_PAGE,
+            url="https://en.wikipedia.org/?curid=2167",
+        )
+        SourceDBFactory(
+            content_license=ContentLicense.CC_BY_SA_4_0,
+            external_id="2167",
+            kind=SourceKind.WIKIPEDIA_JA_PAGE,
+            url="https://ja.wikipedia.org/?curid=2167",
+        )
+        test_db_session.commit()
+
+        kinds = test_db_session.execute(
+            text(
+                "SELECT kind::text FROM sources WHERE external_id = '2167'"
+                " ORDER BY kind"
+            )
+        ).scalars()
+
+        assert list(kinds) == ["wikipedia_en_page", "wikipedia_ja_page"]
 
 
 class TestSourceDBConstraints:
