@@ -1,15 +1,33 @@
 """Migrate with the application's URL and metadata (ALEM-2)."""
 
 from logging.config import fileConfig
+from typing import Final
 
 from alembic import context
 from sqlalchemy import MetaData, create_engine, pool, text
 
 from db.base_db import BaseDB
 from db.db_session_manager import DBSessionManager
+from models.continuity.db import ContinuityDB
+from models.ingest_run.db import IngestRunDB
+from models.source.db import SourceDB
+from models.work.db import WorkDB
+from models.work_relation.db import WorkRelationDB
+from models.work_short_name.db import WorkShortNameDB
 
-# Import every model module here, and in scripts/db/initialize.py once
-# it exists, so autogenerate can see its table (SQLA-13).
+MODELS: Final = (
+    ContinuityDB,
+    IngestRunDB,
+    SourceDB,
+    WorkDB,
+    WorkRelationDB,
+    WorkShortNameDB,
+)
+"""Every model, imported so autogenerate sees its table (SQLA-13).
+
+List each new model here, and in scripts/db/initialize.py once it
+exists; a model that is not imported is missing from the metadata.
+"""
 
 config = context.config
 
