@@ -15,7 +15,8 @@ class WorkRelationDB(JunctionBaseDB, CreatedAtDB):
     """A directed edge: "``from`` is a ``relation_type`` of ``to``".
 
     The key is the edge itself (RDB-2), so a pair of works may be linked
-    by several types but by each type only once.
+    by several types but by each type only once. Like every edge, it
+    cites the page it was read from (ADR 0002).
     """
 
     from_work_id: Mapped[uuid.UUID] = mapped_column(
@@ -24,6 +25,10 @@ class WorkRelationDB(JunctionBaseDB, CreatedAtDB):
     relation_type: Mapped[WorkRelationType] = mapped_column(
         WORK_RELATION_TYPE_DB_TYPE, primary_key=True
     )
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("sources.id", ondelete="RESTRICT"), index=True
+    )
+    """RESTRICT: a source still cited cannot be deleted (RDB-15)."""
     to_work_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("works.id", ondelete="CASCADE"), primary_key=True, index=True
     )

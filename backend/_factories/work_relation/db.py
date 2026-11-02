@@ -15,7 +15,7 @@ class WorkRelationDBFactory(
     SQLAlchemyModelFactory,
     metaclass=BaseMetaFactory[WorkRelationDB],
 ):
-    """Build a sequel edge; pass both works' ids."""
+    """Build a sequel edge; pass both works' ids and a source's."""
 
     class Meta:
         model = WorkRelationDB
@@ -23,4 +23,5 @@ class WorkRelationDBFactory(
 
     from_work_id = None  # a real foreign key: pass an existing work's id
     relation_type = WorkRelationType.SEQUEL_OF
+    source_id = None  # a real foreign key: pass an existing source's id
     to_work_id = None  # a real foreign key: pass an existing work's id
