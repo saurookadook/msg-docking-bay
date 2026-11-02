@@ -58,6 +58,10 @@ and mapping/constraint tests that run against real PostgreSQL. Pydantic entities
   - `ingest_runs` holds `watermark_at`. The current watermark is the latest successful run's, computed
     rather than stored (RDB-1).
   - The review-list table is deferred to Phase 3.
+  - **Every edge and appearance has its own `source_id`** (NOT NULL, RESTRICT, indexed), as ADR 0002
+    requires. *Settled in PR A review:* `work_relations` gained one, and so does
+    `mobile_suit_designers`. The `spec_sheet_*` part links are the one exception: they are part of a
+    sheet, and the sheet's `source_id` covers them.
 - **One deliberate deviation from RDB-2.** `mobile_suit_pilots` and `mobile_suit_organizations` are
   three-way links with a nullable `work_id`. They get a surrogate `id` plus
   `UNIQUE NULLS NOT DISTINCT (…)` (PostgreSQL 15+), not a primary key on the foreign-key pair. Record
@@ -84,9 +88,9 @@ and mapping/constraint tests that run against real PostgreSQL. Pydantic entities
     The key columns are in alphabetical order (SQLA-6), and that order is the key's order.
     So the column that leads alphabetically leads the key, and the foreign key that doesn't lead
     needs `index=True` (RDB-18). For example, `spec_sheet_armaments` would key on
-    (`armament_id`, `mount`, `spec_sheet_id`) and index `spec_sheet_id`, not the order the PR B
-    table lists. Check each PR B and PR C junction against this, or declare a
-    `PrimaryKeyConstraint` in `__table_args__` when the key needs a different order.
+    (`armament_id`, `mount`, `spec_sheet_id`) and index `spec_sheet_id`. The PR B and PR C tables
+    below already list their keys in this order. Declare a `PrimaryKeyConstraint` in
+    `__table_args__` only if a key ever needs a different order.
 
   Their factories use `CreatedAtDBMixinFactory` and set no `id`. Every model shares one
   `MetaData`, so `BaseDB.metadata` still covers every table. The three-way links
@@ -140,24 +144,24 @@ Notation: `?` marks a nullable column. *E* marks an enum.
 | Table | Key columns and constraints |
 | --- | --- |
 | `mobile_suits` | name, `name_ja?`, `model_number?`, slug, `unit_type` *E* (suit, armor, fighter, man_machine, worker, pod, doll), `continuity_id?` (SET NULL), `fandom_page_id?` int unique |
-| `mobile_suit_relations` | PK (`from_mobile_suit_id`, `to_mobile_suit_id`, `relation_type` *E*: variant_of, developed_from, upgrade_of, alternate_version_of), CASCADE, `source_id` (RESTRICT, indexed), CHECK from ≠ to, index `to_mobile_suit_id`, `created_at` |
-| `mobile_suit_appearances` | PK (`mobile_suit_id`, `work_id`), CASCADE, `source_id` (RESTRICT), `is_debut` bool default false, `first_episode?`/`last_episode?` int, CHECK 1 ≤ first ≤ last, index `work_id` |
+| `mobile_suit_relations` | On `JunctionBaseDB`. PK (`from_mobile_suit_id`, `relation_type` *E*: variant_of, developed_from, upgrade_of, alternate_version_of, `to_mobile_suit_id`), CASCADE, `source_id` (RESTRICT, indexed), CHECK from ≠ to, index `to_mobile_suit_id`, `created_at` |
+| `mobile_suit_appearances` | On `JunctionBaseDB`. PK (`mobile_suit_id`, `work_id`), CASCADE, `source_id` (RESTRICT, indexed), `is_debut` bool default false, `first_episode?`/`last_episode?` int, CHECK 1 ≤ first ≤ last, index `work_id` |
 | `spec_sheets` | `mobile_suit_id` (CASCADE), `source_id` (RESTRICT, indexed), `configuration?` (CHECK ≠ ''), UNIQUE NULLS NOT DISTINCT (mobile_suit_id, source_id, configuration); double precision measurements, each with CHECK > 0: `head_height_m?`, `overall_height_m?`, `empty_weight_kg?`, `gross_weight_kg?`, `generator_output_kw?`, `total_thrust_kg?`, `sensor_range_m?`, `max_acceleration_g?`, `max_speed_kmh?`, `turn_time_s?`; `raw_infobox` jsonb default '{}' |
 | `armaments` / `equipment` / `materials` / `powerplants` | name, slug, `fandom_page_title?` unique |
-| `spec_sheet_armaments` | PK (`spec_sheet_id`, `armament_id`, `mount` *E*: fixed, handheld, optional_fixed, optional_handheld), `quantity_min?`/`quantity_max?` with CHECK 1 ≤ min ≤ max, `note?`; sheet CASCADE, armament RESTRICT, index `armament_id` |
-| `spec_sheet_equipment` | PK (sheet, equipment, `fit` *E*: standard, optional), `note?` |
-| `spec_sheet_materials` | PK (sheet, material, `material_use` *E*: armor, frame), `note?` |
-| `spec_sheet_powerplants` | PK (sheet, powerplant), `quantity_min?`/`quantity_max?`, `note?` |
+| `spec_sheet_armaments` | On `JunctionBaseDB`. PK (`armament_id`, `mount` *E*: fixed, handheld, optional_fixed, optional_handheld, `spec_sheet_id`), `quantity_min?`/`quantity_max?` with CHECK 1 ≤ min ≤ max, `note?`; armament RESTRICT, sheet CASCADE, index `spec_sheet_id` (it does not lead the key) |
+| `spec_sheet_equipment` | Same pattern. PK (`equipment_id`, `fit` *E*: standard, optional, `spec_sheet_id`), `note?`; equipment RESTRICT, sheet CASCADE, index `spec_sheet_id` |
+| `spec_sheet_materials` | Same pattern. PK (`material_id`, `material_use` *E*: armor, frame, `spec_sheet_id`), `note?`; material RESTRICT, sheet CASCADE, index `spec_sheet_id` |
+| `spec_sheet_powerplants` | Same pattern. PK (`powerplant_id`, `spec_sheet_id`), `quantity_min?`/`quantity_max?`, `note?`; powerplant RESTRICT, sheet CASCADE, index `spec_sheet_id` |
 
 **PR C — people and organizations**
 | Table | Key columns and constraints |
 | --- | --- |
 | `characters` / `mechanical_designers` | name, `name_ja?`, slug, `fandom_page_title?` unique |
 | `organizations` | name, slug, `fandom_page_title?`, `parent_organization_id?` → self (SET NULL, CHECK not self) |
-| `character_appearances` / `organization_appearances` | PK (entity_id, work_id), CASCADE, `source_id` (RESTRICT), index `work_id` |
-| `mobile_suit_pilots` | surrogate `id`, `mobile_suit_id`, `character_id`, `work_id?`, `source_id`; UNIQUE NULLS NOT DISTINCT (suit, character, work); composite FKs (character_id, work_id) → `character_appearances` and (mobile_suit_id, work_id) → `mobile_suit_appearances` (CASCADE), each with an index |
+| `character_appearances` / `organization_appearances` | On `JunctionBaseDB`. PK (entity_id, work_id), CASCADE, `source_id` (RESTRICT, indexed), index `work_id` |
+| `mobile_suit_pilots` | On `BaseDB` (the deviation above): surrogate `id`, `mobile_suit_id`, `character_id`, `work_id?`, `source_id` (RESTRICT, indexed); UNIQUE NULLS NOT DISTINCT (suit, character, work); composite FKs (character_id, work_id) → `character_appearances` and (mobile_suit_id, work_id) → `mobile_suit_appearances` (CASCADE), each with an index |
 | `mobile_suit_organizations` | same shape, plus `role` *E* (manufacturer, operator, developer) in the unique key; composite FKs to `organization_appearances` and `mobile_suit_appearances` |
-| `mobile_suit_designers` | PK (`mobile_suit_id`, `mechanical_designer_id`), CASCADE / RESTRICT, index designer |
+| `mobile_suit_designers` | On `JunctionBaseDB`. PK (`mechanical_designer_id`, `mobile_suit_id`), designer RESTRICT, suit CASCADE, `source_id` (RESTRICT, indexed; settled in PR A review), index `mobile_suit_id` (it does not lead the key) |
 
 ## Implementation order, checkpoints and PRs
 
@@ -206,6 +210,10 @@ Branch: `feat/add-mobile-suit-schema`, off `main` after PR A merges.
   - a `WITH RECURSIVE … CYCLE` family query over a small fixture graph (Zaku II → Worker Zaku;
     Zaku II + GM → Hi-Zack). This proves the edge design and the cycle guard.
   - the `NULLS NOT DISTINCT` unique key rejects a second base sheet.
+  - deleting a cited source, or a part a sheet still lists, is blocked. A RESTRICT failure is sqlstate
+    `23001` (`restrict_violation`), not `23503`.
+- Junction factories use `CreatedAtDBMixinFactory` and set no `id`. Tests pass `source_id`
+  explicitly, as the `work_relations` tests do.
 
 ### PR C — `feat(backend): add character, organization and designer tables`
 Branch: `feat/add-people-and-organization-schema`, off `main` after PR B merges.
@@ -215,7 +223,8 @@ Branch: `feat/add-people-and-organization-schema`, off `main` after PR B merges.
 - Extra tests for the composite foreign keys:
   - a pilot row with a `work_id` that has no matching appearance fails with sqlstate `23503`;
   - a NULL `work_id` is accepted;
-  - deleting an appearance cascades to its pilot rows.
+  - deleting an appearance cascades to its pilot rows;
+  - deleting a mechanical designer that a suit still cites is blocked with `23001`.
 - Also test the recursive sub-unit query for organizations.
 
 ## Risks to check during implementation
