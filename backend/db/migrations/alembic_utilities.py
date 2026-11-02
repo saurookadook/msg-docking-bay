@@ -26,3 +26,13 @@ def drop_pg_enum(name: str, values: Sequence[str]) -> None:
     """Drop a PostgreSQL enum type, after the tables that use it."""
     enum_type: sa.Enum = postgresql.ENUM(*values, name=name, create_type=False)
     enum_type.drop(op.get_bind(), checkfirst=False)
+
+
+def existing_pg_enum(name: str, values: Sequence[str]) -> sa.Enum:
+    """Return an enum type an earlier migration created, for column use.
+
+    For a second table that shares a type: the migration neither
+    creates nor drops it, since the type's owning migration does both.
+    """
+    enum_type: sa.Enum = postgresql.ENUM(*values, name=name, create_type=False)
+    return enum_type

@@ -1,9 +1,15 @@
+import sqlalchemy as sa
+from alembic import op
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from db.migrations.alembic_utilities import create_pg_enum, drop_pg_enum
+from db.migrations.alembic_utilities import (
+    create_pg_enum,
+    drop_pg_enum,
+    existing_pg_enum,
+)
 
 VALUES = ["fixed", "handheld"]
 
@@ -40,3 +46,19 @@ class TestPgEnumHelpers:
             drop_pg_enum("test_mount", VALUES)
 
         assert enum_labels(test_db_session, "test_mount") == []
+
+    def test_shares_an_existing_type_without_creating_it_again(
+        self, test_db_session: Session
+    ) -> None:
+        """A second ``create_table`` must not re-create the type."""
+        context = MigrationContext.configure(test_db_session.connection())
+
+        with Operations.context(context):
+            create_pg_enum("test_mount", VALUES)
+            op.create_table(
+                "test_mounts",
+                sa.Column("mount", existing_pg_enum("test_mount", VALUES)),
+            )
+            op.drop_table("test_mounts")
+
+        assert enum_labels(test_db_session, "test_mount") == VALUES
