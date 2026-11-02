@@ -9,11 +9,18 @@ from sqlalchemy import MetaData, create_engine, pool, text
 from db.base_db import BaseDB
 from db.db_session_manager import DBSessionManager
 from models.continuity.db import ContinuityDB
+from models.source.db import SourceDB
 from models.work.db import WorkDB
 from models.work_relation.db import WorkRelationDB
 from models.work_short_name.db import WorkShortNameDB
 
-MODELS: Final = (ContinuityDB, WorkDB, WorkRelationDB, WorkShortNameDB)
+MODELS: Final = (
+    ContinuityDB,
+    SourceDB,
+    WorkDB,
+    WorkRelationDB,
+    WorkShortNameDB,
+)
 """Every model, imported so autogenerate sees its table (SQLA-13).
 
 List each new model here, and in scripts/db/initialize.py once it

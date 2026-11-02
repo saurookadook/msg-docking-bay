@@ -29,3 +29,25 @@ class WorkRelationType(StrEnum):
     ADAPTATION_OF = "adaptation_of"
     REMAKE_OF = "remake_of"
     SIDE_STORY_OF = "side_story_of"
+
+
+class SourceKind(StrEnum):
+    """The kind of upstream page a catalog fact came from."""
+
+    FANDOM_PAGE = "fandom_page"
+    """A Gundam Wiki article, keyed by its page ID."""
+    WIKIDATA_ITEM = "wikidata_item"
+    """A Wikidata item, keyed by its QID."""
+    WIKIPEDIA_PAGE = "wikipedia_page"
+    """An English Wikipedia article, keyed by its page ID."""
+
+
+class ContentLicense(StrEnum):
+    """The terms a source's content is published under (ADR 0002)."""
+
+    CC_BY_SA_3_0 = "cc_by_sa_3_0"
+    """The Gundam Wiki on Fandom."""
+    CC_BY_SA_4_0 = "cc_by_sa_4_0"
+    """Wikipedia."""
+    CC0_1_0 = "cc0_1_0"
+    """Wikidata: public domain, no attribution required."""
