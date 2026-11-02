@@ -9,6 +9,7 @@ from sqlalchemy import MetaData, create_engine, pool, text
 from db.base_db import BaseDB
 from db.db_session_manager import DBSessionManager
 from models.continuity.db import ContinuityDB
+from models.ingest_run.db import IngestRunDB
 from models.source.db import SourceDB
 from models.work.db import WorkDB
 from models.work_relation.db import WorkRelationDB
@@ -16,6 +17,7 @@ from models.work_short_name.db import WorkShortNameDB
 
 MODELS: Final = (
     ContinuityDB,
+    IngestRunDB,
     SourceDB,
     WorkDB,
     WorkRelationDB,

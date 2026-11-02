@@ -51,3 +51,11 @@ class ContentLicense(StrEnum):
     """Wikipedia."""
     CC0_1_0 = "cc0_1_0"
     """Wikidata: public domain, no attribution required."""
+
+
+class IngestRunStatus(StrEnum):
+    """Where an ingest run is in its life."""
+
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
