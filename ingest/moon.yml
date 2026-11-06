@@ -1,0 +1,20 @@
+$schema: '../.moon/cache/schemas/project.json'
+
+language: 'python'
+layer: 'application'
+stack: 'data'
+project:
+  title: 'Ingest'
+  description: 'Batch ingest service: loads upstream catalog data into PostgreSQL.'
+  owner: 'team-api'
+
+# A batch data pipeline, so stack `data`. It depends on the backend through
+# the uv path dependency, which moon infers; moon enforces layer rules only
+# within one stack, so an application here may depend on the backend
+# application. The inferred edge does not make a backend change re-run
+# ingest's own tasks, so typecheck also takes the backend's sources as
+# inputs. Lint and format do not: they pass affected files to Ruff, which
+# would then lint backend files with this project's settings.
+tasks:
+  typecheck:
+    inputs: ['/backend/**/*.py', '/backend/pyproject.toml', '/backend/uv.lock']

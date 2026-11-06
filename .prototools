@@ -1,6 +1,6 @@
-# Every tool version lives here, and nowhere else (moon MWS-3). `.nvmrc` and
-# `backend/.python-version` repeat the Node and Python pins for tools outside moon
-# (nvm, uv) and MUST stay equal to them.
+# Every tool version lives here, and nowhere else (moon MWS-3). `.nvmrc`,
+# `backend/.python-version` and `ingest/.python-version` repeat the Node and Python
+# pins for tools outside moon (nvm, uv) and MUST stay equal to them.
 moon = "2.6.2"
 node = "24.22.0"
 pnpm = "12.11.2"
