@@ -51,6 +51,7 @@ The scope is required and names the part of the repository the commit touches:
 | ----------- | -------------------------------------------------------- |
 | `frontend`  | the React app (`frontend/`)                              |
 | `backend`   | the FastAPI app (`backend/`)                             |
+| `ingest`    | the ingest service (`ingest/`)                           |
 | `shared`    | the shared package (`shared/`)                           |
 | `standards` | coding standards (`docs/standards/`)                     |
 | `docs`      | other documentation (`docs/`, READMEs)                   |
