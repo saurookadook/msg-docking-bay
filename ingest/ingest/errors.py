@@ -15,3 +15,10 @@ class SchemaNotAtHeadError(IngestError):
     Ingest writes rows as the app role and never migrates, so it stops
     rather than write against a schema its models do not describe.
     """
+
+
+class RunInProgressError(IngestError):
+    """Raised when another run of the same source kind holds its lock.
+
+    Two runs of one kind would race on the same rows and watermark.
+    """
