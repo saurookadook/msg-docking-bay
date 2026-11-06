@@ -25,10 +25,12 @@ tested live. That is why Phase 0 is a verification spike.
 
 - **New `ingest/` uv project**, a moon project alongside `backend/`. It depends on the backend package by
   path (`msg-docking-bay-backend = { path = "../backend", editable = true }`), so it reuses `db/`
-  (`BaseDB`, `DBSessionManager`), `config/` and `utils/logging` instead of copying them.
+  (`BaseDB`, `DBSessionManager`), `models/`, `constants/`, `config/` and `utils/logging` instead of
+  copying them. Ingest's own code sits under a single `ingest` package (`ingest/ingest/`), because the
+  editable install puts the backend's top-level packages on `sys.path` and flat names would clash.
 - **Migrations stay in `backend/db/migrations`**, with one Alembic history. The ingest service only
   writes rows.
-- **Upstream modules follow the standards:** one module per upstream at `ingest/services/<upstream>.py`
+- **Upstream modules follow the standards:** one module per upstream at `ingest/ingest/services/<upstream>.py`
   (HTTPX-2, SOUP-1), with an explicit User-Agent and timeout (SOUP-3, HTTPX-3), one module error type
   (HTTPX-4) and no live calls in tests (HTTPX-11, using saved fixtures as in SOUP-14).
 - **Data model**, detailed in [`phase-1-catalog-schema.md`](phase-1-catalog-schema.md):
@@ -83,12 +85,20 @@ original `mobile_suit` → `suit_version` → `spec_claim` sketch:
   - **PR 2c:** characters, organizations and designers.
 
 ### Phase 2: Ingest service scaffold
-Branch `feat/add-ingest-service`.
-- **Checkpoint → commit** `chore(repo): add the ingest scope to commit conventions` (`COMMIT_CONVENTIONS.md`, with a matching line in `monorepo.md` if relevant).
-- Add the `ingest/` uv project: `pyproject.toml` with ruff and pyright settings copied from `backend/pyproject.toml`, `moon.yml`, `CLAUDE.md` (importing the httpx and bs4 standards), a CLI entry point, an `ingest_run` start/finish wrapper and env vars (`INGEST_USER_AGENT` with a contact address, rate-limit settings).
-- **Checkpoint → commit** `feat(ingest): scaffold the ingest CLI and run tracking`
-- Add `ingest/Dockerfile`, an `ingest` service in `compose.yaml` (profile `ingest`, depends on postgres plus migrations), a test service in `compose.test.yaml`, and `.env.example` entries.
-- **Checkpoint → commit** `build(docker): add the ingest service to Compose`
+**Detailed plan: [`phase-2-ingest-service.md`](phase-2-ingest-service.md).** Branch
+`feat/add-ingest-service`. Design review changed three things from the original sketch:
+- **Layout:** ingest code lives in one `ingest` package (`ingest/ingest/`) and imports the backend's
+  models, constants, config, DB session and logging. The backend's test fixtures and factories are
+  reused too.
+- **No HTTP config yet:** `INGEST_USER_AGENT`, the rate limits and the User-Agent builder arrive with
+  the first upstream module (Phase 3b or 4), as ENV-1 asks. Phase 2 adds no env vars.
+- **A schema guard, not a Compose dependency on migrations:** the CLI refuses to run unless the
+  database is at the Alembic head. Run tracking holds an advisory lock so one source kind runs at a
+  time, and marks rows left `running` by a crash as abandoned.
+- **Checkpoints:** `chore(repo): add the ingest scope to commit conventions` → `build(ingest): scaffold
+  the ingest uv project` → `feat(ingest): refuse to run against an unmigrated database` →
+  `feat(ingest): record each run in ingest_runs` → `feat(ingest): add the ingest CLI with a status
+  command` → `build(docker): add the ingest service to Compose`.
 - **PR 3:** `feat(ingest): add the ingest service scaffold`.
 
 ### Phase 3: Gundam Wiki ingestion (two PRs)
@@ -98,10 +108,10 @@ written permission for any automated access, `api.php` included (see
 **downloaded by hand**, and the service makes no requests to Fandom.
 - Before this PR: download `gundam_pages_current.xml.7z` by hand. Email Fandom (support@fandom.com) to
   ask for written API permission, and use Special:Contact to request a fresh dump.
-- `ingest/services/fandom_dump.py` streams a **local** 7z XML file (`py7zr` with
+- `ingest/ingest/services/fandom_dump.py` streams a **local** 7z XML file (`py7zr` with
   `xml.etree.iterparse`). It selects ns-0 pages in the `Mobile Weapons` categories that use
   `{{Infobox/Mobile Weapon}}`.
-- `ingest/parsers/fandom_infobox.py` uses `mwparserfromhell`. It handles `[SERIES]` tags, `value~note`,
+- `ingest/ingest/parsers/fandom_infobox.py` uses `mwparserfromhell`. It handles `[SERIES]` tags, `value~note`,
   `tabs` (for version grouping) and the model number from the title prefix. A per-field unit map
   follows the Property pages (`headheight` in m, `weight` in t, `poweroutput` in kW, `turntime` in s).
   Unit helpers return `None` for unparseable values (SOUP-9 and SOUP-10). Missing required fields raise
@@ -126,7 +136,7 @@ written permission for any automated access, `api.php` included (see
 **3b. API delta sync. Only after Fandom's written permission is on file.** Branch
 `feat/add-fandom-api-sync`.
 - Record the permission in `docs/research/notes/fandom/`, and record any conditions it sets.
-- `ingest/services/fandom_api.py` uses one httpx client (HTTPX-8), serial at about 1 req/s. It reuses
+- `ingest/ingest/services/fandom_api.py` uses one httpx client (HTTPX-8), serial at about 1 req/s. It reuses
   the 3a parser and loader, and can add SMW `action=ask` for normalized values.
 - **Watermark:** the cursor is the newest *upstream* revision timestamp seen. It is stored per source,
   separately from local run times. A dump load sets it; it is never set to "now".
@@ -146,8 +156,8 @@ written permission for any automated access, `api.php` included (see
 
 ### Phase 4: Wikimedia ingestion
 Branch `feat/add-wikimedia-ingest`.
-- `ingest/services/wikidata.py` runs SPARQL against query.wikidata.org to get works and cross-IDs (type, dates, QIDs, ANN/AniList IDs, Fandom article ID `P6262`) into `work`. Continuities come from Phase 3a, not from Wikidata.
-- `ingest/services/wikipedia.py` uses the Action API (EN and JA) for series-level facts and page links only, with no copied prose.
+- `ingest/ingest/services/wikidata.py` runs SPARQL against query.wikidata.org to get works and cross-IDs (type, dates, QIDs, ANN/AniList IDs, Fandom article ID `P6262`) into `work`. Continuities come from Phase 3a, not from Wikidata.
+- `ingest/ingest/services/wikipedia.py` uses the Action API (EN and JA) for series-level facts and page links only, with no copied prose.
 - A linker matches Fandom suits to works and creates `mobile_suit_appearances` rows from the infobox "first appearance" and "appearances" fields. Matches it cannot resolve go to a review list and are not guessed. It also sets each work's continuity from the `era` of the Fandom suits that appear in it. Works whose suits span several eras go to the review list.
 - Checkpoints: `feat(ingest): load works and cross-IDs from Wikidata` → `feat(ingest): enrich works from Wikipedia` → `feat(ingest): link mobile suits to their works`.
 - **PR 6:** `feat(ingest): ingest works from Wikimedia`.
@@ -161,7 +171,7 @@ Branch `feat/add-ingest-scheduling`.
 - **PR 7:** `feat(ingest): schedule ingestion and surface attribution`. This can be split into ingest and backend PRs if it grows.
 
 ### Later (out of scope now)
-- **MAHQ:** ask Accidental Pilot for permission first. Check `wp-sitemap.xml` and `/wp-json/`. Write `ingest/services/mahq.py` as a polite crawler that adds a second `spec_sheets` row per suit (MAHQ as its own source) and flags disagreements for review. The schema already supports a second source.
+- **MAHQ:** ask Accidental Pilot for permission first. Check `wp-sitemap.xml` and `/wp-json/`. Write `ingest/ingest/services/mahq.py` as a polite crawler that adds a second `spec_sheets` row per suit (MAHQ as its own source) and flags disagreements for review. The schema already supports a second source.
 - **Gundam Unofficial:** manual spot checks only, unless Mark Simmons gives permission.
 
 ## Verification
