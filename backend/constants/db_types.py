@@ -7,6 +7,7 @@ from sqlalchemy import Enum
 from constants.catalog import (
     ArmamentMount,
     ContentLicense,
+    EquipmentFit,
     IngestRunStatus,
     MobileSuitRelationType,
     SourceKind,
@@ -69,6 +70,13 @@ MOBILE_SUIT_RELATION_TYPE_DB_TYPE: Final[Enum] = Enum(
 ARMAMENT_MOUNT_DB_TYPE: Final[Enum] = Enum(
     ArmamentMount,
     name="armament_mount",
+    values_callable=enum_values,
+    metadata=BaseDB.metadata,
+)
+
+EQUIPMENT_FIT_DB_TYPE: Final[Enum] = Enum(
+    EquipmentFit,
+    name="equipment_fit",
     values_callable=enum_values,
     metadata=BaseDB.metadata,
 )

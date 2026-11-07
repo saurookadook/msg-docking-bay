@@ -85,6 +85,13 @@ class ArmamentMount(StrEnum):
     OPTIONAL_HANDHELD = "optional_handheld"
 
 
+class EquipmentFit(StrEnum):
+    """Whether a spec sheet's equipment is standard or optional."""
+
+    STANDARD = "standard"
+    OPTIONAL = "optional"
+
+
 class SourceKind(StrEnum):
     """The kind of upstream page a catalog fact came from.
 

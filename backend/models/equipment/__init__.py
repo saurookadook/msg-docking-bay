@@ -1,0 +1,1 @@
+"""The equipment part entity."""
