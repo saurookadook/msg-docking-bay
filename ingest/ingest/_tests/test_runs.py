@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
 from _factories.ingest_run.db import IngestRunDBFactory
 from constants.catalog import IngestRunStatus, SourceKind
@@ -21,14 +21,6 @@ from models.ingest_run.db import IngestRunDB
 FANDOM = SourceKind.FANDOM_PAGE
 WIKIDATA = SourceKind.WIKIDATA_ITEM
 WATERMARK = datetime(2025, 9, 1, 12, 0, tzinfo=UTC)
-
-
-@pytest.fixture
-def run_sessions(test_db_session: Session) -> SessionFactory:
-    """Open sessions on the test connection; commits are savepoints."""
-    return sessionmaker(
-        bind=test_db_session.connection(), join_transaction_mode="create_savepoint"
-    )
 
 
 def runs(test_db_session: Session) -> list[IngestRunDB]:
