@@ -17,6 +17,7 @@ from uuid import UUID
 
 import psycopg
 from sqlalchemy import Connection, func, select, text, update
+from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
@@ -119,6 +120,51 @@ def latest_watermark(session: Session, kind: SourceKind) -> datetime | None:
         .order_by(IngestRunDB.started_at.desc(), IngestRunDB.id.desc())
         .limit(1)
     ).scalar_one_or_none()
+
+
+@dataclass(frozen=True)
+class RunSummary:
+    """One run, as the ``status`` command reports it."""
+
+    error_count: int
+    error_summary: str | None
+    finished_at: datetime | None
+    pages_seen: int
+    rows_written: int
+    started_at: datetime
+    status: IngestRunStatus
+    watermark_at: datetime | None
+
+
+def latest_runs(
+    session: Session, *, status: IngestRunStatus | None = None
+) -> dict[SourceKind, RunSummary]:
+    """Return each source kind's newest run, optionally of one status.
+
+    One ``DISTINCT ON`` query rather than one per kind; a kind with no
+    such run is missing from the result.
+    """
+    stmt = select(IngestRunDB).ext(distinct_on(IngestRunDB.source_kind))
+    if status is not None:
+        stmt = stmt.where(IngestRunDB.status == status)
+    stmt = stmt.order_by(
+        IngestRunDB.source_kind,
+        IngestRunDB.started_at.desc(),
+        IngestRunDB.id.desc(),
+    )
+    return {
+        run.source_kind: RunSummary(
+            error_count=run.error_count,
+            error_summary=run.error_summary,
+            finished_at=run.finished_at,
+            pages_seen=run.pages_seen,
+            rows_written=run.rows_written,
+            started_at=run.started_at,
+            status=run.status,
+            watermark_at=run.watermark_at,
+        )
+        for run in session.scalars(stmt)
+    }
 
 
 def summarize_error(exc: BaseException) -> str:

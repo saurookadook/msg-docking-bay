@@ -46,18 +46,16 @@ def current_heads(connection: Connection) -> tuple[str, ...]:
     return MigrationContext.configure(connection).get_current_heads()
 
 
-def assert_schema_at_head(connection: Connection) -> None:
-    """Raise unless the database is at the backend's head.
+def assert_schema_at_head(connection: Connection) -> tuple[str, ...]:
+    """Return the database's heads, or raise unless they are the head.
 
     Raises:
         SchemaNotAtHeadError: The database is behind, ahead, or
             unmigrated.
     """
-    check_heads(
-        expected=expected_heads(),
-        current=current_heads(connection),
-        known=known_revisions(),
-    )
+    current = current_heads(connection)
+    check_heads(expected=expected_heads(), current=current, known=known_revisions())
+    return current
 
 
 def check_heads(

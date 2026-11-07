@@ -36,8 +36,8 @@ class TestAssertSchemaAtHead:
     def test_accepts_the_migrated_test_database(self, test_db_session: Session) -> None:
         connection = test_db_session.connection()
 
+        assert assert_schema_at_head(connection) == current_heads(connection)
         assert set(current_heads(connection)) == set(expected_heads())
-        assert_schema_at_head(connection)
 
 
 class TestCheckHeads:

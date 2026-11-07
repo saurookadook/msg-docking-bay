@@ -12,6 +12,7 @@ from ingest.runs import (
     ABANDONED,
     LOCK_NAMESPACE,
     SessionFactory,
+    latest_runs,
     latest_watermark,
     summarize_error,
     track_run,
@@ -209,6 +210,43 @@ class TestLatestWatermark:
         test_db_session.commit()
 
         assert latest_watermark(test_db_session, FANDOM) is None
+
+
+class TestLatestRuns:
+    def test_returns_each_kinds_newest_run(
+        self, test_db_session: Session, mock_utcnow: datetime
+    ) -> None:
+        older, newer = mock_utcnow, mock_utcnow + timedelta(hours=1)
+        IngestRunDBFactory(
+            finished_at=older,
+            source_kind=FANDOM,
+            started_at=older,
+            status=IngestRunStatus.SUCCEEDED,
+            watermark_at=WATERMARK,
+        )
+        IngestRunDBFactory(
+            error_summary="ValueError",
+            finished_at=newer,
+            pages_seen=4,
+            source_kind=FANDOM,
+            started_at=newer,
+            status=IngestRunStatus.FAILED,
+        )
+        IngestRunDBFactory(source_kind=WIKIDATA, started_at=older)
+        test_db_session.commit()
+
+        latest = latest_runs(test_db_session)
+
+        assert set(latest) == {FANDOM, WIKIDATA}
+        assert latest[FANDOM].status is IngestRunStatus.FAILED
+        assert latest[FANDOM].error_summary == "ValueError"
+        assert latest[FANDOM].pages_seen == 4
+        assert latest[WIKIDATA].status is IngestRunStatus.RUNNING
+
+        succeeded = latest_runs(test_db_session, status=IngestRunStatus.SUCCEEDED)
+
+        assert set(succeeded) == {FANDOM}
+        assert succeeded[FANDOM].watermark_at == WATERMARK
 
 
 class TestSummarizeError:
