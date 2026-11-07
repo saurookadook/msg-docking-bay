@@ -31,6 +31,29 @@ class WorkRelationType(StrEnum):
     SIDE_STORY_OF = "side_story_of"
 
 
+class UnitType(StrEnum):
+    """The kind of mobile weapon, from the Gundam Wiki infobox ``type``.
+
+    Only the kinds the catalog holds: the wiki's Ship, Vehicle, Weapon
+    and Bit pages are out of scope.
+    """
+
+    SUIT = "suit"
+    """A mobile suit, the default: the RX-78-2 Gundam."""
+    ARMOR = "armor"
+    """A mobile armor, such as the MA-08 Big Zam."""
+    FIGHTER = "fighter"
+    """A space or atmospheric fighter, such as the Core Fighter."""
+    MAN_MACHINE = "man_machine"
+    """A Man-Machine: a Universal Century mobile-suit precursor."""
+    WORKER = "worker"
+    """A civilian or construction unit, such as the Mobile Worker."""
+    POD = "pod"
+    """A small pod such as the Ball."""
+    DOLL = "doll"
+    """A Mobile Doll: an unmanned, AI-piloted unit (After Colony)."""
+
+
 class SourceKind(StrEnum):
     """The kind of upstream page a catalog fact came from.
 

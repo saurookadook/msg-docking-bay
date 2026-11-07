@@ -8,6 +8,7 @@ from constants.catalog import (
     ContentLicense,
     IngestRunStatus,
     SourceKind,
+    UnitType,
     WorkRelationType,
     WorkType,
 )
@@ -45,6 +46,13 @@ CONTENT_LICENSE_DB_TYPE: Final[Enum] = Enum(
 INGEST_RUN_STATUS_DB_TYPE: Final[Enum] = Enum(
     IngestRunStatus,
     name="ingest_run_status",
+    values_callable=enum_values,
+    metadata=BaseDB.metadata,
+)
+
+UNIT_TYPE_DB_TYPE: Final[Enum] = Enum(
+    UnitType,
+    name="unit_type",
     values_callable=enum_values,
     metadata=BaseDB.metadata,
 )

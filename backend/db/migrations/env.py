@@ -10,6 +10,7 @@ from db.base_db import BaseDB
 from db.db_session_manager import DBSessionManager
 from models.continuity.db import ContinuityDB
 from models.ingest_run.db import IngestRunDB
+from models.mobile_suit.db import MobileSuitDB
 from models.source.db import SourceDB
 from models.work.db import WorkDB
 from models.work_relation.db import WorkRelationDB
@@ -18,6 +19,7 @@ from models.work_short_name.db import WorkShortNameDB
 MODELS: Final = (
     ContinuityDB,
     IngestRunDB,
+    MobileSuitDB,
     SourceDB,
     WorkDB,
     WorkRelationDB,

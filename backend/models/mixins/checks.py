@@ -21,3 +21,8 @@ def slug_format(column: str = "slug") -> CheckConstraint:
 def not_own_parent(column: str) -> CheckConstraint:
     """Stop a self-referencing row from naming itself (RDB-7)."""
     return CheckConstraint(f"{column} <> id", name="not_own_parent")
+
+
+def positive(column: str) -> CheckConstraint:
+    """Require a number above zero; a NULL passes (RDB-14)."""
+    return CheckConstraint(f"{column} > 0", name=f"{column}_positive")
