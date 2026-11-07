@@ -375,8 +375,8 @@ CMD ["uvicorn", "api.app.main:app", "--no-server-header"]
 ```
 
 The same image runs migrations in production (`alembic upgrade head`, ALEM-13), as the
-separate `backend-migrations` Railway service, which alone holds the owner role's
-credentials ([github-actions.md](github-actions.md) GHA-27, GHA-28).
+separate `msg-docking-bay-backend-migrations` Railway service, which alone holds the
+owner role's credentials ([github-actions.md](github-actions.md) GHA-27, GHA-28).
 
 **ENV-22 — `frontend-prod` serves the Vite build with Caddy, and is production's public
 entry point** (ENV-36), as in `aoam-property-plan`. The stage copies only
@@ -748,8 +748,9 @@ next successful CI publish replace what it pushed. The root script runs
   Buildx's own provenance and SBOM attestations (`--provenance=true --sbom=true`).
 - **No GitHub attestation.** A laptop cannot create one, so the `deploy` job's
   verification (GHA-27) would reject these images. Deploy them by hand, in the same order
-  as the `deploy` job: `railway redeploy --service backend-migrations`, wait for it to
-  finish, then `backend`, then `frontend`, logged in with `railway login`.
+  as the `deploy` job: `railway redeploy --service msg-docking-bay-backend-migrations`,
+  wait for it to finish, then `msg-docking-bay-backend`, then `msg-docking-bay-frontend`,
+  logged in with `railway login`.
 
 Record each use in the PR or issue that explains why CI could not publish.
 

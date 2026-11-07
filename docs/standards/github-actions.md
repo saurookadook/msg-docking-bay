@@ -401,13 +401,14 @@ review their own PRs.
 > writing `deploy.yml`:
 >
 > - **Railway's CLI has no "wait" option.** Nothing in `railway redeploy` waits for the
->   new deployment to finish, so the `deploy` job waits for `backend-migrations` by polling
->   `railway deployment list --service backend-migrations --limit 1 --json` until the
->   newest deployment settles (GHA-27).
+>   new deployment to finish, so the `deploy` job waits for the migrations service by
+>   polling `railway deployment list --service msg-docking-bay-backend-migrations --limit 1
+>   --json` until the newest deployment settles (GHA-27).
 > - **Confirm the migration service's exit statuses.** Railway's documentation does not
 >   say which status a one-shot service reports when its process exits `0` and when it
->   exits non-zero. Before relying on the `deploy` job, run `backend-migrations` once with
->   a migration that succeeds and once with one that fails, note the status
+>   exits non-zero. Before relying on the `deploy` job, run
+>   `msg-docking-bay-backend-migrations` once with a migration that succeeds and once
+>   with one that fails, note the status
 >   `railway deployment list --json` shows for each, and make the wait step treat them
 >   that way (GHA-28).
 > - Create the `production` environment, the Railway project token, and the Docker Hub
@@ -417,9 +418,11 @@ review their own PRs.
 `deploy.yml`.** As in `aoam-property-plan`, production runs on Railway. Each deployable
 image is the source of one or more Railway services, at its Docker Hub `:latest` tag
 ([docker-and-environment.md](docker-and-environment.md) ENV-30): the backend image runs
-as `backend-migrations` and `backend`, and the frontend image as `frontend`. Railway never
-builds from the repository. The `deploy` job runs on pushes to `main` only, after
-`publish` succeeds, and the workflow:
+as `msg-docking-bay-backend-migrations` and `msg-docking-bay-backend`, and the frontend
+image as `msg-docking-bay-frontend`. These are the Railway service names, which differ
+from the Compose ones: `railway --service` takes them, and each service's private
+hostname is `<service>.railway.internal`. Railway never builds from the repository. The
+`deploy` job runs on pushes to `main` only, after `publish` succeeds, and the workflow:
 
 - declares `environment: production` inside the reusable workflow (GHA-10). The
   environment allows deploys only from `main` and holds `RAILWAY_TOKEN`, a Railway
@@ -434,14 +437,15 @@ builds from the repository. The `deploy` job runs on pushes to `main` only, afte
 - 🚀 redeploys the services in order with `railway redeploy --service <service> --yes`.
   Redeploying an image-sourced service makes Railway pull the tag again without building
   anything.
-  1. `backend-migrations`, then waits for it: it polls
-     `railway deployment list --service backend-migrations --limit 1 --json` every few
-     seconds, for at most ten minutes, and fails the job if the newest deployment's
-     status is `FAILED` or `CRASHED` or never settles. A failed migration stops the
-     deploy before any new code runs.
-  2. `backend`. Migrations are backward compatible (RDB-34), so the backend still running
-     keeps working while they apply.
-  3. `frontend`, last, so it never calls an API the backend does not serve yet.
+  1. `msg-docking-bay-backend-migrations`, then waits for it: it polls
+     `railway deployment list --service msg-docking-bay-backend-migrations --limit 1
+     --json` every few seconds, for at most ten minutes, and fails the job if the
+     newest deployment's status is `FAILED` or `CRASHED` or never settles. A failed
+     migration stops the deploy before any new code runs.
+  2. `msg-docking-bay-backend`. Migrations are backward compatible (RDB-34), so the
+     backend still running keeps working while they apply.
+  3. `msg-docking-bay-frontend`, last, so it never calls an API the backend does not
+     serve yet.
 - runs the Railway CLI from the image pinned in `.github/tools/railway/Dockerfile`
   (GHA-24), with `RAILWAY_TOKEN` passed as an environment variable to that one step.
 - uses `concurrency: { group: deploy-production, cancel-in-progress: false }` (GHA-12).
@@ -468,13 +472,13 @@ check, and networking:
 ```ts
 const backendImage = image('docker.io/<user>/msg-docking-bay-backend:latest');
 
-const backendMigrations = service('backend-migrations', {
+const backendMigrations = service('msg-docking-bay-backend-migrations', {
   source: backendImage,
   start: 'alembic upgrade head',
   env: { DATABASE_USER: 'app_owner', DATABASE_PASSWORD: preserve() },
 });
 
-const backend = service('backend', {
+const backend = service('msg-docking-bay-backend', {
   source: backendImage,
   healthcheck: '/api/health-check',
   healthcheckTimeout: 100,
@@ -489,14 +493,14 @@ const backend = service('backend', {
   },
 });
 
-const frontend = service('frontend', {
+const frontend = service('msg-docking-bay-frontend', {
   source: image('docker.io/<user>/msg-docking-bay-frontend:latest'),
   healthcheck: '/',
-  env: { PORT: '8080', BACKEND_UPSTREAM: 'backend.railway.internal:8000' },
+  env: { PORT: '8080', BACKEND_UPSTREAM: 'msg-docking-bay-backend.railway.internal:8000' },
 });
 ```
 
-- **Migrations service.** `backend-migrations` runs the backend image with
+- **Migrations service.** `msg-docking-bay-backend-migrations` runs the backend image with
   `alembic upgrade head` instead of Uvicorn, exits, and is never restarted: set its
   restart policy to **Never** (in the dashboard, if `railway.ts` has no field for it). It
   is the only service with the owner role's credentials
@@ -505,8 +509,9 @@ const frontend = service('frontend', {
   exactly one process migrates (ALEM-13). It has no health check and no domain. On the
   first setup, confirm which status Railway reports when this one-shot process exits `0`
   and when it exits non-zero, and make the `deploy` job's wait match.
-- **Public and private.** Only `frontend` has a public domain; its Caddy proxies `/api`
-  and `/ws/` to `backend` over the private network
+- **Public and private.** Only `msg-docking-bay-frontend` has a public domain; its Caddy
+  proxies `/api` and `/ws/` to `msg-docking-bay-backend.railway.internal` over the
+  private network
   ([docker-and-environment.md](docker-and-environment.md) ENV-22, ENV-36). The backend
   and the migrations service have no public domain.
 - **Health checks.** Railway switches traffic to a new deployment only after its health
