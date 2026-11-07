@@ -1,0 +1,44 @@
+name: "CI"
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # `repo` runs on every run, so nothing needs a `changes` job yet
+  # (GHA-6); add it with the first path-gated area.
+  repo:
+    permissions:
+      contents: read # check out the code
+    uses: ./.github/workflows/repo-lint.yml
+
+  ci-success:
+    needs: [repo]
+    # Must report even when a needed job fails or the run is cancelled (GHA-7).
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: "Check job results"
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            if [[ "$result" != "success" && "$result" != "skipped" ]]; then
+              echo "::error::A CI job finished with result '$result'"
+              exit 1
+            fi
+          done

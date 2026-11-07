@@ -1,0 +1,27 @@
+name: "Repo Lint"
+
+on:
+  workflow_call:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lockfiles:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: "Check out code"
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # ingest's environment, the one `moon run ingest:lock-drift` uses.
+      - name: "Set up Python"
+        uses: ./.github/actions/python-setup
+        with:
+          project: "ingest"
+
+      - name: "🧹 Check ingest's lockfile against the backend's"
+        run: uv run --locked --project ingest python scripts/check-uv-lock-drift.py

@@ -31,7 +31,7 @@ are in `docs/plans/` (`data-ingestion.md`, `phase-2-ingest-service.md`).
   an upgrade in `backend/uv.lock`, run `moon run ingest:lock-drift`. It lists every
   package the two lockfiles hold at different versions and prints the `uv lock -P …`
   command that realigns this one. The pre-commit hook runs it when either lockfile is
-  staged.
+  staged, and CI's `repo` job runs it on every PR and push.
 
 ## Read first when the task touches
 

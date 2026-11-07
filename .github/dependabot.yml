@@ -32,7 +32,8 @@ updates:
     schedule: { interval: "weekly" }
     cooldown: { default-days: 7 }
   - package-ecosystem: "github-actions"
-    directory: "/"
+    # "/" covers .github/workflows; each composite action needs its own entry.
+    directories: ["/", "/.github/actions/*"]
     schedule: { interval: "weekly" }
     cooldown: { default-days: 7 }
     groups:
