@@ -74,6 +74,17 @@ class MobileSuitRelationType(StrEnum):
     """
 
 
+class ArmamentMount(StrEnum):
+    """How a spec sheet carries an armament, from the infobox field."""
+
+    FIXED = "fixed"
+    """Built in, such as head vulcans (``fixedArmaments``)."""
+    HANDHELD = "handheld"
+    """Carried in hand, such as a beam rifle (``handheldArmaments``)."""
+    OPTIONAL_FIXED = "optional_fixed"
+    OPTIONAL_HANDHELD = "optional_handheld"
+
+
 class SourceKind(StrEnum):
     """The kind of upstream page a catalog fact came from.
 
