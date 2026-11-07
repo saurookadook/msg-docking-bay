@@ -15,8 +15,8 @@ updates:
     cooldown: { default-days: 7 }
     groups:
       uv-minor-and-patch: { update-types: ["minor", "patch"] }
-  # Its shared packages must match backend/uv.lock; re-lock them together when either
-  # PR lands (ingest/CLAUDE.md).
+  # Its shared packages must match backend/uv.lock: after either PR, run
+  # `moon run ingest:lock-drift`, which prints the command that realigns ingest.
   - package-ecosystem: "uv"
     directory: "/ingest"
     schedule: { interval: "weekly" }
@@ -32,7 +32,8 @@ updates:
     schedule: { interval: "weekly" }
     cooldown: { default-days: 7 }
   - package-ecosystem: "github-actions"
-    directory: "/"
+    # "/" covers .github/workflows; each composite action needs its own entry.
+    directories: ["/", "/.github/actions/*"]
     schedule: { interval: "weekly" }
     cooldown: { default-days: 7 }
     groups:

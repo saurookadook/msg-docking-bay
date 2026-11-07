@@ -15,9 +15,26 @@ project:
 # ingest's own tasks, so typecheck also takes the backend's sources as
 # inputs. Lint and format do not: they pass affected files to Ruff, which
 # would then lint backend files with this project's settings.
+#
+# The lockfile drift script and its tests in /scripts run in this
+# environment, and no other project has Python tasks, so all three checks
+# take them as inputs. moon passes Ruff only the affected files inside this
+# project, so format and lint also name the folder in their arguments (moon
+# appends them to the inherited ones); Ruff applies this project's settings,
+# since /scripts has none of its own.
 tasks:
+  format:
+    args: ['../scripts']
+    inputs: ['/scripts/**/*.py']
+  lint:
+    args: ['../scripts']
+    inputs: ['/scripts/**/*.py']
   typecheck:
-    inputs: ['/backend/**/*.py', '/backend/pyproject.toml', '/backend/uv.lock']
+    inputs:
+      - '/backend/**/*.py'
+      - '/backend/pyproject.toml'
+      - '/backend/uv.lock'
+      - '/scripts/**/*.py'
   # The suite needs PostgreSQL, so it runs in the ingest-test Compose service, in the
   # same Compose project as backend:test (ENV-4), never on the host. The mutex keeps
   # the two from sharing one test database at once.
@@ -30,3 +47,19 @@ tasks:
       runFromWorkspaceRoot: true
       # CI runs the Compose test job directly, not through moon (MCI-1).
       runInCI: false
+  # ingest runs the backend's code, so every package both lockfiles hold must be at the
+  # backend's version; Dependabot updates the two in separate PRs, so they drift. Runs
+  # in the pre-commit hook whenever either lockfile is staged.
+  # --locked, as in CI: a stale ingest/uv.lock fails here instead of being re-locked,
+  # so the check never rewrites the file it checks.
+  lock-drift:
+    command: 'uv'
+    args: ['run', '--locked', 'python', '../scripts/check-uv-lock-drift.py']
+    inputs: ['/backend/uv.lock', 'uv.lock', '/scripts/check-uv-lock-drift.py']
+  # The script's own tests: no database, so they run on the host.
+  lock-drift-test:
+    command: 'uv'
+    args: ['run', '--locked', '--project', 'ingest', 'pytest', 'scripts']
+    inputs: ['/scripts/**/*.py', '/scripts/pytest.ini', 'uv.lock']
+    options:
+      runFromWorkspaceRoot: true

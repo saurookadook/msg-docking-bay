@@ -71,6 +71,7 @@ The whole stack runs in Docker Compose behind an NGINX proxy at
 | `moon run backend:test`                  | pytest against a throwaway database, in its own Compose project |
 | `moon run backend:migrate`               | `alembic upgrade head`, as the owner role                   |
 | `moon run ingest:test`                   | the ingest service's pytest suite, in the same throwaway Compose project |
+| `moon run ingest:lock-drift`             | check `ingest/uv.lock` holds the backend's version of every shared package; prints the fix |
 | `docker compose --profile ingest run --rm ingest <cmd>` | an ingest command (`status`, `--help`), as the app role, with the current source mounted |
 | `docker compose run --rm backend-migrations revision --autogenerate -m "..."` | new migration |
 | `docker compose run --rm backend <cmd>`  | any command in the backend's image (rebuild it first: Watch only syncs the running container) |
