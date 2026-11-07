@@ -438,9 +438,12 @@ talks to one origin:
 }
 ```
 
-- `BACKEND_UPSTREAM` is `backend.railway.internal:8000` on Railway. Its default matches
-  the Compose service name, so `caddy validate` passes at build time and the image also
-  runs locally against the Compose network.
+- `BACKEND_UPSTREAM` is `<backend-service>.railway.internal:8000` on Railway, named after
+  the backend's Railway service (here `msg-docking-bay-backend.railway.internal:8000`),
+  not its Compose service. Set it on the frontend service: unset, Caddy dials `backend`,
+  which does not resolve on Railway, and every `/api` request is a 502. Its default
+  matches the Compose service name, so `caddy validate` passes at build time and the
+  image also runs locally against the Compose network.
 - Caddy's `reverse_proxy` passes WebSocket upgrades through and keeps them open, so `/ws/`
   needs no extra settings (compare ENV-37).
 - Keep the Caddyfile formatted: `caddy fmt --overwrite frontend/Caddyfile` before
@@ -640,7 +643,8 @@ In **development**, that entry point is the `proxy` Compose service (NGINX, ENV-
 ENV-39), which terminates TLS for `APP_DOMAIN` and routes "everything else" to the Vite
 dev server. In **production on Railway**, it is the `frontend` service's Caddy (ENV-22):
 Railway terminates TLS, the frontend is the only service with a public domain, and Caddy
-proxies `/api` and `/ws/` to `backend.railway.internal` over Railway's private network.
+proxies `/api` and `/ws/` to the backend's `<backend-service>.railway.internal` name over
+Railway's private network.
 The backend has no public domain, so nothing outside the project can reach it directly,
 and the browser makes only same-origin requests: session cookies stay first-party, and
 no build-time API URL is baked into the frontend.
