@@ -1,10 +1,15 @@
 """Record each ingest run in ``ingest_runs``.
 
 ``track_run`` wraps one load or sync of one source kind. It holds an
-advisory lock so two runs of a kind never overlap, and writes the run
-row in short transactions of its own, separate from the job's data
-writes: a job whose transaction rolls back still leaves its ``failed``
-row behind.
+advisory lock so two runs of a kind never overlap, and every write of
+the run goes through the connection that holds the lock: the run row
+and the job's data alike. The lock lives as long as that connection's
+database session, and a guard refuses every statement once SQLAlchemy
+has replaced it, so a run that lost its lock can write nothing more.
+
+The run row is written in short transactions of its own, before and
+after the job's: a job whose transaction rolls back still leaves its
+``failed`` row behind.
 """
 
 import logging
@@ -16,14 +21,14 @@ from typing import Final
 from uuid import UUID
 
 import psycopg
-from sqlalchemy import Connection, func, select, text, update
+from sqlalchemy import Connection, TextClause, event, func, select, text, update
 from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
 from constants.catalog import IngestRunStatus, SourceKind
 from db.db_session_manager import DBSessionManager
-from ingest.errors import RunInProgressError
+from ingest.errors import RunInProgressError, RunLostError
 from models.ingest_run.db import IngestRunDB
 
 logger = logging.getLogger(__name__)
@@ -57,10 +62,28 @@ class RunStats:
     watermark_at: datetime | None = None
 
 
+@dataclass(frozen=True)
+class Run:
+    """A run in progress: its row, its stats, and its connection."""
+
+    connection: Connection
+    """Holds the run's lock. Every write of the run goes through it."""
+    id: UUID
+    stats: RunStats
+
+    def session(self) -> Session:
+        """Open a session on the run's connection, for the job's writes.
+
+        Close it before the ``track_run`` block ends: the run row is
+        written on the same connection, after the job's transaction.
+        """
+        return _session_on(self.connection)
+
+
 @contextmanager
 def track_run(
-    kind: SourceKind, *, session_factory: SessionFactory | None = None
-) -> Generator[RunStats]:
+    kind: SourceKind, *, connection: Connection | None = None
+) -> Generator[Run]:
     """Record a run of ``kind`` from start to finish.
 
     The run row is ``running`` while the block runs, then ``succeeded``
@@ -69,39 +92,32 @@ def track_run(
 
     Args:
         kind: The source kind the job reads.
-        session_factory: Opens the sessions that write the run row.
-            Defaults to the process's session factory; tests pass one
-            bound to their rolled-back connection.
+        connection: The connection to lock and write through. Defaults
+            to a new one from the engine, closed when the run ends;
+            tests pass their rolled-back connection.
 
     Yields:
-        The stats the job fills in.
+        The run, whose ``session()`` the job writes through and whose
+        ``stats`` it fills in.
 
     Raises:
         RunInProgressError: Another run of ``kind`` holds the lock.
+        RunLostError: Another run marked this one abandoned before it
+            finished, so its outcome was not recorded.
     """
-    sessions = session_factory or DBSessionManager().scoped_session.session_factory
-    with _run_lock(kind):
-        run_id = _start_run(kind, sessions=sessions)
-        stats = RunStats()
+    with _own_or_given(connection) as conn, _run_lock(conn, kind):
+        run = Run(connection=conn, id=_start_run(conn, kind), stats=RunStats())
         try:
-            yield stats
+            yield run
         # BaseException: a Ctrl-C also ends the run, and is re-raised.
         except BaseException as exc:
             _finish_run(
-                run_id,
+                run,
                 status=IngestRunStatus.FAILED,
-                stats=stats,
                 error_summary=summarize_error(exc),
-                sessions=sessions,
             )
             raise
-        _finish_run(
-            run_id,
-            status=IngestRunStatus.SUCCEEDED,
-            stats=stats,
-            error_summary=None,
-            sessions=sessions,
-        )
+        _finish_run(run, status=IngestRunStatus.SUCCEEDED, error_summary=None)
 
 
 def latest_watermark(session: Session, kind: SourceKind) -> datetime | None:
@@ -180,47 +196,107 @@ def summarize_error(exc: BaseException) -> str:
     return type(exc).__name__
 
 
+def _session_on(connection: Connection) -> Session:
+    # The process's session settings (SQLA-14), bound to one connection.
+    # create_savepoint: on a connection already in a transaction (a
+    # test's), commits become savepoints; otherwise they commit.
+    return DBSessionManager().scoped_session.session_factory(
+        bind=connection, join_transaction_mode="create_savepoint"
+    )
+
+
 @contextmanager
-def _run_lock(kind: SourceKind) -> Generator[None]:
+def _own_or_given(connection: Connection | None) -> Generator[Connection]:
+    if connection is not None:
+        yield connection
+        return
+    with DBSessionManager().engine.connect() as own:
+        yield own
+
+
+@contextmanager
+def _run_lock(connection: Connection, kind: SourceKind) -> Generator[None]:
     """Hold the session-level advisory lock for ``kind``.
 
-    Session-level, on a connection of its own that stays idle outside a
-    transaction, because a transaction-level lock would need a
-    transaction open for the whole run, which
+    Session-level, with the connection left idle outside a transaction
+    between the run's writes, because a transaction-level lock would
+    need a transaction open for the whole run, which
     ``idle_in_transaction_session_timeout`` ends after 30 seconds. The
-    server releases it if the process dies.
+    server releases it if the connection or the process dies.
+
+    NOTE: after a disconnect, SQLAlchemy reconnects a ``Connection`` on
+    its next use, to a new database session that does not hold the
+    lock. The guard refuses every statement on any DBAPI connection but
+    the one that took the lock.
+
+    Raises:
+        RunInProgressError: Another connection holds the lock.
     """
     params = {"namespace": LOCK_NAMESPACE, "kind": kind.value}
-    with DBSessionManager().engine.connect() as connection:
-        acquired = connection.execute(
-            text("SELECT pg_try_advisory_lock(:namespace, hashtext(:kind))"), params
-        ).scalar_one()
-        connection.commit()
-        if not acquired:
-            raise RunInProgressError(
-                f"Another '{kind.value}' run is in progress; wait for it to finish."
+    acquired = _execute_and_end(
+        connection,
+        text("SELECT pg_try_advisory_lock(:namespace, hashtext(:kind))"),
+        params,
+    )
+    if not acquired:
+        raise RunInProgressError(
+            f"Another '{kind.value}' run is in progress; wait for it to finish."
+        )
+    locked = connection.connection.dbapi_connection
+
+    def guard(
+        conn: Connection,
+        cursor: object,
+        statement: str,
+        parameters: object,
+        context: object,
+        executemany: bool,
+    ) -> None:
+        if conn.connection.dbapi_connection is not locked:
+            raise RunLostError(
+                f"The '{kind.value}' run lost its database connection, and its"
+                " lock with it; it cannot write any more."
             )
-        try:
-            yield
-        finally:
-            _release_lock(connection, params)
+
+    event.listen(connection, "before_cursor_execute", guard)
+    try:
+        yield
+    finally:
+        _release_lock(connection, params)
+        event.remove(connection, "before_cursor_execute", guard)
 
 
 def _release_lock(connection: Connection, params: Mapping[str, object]) -> None:
     try:
-        connection.execute(
-            text("SELECT pg_advisory_unlock(:namespace, hashtext(:kind))"), params
+        _execute_and_end(
+            connection,
+            text("SELECT pg_advisory_unlock(:namespace, hashtext(:kind))"),
+            params,
         )
-        connection.commit()
-    except DBAPIError:
+    except DBAPIError, RunLostError:
         # NOTE: a pooled connection must not keep the lock; dropping it
         # makes the server release the lock instead.
         logger.warning("Could not release the run lock; dropping its connection")
         connection.invalidate()
 
 
-def _start_run(kind: SourceKind, *, sessions: SessionFactory) -> UUID:
-    with sessions() as session, session.begin():
+def _execute_and_end(
+    connection: Connection, statement: TextClause, params: Mapping[str, object]
+) -> object:
+    """Run one statement, committing only a transaction it began.
+
+    The lock's connection must be idle between the run's writes; a
+    connection already in a transaction (a test's) is left in it.
+    """
+    began = not connection.in_transaction()
+    result = connection.execute(statement, params).scalar_one()
+    if began:
+        connection.commit()
+    return result
+
+
+def _start_run(connection: Connection, kind: SourceKind) -> UUID:
+    with _session_on(connection) as session, session.begin():
         abandoned = session.scalars(
             update(IngestRunDB)
             .where(
@@ -246,25 +322,40 @@ def _start_run(kind: SourceKind, *, sessions: SessionFactory) -> UUID:
 
 
 def _finish_run(
-    run_id: UUID,
-    *,
-    status: IngestRunStatus,
-    stats: RunStats,
-    error_summary: str | None,
-    sessions: SessionFactory,
+    run: Run, *, status: IngestRunStatus, error_summary: str | None
 ) -> None:
-    with sessions() as session, session.begin():
-        run = session.get_one(IngestRunDB, run_id)
-        run.error_count = stats.error_count
-        run.error_summary = error_summary
-        run.finished_at = session.execute(select(func.now())).scalar_one()
-        run.pages_seen = stats.pages_seen
-        run.rows_written = stats.rows_written
-        run.status = status
-        run.watermark_at = stats.watermark_at
+    """Record the run's outcome, unless it is no longer ``running``.
+
+    Fenced on ``status = 'running'``: a later run that marked this one
+    abandoned has the final word, and this run's outcome is dropped.
+    """
+    stats = run.stats
+    with _session_on(run.connection) as session, session.begin():
+        updated = session.scalars(
+            update(IngestRunDB)
+            .where(
+                IngestRunDB.id == run.id,
+                IngestRunDB.status == IngestRunStatus.RUNNING,
+            )
+            .values(
+                error_count=stats.error_count,
+                error_summary=error_summary,
+                finished_at=func.now(),
+                pages_seen=stats.pages_seen,
+                rows_written=stats.rows_written,
+                status=status,
+                watermark_at=stats.watermark_at,
+            )
+            .returning(IngestRunDB.id)
+        ).all()
+    if not updated:
+        raise RunLostError(
+            f"Run id='{run.id}' was marked abandoned by a later run before it"
+            f" finished; its outcome ({status.value}) was not recorded."
+        )
     logger.info(
         "Finished run id='%s' as %s: pages_seen=%s rows_written=%s errors=%s",
-        run_id,
+        run.id,
         status.value,
         stats.pages_seen,
         stats.rows_written,
