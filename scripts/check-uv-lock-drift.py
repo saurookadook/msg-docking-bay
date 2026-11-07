@@ -7,13 +7,14 @@ source of truth: on drift this prints the ``uv lock`` command that moves
 ingest back to the backend's versions, and exits 1.
 
 Run it with ``moon run ingest:lock-drift``, in ingest's environment
-(for Pydantic).
+(for Pydantic). Its tests are in ``scripts/_tests/``.
 """
 
 import argparse
 import shlex
 import sys
 import tomllib
+from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Final, NamedTuple
@@ -48,26 +49,40 @@ class Drift(NamedTuple):
     """A package both lockfiles hold, at different versions."""
 
     name: str
-    backend_version: str
-    ingest_version: str
+    backend_versions: frozenset[str]
+    ingest_versions: frozenset[str]
+
+    @property
+    def forked(self) -> bool:
+        """Whether either lockfile holds several versions of it.
+
+        A forked resolution locks one version per set of markers (a
+        platform, a Python version); a ``-P`` pin cannot say which
+        version goes with which markers, so it is realigned by hand.
+        """
+        return len(self.backend_versions) > 1 or len(self.ingest_versions) > 1
 
 
-def locked_versions(lockfile: Path) -> dict[str, str]:
-    """Return each locked package's version, keyed by name.
+def locked_versions(lockfile: Path) -> dict[str, frozenset[str]]:
+    """Return every version locked for each package, keyed by name.
+
+    A name maps to several versions when uv forked the resolution.
 
     Raises:
         pydantic.ValidationError: The file is not a uv lockfile.
     """
     with lockfile.open("rb") as file:
         lock = Lockfile.model_validate(tomllib.load(file))
-    return {
-        package.name: package.version
-        for package in lock.package
-        if package.version is not None and package.name not in OWN_PACKAGES
-    }
+    versions: defaultdict[str, set[str]] = defaultdict(set)
+    for package in lock.package:
+        if package.version is not None and package.name not in OWN_PACKAGES:
+            versions[package.name].add(package.version)
+    return {name: frozenset(found) for name, found in versions.items()}
 
 
-def find_drift(backend: Mapping[str, str], ingest: Mapping[str, str]) -> list[Drift]:
+def find_drift(
+    backend: Mapping[str, frozenset[str]], ingest: Mapping[str, frozenset[str]]
+) -> list[Drift]:
     """Return the shared packages whose versions differ; pure."""
     return [
         Drift(name, backend[name], ingest[name])
@@ -76,12 +91,20 @@ def find_drift(backend: Mapping[str, str], ingest: Mapping[str, str]) -> list[Dr
     ]
 
 
-def relock_command(drift: Sequence[Drift]) -> str:
-    """Return the ``uv lock`` command that realigns ingest."""
-    pins = " ".join(
-        f"-P {shlex.quote(f'{d.name}=={d.backend_version}')}" for d in drift
-    )
-    return f"(cd ingest && uv lock {pins})"
+def relock_command(drift: Sequence[Drift]) -> str | None:
+    """Return the ``uv lock`` command that realigns ingest.
+
+    Forked packages are left out (see ``Drift.forked``); ``None`` when
+    every drifted package is forked.
+    """
+    pins = [
+        f"-P {shlex.quote(f'{d.name}=={next(iter(d.backend_versions))}')}"
+        for d in drift
+        if not d.forked
+    ]
+    if not pins:
+        return None
+    return f"(cd ingest && uv lock {' '.join(pins)})"
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -108,17 +131,26 @@ def main(argv: Sequence[str] | None = None) -> int:
         file=sys.stderr,
     )
     for d in drift:
+        note = " (forked resolution: realign by hand)" if d.forked else ""
         print(
-            f"  {d.name}: backend {d.backend_version}, ingest {d.ingest_version}",
+            f"  {d.name}: backend {_join(d.backend_versions)},"
+            f" ingest {_join(d.ingest_versions)}{note}",
             file=sys.stderr,
         )
     print(
         "\nThe backend's versions win. If the backend should move instead,"
-        " update backend/uv.lock first. To realign ingest, run:\n\n"
-        f"  {relock_command(drift)}",
+        " update backend/uv.lock first.",
         file=sys.stderr,
     )
+    command = relock_command(drift)
+    if command is not None:
+        print(f"To realign ingest, run:\n\n  {command}", file=sys.stderr)
     return 1
+
+
+def _join(versions: frozenset[str]) -> str:
+    """Return the versions, sorted, as one string."""
+    return ", ".join(sorted(versions))
 
 
 if __name__ == "__main__":
