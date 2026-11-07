@@ -54,6 +54,26 @@ class UnitType(StrEnum):
     """A Mobile Doll: an unmanned, AI-piloted unit (After Colony)."""
 
 
+class MobileSuitRelationType(StrEnum):
+    """How one mobile suit descends from another, read from → to.
+
+    ``(Worker Zaku, Zaku II, variant_of)`` reads "the Worker Zaku is a
+    variant of the Zaku II".
+    """
+
+    VARIANT_OF = "variant_of"
+    """A modified model of the same line, such as the Zaku II Kai."""
+    DEVELOPED_FROM = "developed_from"
+    """A new design built on another's technology: Hi-Zack from GM."""
+    UPGRADE_OF = "upgrade_of"
+    """The same unit refitted, such as the Full Armor Gundam."""
+    ALTERNATE_VERSION_OF = "alternate_version_of"
+    """The same unit as another work depicts it: RX-78-02 and RX-78-2.
+
+    Written in one direction only; the loader picks which.
+    """
+
+
 class SourceKind(StrEnum):
     """The kind of upstream page a catalog fact came from.
 

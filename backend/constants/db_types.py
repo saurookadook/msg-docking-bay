@@ -7,6 +7,7 @@ from sqlalchemy import Enum
 from constants.catalog import (
     ContentLicense,
     IngestRunStatus,
+    MobileSuitRelationType,
     SourceKind,
     UnitType,
     WorkRelationType,
@@ -53,6 +54,13 @@ INGEST_RUN_STATUS_DB_TYPE: Final[Enum] = Enum(
 UNIT_TYPE_DB_TYPE: Final[Enum] = Enum(
     UnitType,
     name="unit_type",
+    values_callable=enum_values,
+    metadata=BaseDB.metadata,
+)
+
+MOBILE_SUIT_RELATION_TYPE_DB_TYPE: Final[Enum] = Enum(
+    MobileSuitRelationType,
+    name="mobile_suit_relation_type",
     values_callable=enum_values,
     metadata=BaseDB.metadata,
 )
