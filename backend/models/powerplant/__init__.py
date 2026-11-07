@@ -1,0 +1,1 @@
+"""The powerplant part entity."""

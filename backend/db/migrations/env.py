@@ -16,11 +16,13 @@ from models.material.db import MaterialDB
 from models.mobile_suit.db import MobileSuitDB
 from models.mobile_suit_appearance.db import MobileSuitAppearanceDB
 from models.mobile_suit_relation.db import MobileSuitRelationDB
+from models.powerplant.db import PowerplantDB
 from models.source.db import SourceDB
 from models.spec_sheet.db import SpecSheetDB
 from models.spec_sheet_armament.db import SpecSheetArmamentDB
 from models.spec_sheet_equipment.db import SpecSheetEquipmentDB
 from models.spec_sheet_material.db import SpecSheetMaterialDB
+from models.spec_sheet_powerplant.db import SpecSheetPowerplantDB
 from models.work.db import WorkDB
 from models.work_relation.db import WorkRelationDB
 from models.work_short_name.db import WorkShortNameDB
@@ -34,11 +36,13 @@ MODELS: Final = (
     MobileSuitAppearanceDB,
     MobileSuitDB,
     MobileSuitRelationDB,
+    PowerplantDB,
     SourceDB,
     SpecSheetArmamentDB,
     SpecSheetDB,
     SpecSheetEquipmentDB,
     SpecSheetMaterialDB,
+    SpecSheetPowerplantDB,
     WorkDB,
     WorkRelationDB,
     WorkShortNameDB,
