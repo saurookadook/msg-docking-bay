@@ -30,3 +30,10 @@ tasks:
       runFromWorkspaceRoot: true
       # CI runs the Compose test job directly, not through moon (MCI-1).
       runInCI: false
+  # ingest runs the backend's code, so every package both lockfiles hold must be at the
+  # backend's version; Dependabot updates the two in separate PRs, so they drift. Runs
+  # in the pre-commit hook whenever either lockfile is staged.
+  lock-drift:
+    command: 'uv'
+    args: ['run', 'python', '../scripts/check-uv-lock-drift.py']
+    inputs: ['/backend/uv.lock', 'uv.lock', '/scripts/check-uv-lock-drift.py']

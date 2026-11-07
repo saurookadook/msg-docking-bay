@@ -16,7 +16,7 @@ vcs:
   sync: false
   hooks:
     pre-commit:
-      - 'moon run :lint :format --affected --status=staged'
+      - 'moon run :lint :format :lock-drift --affected --status=staged'
 
 constraints:
   enforceLayerRelationships: true

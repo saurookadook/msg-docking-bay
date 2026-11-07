@@ -28,8 +28,10 @@ are in `docs/plans/` (`data-ingestion.md`, `phase-2-ingest-service.md`).
 - Tests reuse the backend's test support: `_fixtures.db` (loaded in `conftest.py`),
   `_factories` and `_mocks`.
 - **Shared dependencies lock to the backend's versions.** After `uv lock` here, or after
-  an upgrade in `backend/uv.lock`, compare the two lockfiles and re-lock with
-  `uv lock -P <package>==<backend version>` until every shared package matches.
+  an upgrade in `backend/uv.lock`, run `moon run ingest:lock-drift`. It lists every
+  package the two lockfiles hold at different versions and prints the `uv lock -P …`
+  command that realigns this one. The pre-commit hook runs it when either lockfile is
+  staged.
 
 ## Read first when the task touches
 
