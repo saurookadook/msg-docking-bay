@@ -86,8 +86,9 @@ reportUnnecessaryTypeIgnoreComment = "error"  # stale suppressions fail (PY-10)
 # editable install, strict mode reports every backend module as missing
 # type stubs.
 extraPaths = ["../backend"]
-# The lockfile drift check runs in this environment (ingest/moon.yml).
-include = [".", "../scripts/check-uv-lock-drift.py"]
+# The lockfile drift check and its tests run in this environment
+# (ingest/moon.yml).
+include = [".", "../scripts"]
 
 [tool.uv.sources]
 msg-docking-bay-backend = { path = "../backend", editable = true }
