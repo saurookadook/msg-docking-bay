@@ -35,7 +35,7 @@ tasks:
   # Builds frontend-prod and pushes it to Docker Hub (ENV-41); credentials from 1Password.
   publish:
     command: 'scripts/publish-images.sh frontend'
-    inputs: []  # pushes an image; nothing to cache
+    inputs: [] # pushes an image; nothing to cache
     preset: 'utility'
     options:
       runFromWorkspaceRoot: true
