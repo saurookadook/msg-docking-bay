@@ -9,6 +9,7 @@ from constants.catalog import (
     ContentLicense,
     EquipmentFit,
     IngestRunStatus,
+    MaterialUse,
     MobileSuitRelationType,
     SourceKind,
     UnitType,
@@ -77,6 +78,13 @@ ARMAMENT_MOUNT_DB_TYPE: Final[Enum] = Enum(
 EQUIPMENT_FIT_DB_TYPE: Final[Enum] = Enum(
     EquipmentFit,
     name="equipment_fit",
+    values_callable=enum_values,
+    metadata=BaseDB.metadata,
+)
+
+MATERIAL_USE_DB_TYPE: Final[Enum] = Enum(
+    MaterialUse,
+    name="material_use",
     values_callable=enum_values,
     metadata=BaseDB.metadata,
 )

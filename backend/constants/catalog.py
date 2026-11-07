@@ -92,6 +92,13 @@ class EquipmentFit(StrEnum):
     OPTIONAL = "optional"
 
 
+class MaterialUse(StrEnum):
+    """What a spec sheet's material is used for."""
+
+    ARMOR = "armor"
+    FRAME = "frame"
+
+
 class SourceKind(StrEnum):
     """The kind of upstream page a catalog fact came from.
 
