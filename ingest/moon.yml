@@ -18,3 +18,15 @@ project:
 tasks:
   typecheck:
     inputs: ['/backend/**/*.py', '/backend/pyproject.toml', '/backend/uv.lock']
+  # The suite needs PostgreSQL, so it runs in the ingest-test Compose service, in the
+  # same Compose project as backend:test (ENV-4), never on the host. The mutex keeps
+  # the two from sharing one test database at once.
+  test:
+    command: 'scripts/ingest-test.sh'
+    inputs: []  # cache is off; every run rebuilds the image and starts a fresh database
+    options:
+      cache: false
+      mutex: 'compose-test-db'
+      runFromWorkspaceRoot: true
+      # CI runs the Compose test job directly, not through moon (MCI-1).
+      runInCI: false
