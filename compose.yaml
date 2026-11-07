@@ -199,6 +199,56 @@ services:
       disable: true
     secrets: [db_owner_password]
 
+  # The batch ingest CLI (ingest/, docs/decisions/0002-data-ingestion.md):
+  # `docker compose --profile ingest run --rm ingest <command>`, e.g. `status`. It writes
+  # rows as the app role and never migrates; every command checks first that the
+  # database is at the backend's head (`moon run backend:migrate`).
+  ingest:
+    build:
+      context: ./ingest
+      target: ingest-dev
+      # The backend is ingest's path dependency (ingest/Dockerfile).
+      additional_contexts:
+        backend: ./backend
+    profiles: [ingest]
+    entrypoint: ["python", "-m", "ingest"]
+    env_file: [.env]
+    environment:
+      DATABASE_PASSWORD_FILE: /run/secrets/db_app_password
+    secrets: [db_app_password]
+    # Mounted, not baked in, so a run uses the current code without a rebuild. The
+    # environment is in /opt/venv, outside both mounts.
+    volumes:
+      - ./ingest:/app/ingest
+      - ./backend:/app/backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+
+  # Run through scripts/ingest-test.sh (`moon run ingest:test`), in the same Compose
+  # project and against the same test database as backend-test (ENV-4, ENV-8). The suite
+  # migrates that database itself, so it connects as the owner role (PG-13). It tests
+  # the image, so it drops the source mounts and the CLI entrypoint.
+  ingest-test:
+    extends: ingest
+    # !override: extends would append to the lists, keeping the ingest profile
+    # and the app role's secret.
+    profiles: !override [test]
+    build:
+      target: ingest-test
+    entrypoint: !reset null
+    volumes: !reset []
+    env_file: [.env.test]
+    environment:
+      DATABASE_USER: ${DATABASE_OWNER_USER}
+      DATABASE_PASSWORD_FILE: /run/secrets/db_owner_password
+    secrets: !override [db_owner_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # The published database image (postgres/Dockerfile), with postgres/initdb/ baked in.
   # Rebuild after changing an init script; it runs only on an empty data folder.
   postgres:

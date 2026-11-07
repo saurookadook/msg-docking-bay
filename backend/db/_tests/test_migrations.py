@@ -1,7 +1,7 @@
 from alembic import command
 from alembic.script import ScriptDirectory
 
-from conftest import alembic_config
+from _fixtures.db import alembic_config
 
 
 class TestMigrations:

@@ -70,6 +70,8 @@ The whole stack runs in Docker Compose behind an NGINX proxy at
 | `moon run frontend:test`                 | Vitest                                                      |
 | `moon run backend:test`                  | pytest against a throwaway database, in its own Compose project |
 | `moon run backend:migrate`               | `alembic upgrade head`, as the owner role                   |
+| `moon run ingest:test`                   | the ingest service's pytest suite, in the same throwaway Compose project |
+| `docker compose --profile ingest run --rm ingest <cmd>` | an ingest command (`status`, `--help`), as the app role, with the current source mounted |
 | `docker compose run --rm backend-migrations revision --autogenerate -m "..."` | new migration |
 | `docker compose run --rm backend <cmd>`  | any command in the backend's image (rebuild it first: Watch only syncs the running container) |
 | `moon run :format-write :lint-fix`       | fix formatting and autofixable lint                         |
@@ -87,12 +89,14 @@ The whole stack runs in Docker Compose behind an NGINX proxy at
   regenerating a file, the next `up` picks it up.
 - **Database roles.** On a fresh volume, `postgres/initdb/` creates the two roles named
   in `.env`: `DATABASE_OWNER_USER` (owns the schema, runs migrations) and
-  `DATABASE_APP_USER` (reads and writes rows; the backend's role, as `DATABASE_USER`).
+  `DATABASE_APP_USER` (reads and writes rows; the backend's and the ingest service's
+  role, as `DATABASE_USER`).
   To start over: `docker compose down -v`.
 - **Proxy.** `nginx-reverse-proxy/templates/default.conf.template` routes `/api` and `/ws/` to the
   backend and everything else, including Vite's HMR socket, to the frontend.
-- **Versions.** `.prototools` pins every tool. `frontend/.nvmrc` and
-  `backend/.python-version` repeat the Node and Python pins and must stay equal.
+- **Versions.** `.prototools` pins every tool. `frontend/.nvmrc`,
+  `backend/.python-version` and `ingest/.python-version` repeat the Node and Python pins
+  and must stay equal.
 - **Production images** are the `-prod` stages of `backend/Dockerfile`,
   `frontend/Dockerfile` (Caddy, `frontend/Caddyfile`), and `postgres/Dockerfile`, listed
   in `docker-bake.hcl`; see

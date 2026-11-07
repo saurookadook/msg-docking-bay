@@ -55,6 +55,8 @@ which also opens the stack to your network.
 | `moon run frontend:test`                | frontend tests (Vitest)                                        |
 | `moon run backend:test`                 | backend tests (pytest) against a throwaway database            |
 | `moon run backend:migrate`              | apply migrations                                               |
+| `moon run ingest:test`                  | ingest tests (pytest) against a throwaway database             |
+| `docker compose --profile ingest run --rm ingest status` | the schema revision and each source's latest ingest run |
 | `docker compose run --rm backend-migrations revision --autogenerate -m "..."` | create a migration |
 | `docker compose down -v`                | reset everything, including the database volume                |
 

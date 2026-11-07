@@ -36,6 +36,7 @@ packages = ["api", "config", "constants", "db", "models", "utils"]
 omit = [
     "**/_tests/**",
     "_factories/**",
+    "_fixtures/**",
     "_mocks/**",
     ".venv/**",
     "conftest.py",
@@ -64,6 +65,7 @@ extend-select = [
 "**/_tests/**" = ["D"]           # test docstrings follow pytest.md PYTEST-8
 "**/conftest.py" = ["D"]
 "_factories/**" = ["D"]
+"_fixtures/**" = ["D"]
 "_mocks/**" = ["D"]
 
 [tool.ruff.lint.pycodestyle]
