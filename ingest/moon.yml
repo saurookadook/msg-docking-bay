@@ -56,3 +56,10 @@ tasks:
     command: 'uv'
     args: ['run', '--locked', 'python', '../scripts/check-uv-lock-drift.py']
     inputs: ['/backend/uv.lock', 'uv.lock', '/scripts/check-uv-lock-drift.py']
+  # The script's own tests: no database, so they run on the host.
+  lock-drift-test:
+    command: 'uv'
+    args: ['run', '--locked', '--project', 'ingest', 'pytest', 'scripts']
+    inputs: ['/scripts/**/*.py', '/scripts/pytest.ini', 'uv.lock']
+    options:
+      runFromWorkspaceRoot: true

@@ -23,5 +23,8 @@ jobs:
         with:
           project: "ingest"
 
+      - name: "🖊️ Test the lockfile check"
+        run: uv run --locked --project ingest pytest scripts
+
       - name: "🧹 Check ingest's lockfile against the backend's"
         run: uv run --locked --project ingest python scripts/check-uv-lock-drift.py
