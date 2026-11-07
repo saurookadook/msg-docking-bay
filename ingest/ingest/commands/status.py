@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime
 
 from rich.console import Console
-from rich.table import Table
+from rich.table import Column, Table
 
 from constants.catalog import IngestRunStatus, SourceKind
 from ingest.commands.command import Command
@@ -39,22 +39,23 @@ COMMAND = Command(
 def _runs_table(
     latest: dict[SourceKind, RunSummary], succeeded: dict[SourceKind, RunSummary]
 ) -> Table:
+    # Fold rather than truncate: a non-terminal console (a pipe, or a
+    # container without a TTY) is 80 columns, and every value must
+    # still show in full. Six columns keep the headers whole there.
     table = Table(
-        "Source",
-        "Last run",
-        "Started",
-        "Finished",
-        "Pages",
-        "Rows",
-        "Errors",
-        "Watermark",
+        Column("Source", no_wrap=True),
+        *(
+            Column(header, min_width=len(header), overflow="fold")
+            for header in ("Last run", "Started", "Finished", "Counts", "Watermark")
+        ),
+        caption="Counts: pages seen / rows written / errors",
     )
     for kind in SourceKind:
         run = latest.get(kind)
         last_success = succeeded.get(kind)
         watermark = _when(last_success.watermark_at) if last_success else NEVER
         if run is None:
-            table.add_row(kind.value, "never", *[NEVER] * 5, watermark)
+            table.add_row(kind.value, "never", NEVER, NEVER, NEVER, watermark)
             continue
         status = run.status.value
         if run.error_summary:
@@ -64,9 +65,7 @@ def _runs_table(
             status,
             _when(run.started_at),
             _when(run.finished_at),
-            str(run.pages_seen),
-            str(run.rows_written),
-            str(run.error_count),
+            f"{run.pages_seen} / {run.rows_written} / {run.error_count}",
             watermark,
         )
     return table

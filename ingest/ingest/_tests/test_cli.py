@@ -59,6 +59,32 @@ class TestStatus:
         assert "failed (ValueError)" in fandom_row
         assert WATERMARK.isoformat(timespec="seconds") in fandom_row
 
+    def test_folds_rather_than_truncates_on_an_80_column_console(
+        self,
+        test_db_session: Session,
+        mock_utcnow: datetime,
+        run_sessions: SessionFactory,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A pipe or a container without a TTY gets 80 columns."""
+        monkeypatch.setenv("COLUMNS", "80")
+        IngestRunDBFactory(
+            error_summary="23514 ck_ingest_runs_pages_seen_not_negative",
+            finished_at=mock_utcnow,
+            status=IngestRunStatus.FAILED,
+            watermark_at=WATERMARK,
+        )
+        test_db_session.commit()
+
+        assert main(["status"], session_factory=run_sessions) == 0
+
+        out = capsys.readouterr().out
+        assert "…" not in out
+        assert max(len(line) for line in out.splitlines()) <= 80
+        for kind in SourceKind:
+            assert kind.value in out
+
     def test_exits_1_with_the_fix_when_the_schema_is_not_at_head(
         self,
         run_sessions: SessionFactory,
