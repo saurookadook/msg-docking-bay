@@ -77,19 +77,19 @@ class TestSpecSheetDB:
         ).scalar_one()
 
         assert row.configuration == "Waverider"
-        assert row.empty_weight_kg == 28_700.0
-        assert row.generator_output_kw == 2_020.0
-        assert row.gross_weight_kg == 62_300.0
-        assert row.head_height_m == 19.85
-        assert row.max_acceleration_g == 1.5
-        assert row.max_speed_kmh == 7_200.0
+        assert row.empty_weight_kg == pytest.approx(28_700.0, rel=1e-6)
+        assert row.generator_output_kw == pytest.approx(2_020.0, rel=1e-6)
+        assert row.gross_weight_kg == pytest.approx(62_300.0, rel=1e-6)
+        assert row.head_height_m == pytest.approx(19.85, rel=1e-6)
+        assert row.max_acceleration_g == pytest.approx(1.5, rel=1e-6)
+        assert row.max_speed_kmh == pytest.approx(7_200.0, rel=1e-6)
         assert row.mobile_suit_id == ZETA_ID
-        assert row.overall_height_m == 21.5
+        assert row.overall_height_m == pytest.approx(21.5, rel=1e-6)
         assert row.raw_infobox == {"headheight": "19.85~MS mode", "armor": "Gundarium"}
-        assert row.sensor_range_m == 16_200.0
+        assert row.sensor_range_m == pytest.approx(16_200.0, rel=1e-6)
         assert row.source_id == SOURCE_ID
-        assert row.total_thrust_kg == 112_600.0
-        assert row.turn_time_s == 1.8
+        assert row.total_thrust_kg == pytest.approx(112_600.0, rel=1e-6)
+        assert row.turn_time_s == pytest.approx(1.8, rel=1e-6)
         assert row.created_at == mock_utcnow
         assert row.updated_at == mock_utcnow
 
