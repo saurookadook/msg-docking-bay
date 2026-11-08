@@ -21,3 +21,24 @@ def slug_format(column: str = "slug") -> CheckConstraint:
 def not_own_parent(column: str) -> CheckConstraint:
     """Stop a self-referencing row from naming itself (RDB-7)."""
     return CheckConstraint(f"{column} <> id", name="not_own_parent")
+
+
+def positive(column: str) -> CheckConstraint:
+    """Require a number above zero; a NULL passes (RDB-14)."""
+    return CheckConstraint(f"{column} > 0", name=f"{column}_positive")
+
+
+def ordered_range(
+    low: str, high: str, *, name: str
+) -> tuple[CheckConstraint, CheckConstraint]:
+    """Keep an optional range in order, and its high end with a low.
+
+    ``name`` is the range as a plural, such as ``"quantities"``. The
+    high end alone is rejected: an exact value sets only the low end.
+    """
+    return (
+        CheckConstraint(f"{high} >= {low}", name=f"{name}_in_order"),
+        CheckConstraint(
+            f"{high} IS NULL OR {low} IS NOT NULL", name=f"{high}_needs_{low}"
+        ),
+    )

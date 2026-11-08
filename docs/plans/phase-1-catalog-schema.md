@@ -73,8 +73,9 @@ and mapping/constraint tests that run against real PostgreSQL. Pydantic entities
   (SQLA-4).
   - Columns are listed alphabetically, then relationships, then `__table_args__` (SQLA-6).
   - Each relationship uses `lazy="raise"` and `back_populates` (SQLA-10).
-  - Junction models live in the folder of the side that owns them, e.g. `models/spec_sheet/` holds
-    `spec_sheet_armaments`.
+  - Each junction model has its own folder, e.g. `models/spec_sheet_armament/db.py`. *Changed
+    during implementation:* PR A put `work_relations` in `models/work_relation/` rather than in the
+    owning side's folder, and PR B follows it.
 - **Inherited columns:** `id` (uuidv7) comes from `BaseDB`, in `backend/db/base_db.py`.
   `created_at` and `updated_at` come from the new `models/mixins/db.py` `TimestampsDB` (SQLA-7).
   Junction tables get `created_at` only (RDB-17).
@@ -145,13 +146,13 @@ Notation: `?` marks a nullable column. *E* marks an enum.
 | --- | --- |
 | `mobile_suits` | name, `name_ja?`, `model_number?`, slug, `unit_type` *E* (suit, armor, fighter, man_machine, worker, pod, doll), `continuity_id?` (SET NULL), `fandom_page_id?` int unique |
 | `mobile_suit_relations` | On `JunctionBaseDB`. PK (`from_mobile_suit_id`, `relation_type` *E*: variant_of, developed_from, upgrade_of, alternate_version_of, `to_mobile_suit_id`), CASCADE, `source_id` (RESTRICT, indexed), CHECK from ≠ to, index `to_mobile_suit_id`, `created_at` |
-| `mobile_suit_appearances` | On `JunctionBaseDB`. PK (`mobile_suit_id`, `work_id`), CASCADE, `source_id` (RESTRICT, indexed), `is_debut` bool default false, `first_episode?`/`last_episode?` int, CHECK 1 ≤ first ≤ last, index `work_id` |
-| `spec_sheets` | `mobile_suit_id` (CASCADE), `source_id` (RESTRICT, indexed), `configuration?` (CHECK ≠ ''), UNIQUE NULLS NOT DISTINCT (mobile_suit_id, source_id, configuration); double precision measurements, each with CHECK > 0: `head_height_m?`, `overall_height_m?`, `empty_weight_kg?`, `gross_weight_kg?`, `generator_output_kw?`, `total_thrust_kg?`, `sensor_range_m?`, `max_acceleration_g?`, `max_speed_kmh?`, `turn_time_s?`; `raw_infobox` jsonb default '{}' |
+| `mobile_suit_appearances` | On `JunctionBaseDB`. PK (`mobile_suit_id`, `work_id`), CASCADE, `source_id` (RESTRICT, indexed), `is_debut` bool default false, `first_episode?`/`last_episode?` int, CHECK 1 ≤ first ≤ last and last requires first, index `work_id` |
+| `spec_sheets` | `mobile_suit_id` (CASCADE), `source_id` (RESTRICT, indexed), `configuration?` (CHECK ≠ ''), UNIQUE NULLS NOT DISTINCT (mobile_suit_id, source_id, configuration); double precision measurements, each with CHECK > 0: `head_height_m?`, `overall_height_m?`, `empty_weight_kg?`, `gross_weight_kg?`, `generator_output_kw?`, `total_thrust_kg?`, `sensor_range_m?`, `max_acceleration_g?`, `max_speed_kmh?`, `turn_time_s?`; `raw_infobox` jsonb default '{}', CHECK it is a JSON object |
 | `armaments` / `equipment` / `materials` / `powerplants` | name, slug, `fandom_page_title?` unique |
-| `spec_sheet_armaments` | On `JunctionBaseDB`. PK (`armament_id`, `mount` *E*: fixed, handheld, optional_fixed, optional_handheld, `spec_sheet_id`), `quantity_min?`/`quantity_max?` with CHECK 1 ≤ min ≤ max, `note?`; armament RESTRICT, sheet CASCADE, index `spec_sheet_id` (it does not lead the key) |
+| `spec_sheet_armaments` | On `JunctionBaseDB`. PK (`armament_id`, `mount` *E*: fixed, handheld, optional_fixed, optional_handheld, `spec_sheet_id`), `quantity_min?`/`quantity_max?` with CHECK 1 ≤ min ≤ max and max requires min, `note?`; armament RESTRICT, sheet CASCADE, index `spec_sheet_id` (it does not lead the key) |
 | `spec_sheet_equipment` | Same pattern. PK (`equipment_id`, `fit` *E*: standard, optional, `spec_sheet_id`), `note?`; equipment RESTRICT, sheet CASCADE, index `spec_sheet_id` |
 | `spec_sheet_materials` | Same pattern. PK (`material_id`, `material_use` *E*: armor, frame, `spec_sheet_id`), `note?`; material RESTRICT, sheet CASCADE, index `spec_sheet_id` |
-| `spec_sheet_powerplants` | Same pattern. PK (`powerplant_id`, `spec_sheet_id`), `quantity_min?`/`quantity_max?`, `note?`; powerplant RESTRICT, sheet CASCADE, index `spec_sheet_id` |
+| `spec_sheet_powerplants` | Same pattern. PK (`powerplant_id`, `spec_sheet_id`), `quantity_min?`/`quantity_max?` (the armament checks), `note?`; powerplant RESTRICT, sheet CASCADE, index `spec_sheet_id` |
 
 **PR C — people and organizations**
 | Table | Key columns and constraints |
@@ -202,6 +203,7 @@ Branch: the current `feat/backend-database-setup`.
      yet, so the test suite is where this check runs.
 
 ### PR B — `feat(backend): add mobile suit, spec sheet and part tables`
+**Detailed plan: [`phase-1b-mobile-suit-schema.md`](phase-1b-mobile-suit-schema.md).**
 Branch: `feat/add-mobile-suit-schema`, off `main` after PR A merges.
 - One checkpoint per table: `mobile_suits` → `mobile_suit_relations` → `mobile_suit_appearances` →
   `spec_sheets` → `armaments` + `spec_sheet_armaments` → the same for equipment, materials and
