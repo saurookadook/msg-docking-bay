@@ -45,7 +45,7 @@ def upgrade() -> None:
         ),
         sa.CheckConstraint(
             "quantity_max IS NULL OR quantity_min IS NOT NULL",
-            name=op.f("ck_spec_sheet_powerplants_quantity_max_needs_min"),
+            name=op.f("ck_spec_sheet_powerplants_quantity_max_needs_quantity_min"),
         ),
         sa.CheckConstraint(
             "quantity_min > 0",

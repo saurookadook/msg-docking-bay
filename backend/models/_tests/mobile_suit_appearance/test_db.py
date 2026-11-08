@@ -155,7 +155,7 @@ class TestMobileSuitAppearanceDBConstraints:
             ),
             (
                 {"last_episode": 9},
-                "ck_mobile_suit_appearances_last_episode_needs_first",
+                "ck_mobile_suit_appearances_last_episode_needs_first_episode",
             ),
         ],
     )

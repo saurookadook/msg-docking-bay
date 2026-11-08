@@ -50,7 +50,7 @@ def upgrade() -> None:
         # A range needs its start: a last episode alone means nothing.
         sa.CheckConstraint(
             "last_episode IS NULL OR first_episode IS NOT NULL",
-            name=op.f("ck_mobile_suit_appearances_last_episode_needs_first"),
+            name=op.f("ck_mobile_suit_appearances_last_episode_needs_first_episode"),
         ),
         # CASCADE on suit and work: an appearance needs both.
         sa.ForeignKeyConstraint(

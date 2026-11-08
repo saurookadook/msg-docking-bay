@@ -2,11 +2,11 @@
 
 import uuid
 
-from sqlalchemy import CheckConstraint, ForeignKey
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.base_db import JunctionBaseDB
-from models.mixins.checks import not_empty, positive
+from models.mixins.checks import not_empty, ordered_range, positive
 from models.mixins.db import CreatedAtDB
 
 
@@ -35,10 +35,6 @@ class SpecSheetPowerplantDB(JunctionBaseDB, CreatedAtDB):
 
     __table_args__ = (
         not_empty("note"),
-        CheckConstraint("quantity_max >= quantity_min", name="quantities_in_order"),
-        CheckConstraint(
-            "quantity_max IS NULL OR quantity_min IS NOT NULL",
-            name="quantity_max_needs_min",
-        ),
+        *ordered_range("quantity_min", "quantity_max", name="quantities"),
         positive("quantity_min"),
     )

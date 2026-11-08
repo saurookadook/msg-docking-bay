@@ -137,7 +137,10 @@ class TestSpecSheetPowerplantDBConstraints:
                 {"quantity_min": 4, "quantity_max": 2},
                 "ck_spec_sheet_powerplants_quantities_in_order",
             ),
-            ({"quantity_max": 2}, "ck_spec_sheet_powerplants_quantity_max_needs_min"),
+            (
+                {"quantity_max": 2},
+                "ck_spec_sheet_powerplants_quantity_max_needs_quantity_min",
+            ),
         ],
     )
     def test_rejects_an_invalid_quantity(

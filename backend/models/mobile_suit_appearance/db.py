@@ -2,11 +2,11 @@
 
 import uuid
 
-from sqlalchemy import CheckConstraint, ForeignKey, false
+from sqlalchemy import ForeignKey, false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.base_db import JunctionBaseDB
-from models.mixins.checks import positive
+from models.mixins.checks import ordered_range, positive
 from models.mixins.db import CreatedAtDB
 
 
@@ -38,10 +38,6 @@ class MobileSuitAppearanceDB(JunctionBaseDB, CreatedAtDB):
     """Indexed: it does not lead the primary key (RDB-18)."""
 
     __table_args__ = (
-        CheckConstraint("last_episode >= first_episode", name="episodes_in_order"),
+        *ordered_range("first_episode", "last_episode", name="episodes"),
         positive("first_episode"),
-        CheckConstraint(
-            "last_episode IS NULL OR first_episode IS NOT NULL",
-            name="last_episode_needs_first",
-        ),
     )
