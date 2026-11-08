@@ -23,6 +23,7 @@ WORKER_ZAKU_ID = uuid.UUID("019a1984-0750-7142-aedd-75291c5ba003")
 HI_ZACK_ID = uuid.UUID("019a1984-0750-7142-aedd-75291c5ba004")
 MARASAI_ID = uuid.UUID("019a1984-0750-7142-aedd-75291c5ba005")
 GELGOOG_ID = uuid.UUID("019a1984-0750-7142-aedd-75291c5ba006")
+GELGOOG_CANNON_ID = uuid.UUID("019a1984-0750-7142-aedd-75291c5ba008")
 SOURCE_ID = uuid.UUID("019a1984-0750-7142-aedd-75291c5ba007")
 
 # An edge reads "from is a <type> of to", so a descendant is on the
@@ -138,7 +139,7 @@ class TestMobileSuitLineage:
         assert walk(test_db_session, DESCENDANTS, GELGOOG_ID) == set()
         assert walk(test_db_session, ANCESTORS, GELGOOG_ID) == set()
 
-    def test_stops_at_a_cycle_instead_of_looping(
+    def test_stops_at_a_three_suit_cycle_instead_of_looping(
         self, test_db_session: Session
     ) -> None:
         """Bad upstream data can loop; ``CYCLE`` ends the walk there.
@@ -159,3 +160,16 @@ class TestMobileSuitLineage:
             HI_ZACK_ID,
             GM_ID,
         }
+
+    def test_stops_at_a_two_suit_cycle_instead_of_looping(
+        self, test_db_session: Session
+    ) -> None:
+        """Two suits each an upgrade of the other: the shortest loop."""
+        MobileSuitDBFactory(id=GELGOOG_CANNON_ID, name="Gelgoog Cannon")
+        test_db_session.flush()
+        link(GELGOOG_CANNON_ID, MobileSuitRelationType.UPGRADE_OF, GELGOOG_ID)
+        link(GELGOOG_ID, MobileSuitRelationType.UPGRADE_OF, GELGOOG_CANNON_ID)
+        test_db_session.commit()
+
+        assert walk(test_db_session, DESCENDANTS, GELGOOG_ID) == {GELGOOG_CANNON_ID}
+        assert walk(test_db_session, ANCESTORS, GELGOOG_ID) == {GELGOOG_CANNON_ID}
