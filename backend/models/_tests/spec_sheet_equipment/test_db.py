@@ -156,7 +156,7 @@ class TestSpecSheetEquipmentDBConstraints:
 
         assert violated_constraint(exc_info.value) == ("23503", constraint)
 
-    def test_blocks_deleting_a_item_a_sheet_still_lists(
+    def test_blocks_deleting_an_item_a_sheet_still_lists(
         self, test_db_session: Session
     ) -> None:
         """RESTRICT: a listed part cannot vanish from under a sheet."""

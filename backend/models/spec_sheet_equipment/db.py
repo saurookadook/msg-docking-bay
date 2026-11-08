@@ -33,7 +33,7 @@ class SpecSheetEquipmentDB(JunctionBaseDB, CreatedAtDB):
     equipment_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("equipment.id", ondelete="RESTRICT"), primary_key=True
     )
-    """RESTRICT: a item a sheet still lists cannot be deleted."""
+    """RESTRICT: an item a sheet still lists cannot be deleted."""
     fit: Mapped[EquipmentFit] = mapped_column(EQUIPMENT_FIT_DB_TYPE, primary_key=True)
     note: Mapped[str | None]
     """The infobox's ``~`` note on this entry, kept as written."""

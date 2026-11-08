@@ -18,7 +18,7 @@ class EquipmentDBFactory(
     SQLAlchemyModelFactory,
     metaclass=BaseMetaFactory[EquipmentDB],
 ):
-    """Build a item with no wiki page."""
+    """Build an item with no wiki page."""
 
     class Meta:
         model = EquipmentDB
