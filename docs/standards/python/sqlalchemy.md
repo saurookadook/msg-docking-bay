@@ -63,7 +63,12 @@ class BaseDB(DeclarativeBase):
 ```
 
 Name every `CheckConstraint` (`CheckConstraint("priority BETWEEN 1 AND 5",
-name="priority_range")`): the `ck` template needs `%(constraint_name)s`.
+name="priority_range")`): the `ck` template needs `%(constraint_name)s`. Where the name
+mentions a column, write the column's full name, never a shortened form:
+`price_max_needs_price_min`, not `price_max_needs_min`. A check that several tables share
+comes from a helper in `models/mixins/checks.py` (`not_empty`, `positive`,
+`ordered_range`), which derives the name from the columns it is given, so the same rule
+gets the same name on every table.
 
 Primary, unique, and foreign keys follow PostgreSQL's default names (RDB-10). Indexes use
 the `ix_<table>_<columns>` form shown here; for Python backends this replaces the index
