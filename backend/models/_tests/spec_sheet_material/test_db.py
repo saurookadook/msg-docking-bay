@@ -8,30 +8,22 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from _factories.material.db import MaterialDBFactory
-from _factories.mobile_suit.db import MobileSuitDBFactory
-from _factories.source.db import SourceDBFactory
-from _factories.spec_sheet.db import SpecSheetDBFactory
 from _factories.spec_sheet_material.db import SpecSheetMaterialDBFactory
 from constants.catalog import MaterialUse
 from db.base_db import BaseDB
 from models._tests.integrity import violated_constraint
+from models._tests.spec_sheet_parts import SHEET_ID, row_count, seed_sheet
 from models.material.db import MaterialDB
 from models.spec_sheet.db import SpecSheetDB
 from models.spec_sheet_material.db import SpecSheetMaterialDB
 
 PART_ID = uuid.UUID("019a1984-0750-7142-aedd-75295bf00011")
-SUIT_ID = uuid.UUID("019a1984-0750-7142-aedd-75295bf00012")
-SOURCE_ID = uuid.UUID("019a1984-0750-7142-aedd-75295bf00013")
-SHEET_ID = uuid.UUID("019a1984-0750-7142-aedd-75295bf00014")
 MISSING_ID = uuid.UUID("019a1984-0750-7142-aedd-75295bf000ff")
 
 
 @pytest.fixture
 def sheet_and_material(test_db_session: Session) -> None:
-    MobileSuitDBFactory(id=SUIT_ID)
-    SourceDBFactory(id=SOURCE_ID)
-    test_db_session.flush()
-    SpecSheetDBFactory(id=SHEET_ID, mobile_suit_id=SUIT_ID, source_id=SOURCE_ID)
+    seed_sheet(test_db_session)
     MaterialDBFactory(id=PART_ID, name="Luna Titanium Alloy")
     test_db_session.commit()
 
@@ -40,12 +32,6 @@ def listing(**overrides: Any) -> None:
     SpecSheetMaterialDBFactory(
         **{"material_id": PART_ID, "spec_sheet_id": SHEET_ID, **overrides}
     )
-
-
-def listing_count(test_db_session: Session) -> int:
-    return test_db_session.execute(
-        text("SELECT count(*) FROM spec_sheet_materials")
-    ).scalar_one()
 
 
 class TestSpecSheetMaterialDBTable:
@@ -111,7 +97,7 @@ class TestSpecSheetMaterialDB:
         test_db_session.delete(test_db_session.get_one(SpecSheetDB, SHEET_ID))
         test_db_session.commit()
 
-        assert listing_count(test_db_session) == 0
+        assert row_count(test_db_session, SpecSheetMaterialDB) == 0
 
 
 @pytest.mark.usefixtures("sheet_and_material")
