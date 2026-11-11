@@ -18,6 +18,7 @@ from models.material.db import MaterialDB
 from models.mechanical_designer.db import MechanicalDesignerDB
 from models.mobile_suit.db import MobileSuitDB
 from models.mobile_suit_appearance.db import MobileSuitAppearanceDB
+from models.mobile_suit_organization.db import MobileSuitOrganizationDB
 from models.mobile_suit_pilot.db import MobileSuitPilotDB
 from models.mobile_suit_relation.db import MobileSuitRelationDB
 from models.organization.db import OrganizationDB
@@ -44,6 +45,7 @@ MODELS: Final = (
     MechanicalDesignerDB,
     MobileSuitAppearanceDB,
     MobileSuitDB,
+    MobileSuitOrganizationDB,
     MobileSuitPilotDB,
     MobileSuitRelationDB,
     OrganizationAppearanceDB,

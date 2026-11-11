@@ -99,6 +99,17 @@ class MaterialUse(StrEnum):
     FRAME = "frame"
 
 
+class MobileSuitOrganizationRole(StrEnum):
+    """What an organization does for a mobile suit."""
+
+    MANUFACTURER = "manufacturer"
+    """It builds the suit, such as Anaheim Electronics the Zeta."""
+    OPERATOR = "operator"
+    """It fields the suit, such as the AEUG the Zeta."""
+    DEVELOPER = "developer"
+    """It designs the suit, where that differs from who builds it."""
+
+
 class SourceKind(StrEnum):
     """The kind of upstream page a catalog fact came from.
 
