@@ -57,7 +57,7 @@ services:
     logging: *logging
 
   proxy:
-    image: nginxinc/nginx-unprivileged:1.30.6-trixie@sha256:455cebcadcac0b597cdeaab077d93fb8ad59a98f7ed001dcf8f8693154b5d3d3
+    image: nginxinc/nginx-unprivileged:1.31.7-trixie@sha256:09b0d3eda2aa592d2487f284519419015cab010d7df16cd0fe224b585fc60eb6
     environment:
       # Read by the image's envsubst step, which renders templates/ into conf.d/.
       APP_DOMAIN: ${APP_DOMAIN}
