@@ -74,6 +74,11 @@ Primary, unique, and foreign keys follow PostgreSQL's default names (RDB-10). In
 the `ix_<table>_<columns>` form shown here; for Python backends this replaces the index
 row of RDB-10. Name a GiST or other hand-declared index the same way (`ix_listings_location`).
 
+PostgreSQL cuts identifiers at 63 characters, so check any derived name that might pass it.
+Where it does, name the constraint `<table>_<what it identifies>_<suffix>`
+(`mobile_suit_organizations_link_key`), and say why in a comment. Never shorten the
+column names to make it fit.
+
 **SQLA-4 — One model per file, at `models/<entity>/db.py`, named `<Entity>DB`.** Mixins
 come before `BaseDB` in the bases only when they must override it; otherwise
 `class ProjectDB(BaseDB, TimestampsDB):`.
