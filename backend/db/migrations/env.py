@@ -14,6 +14,7 @@ from models.continuity.db import ContinuityDB
 from models.equipment.db import EquipmentDB
 from models.ingest_run.db import IngestRunDB
 from models.material.db import MaterialDB
+from models.mechanical_designer.db import MechanicalDesignerDB
 from models.mobile_suit.db import MobileSuitDB
 from models.mobile_suit_appearance.db import MobileSuitAppearanceDB
 from models.mobile_suit_relation.db import MobileSuitRelationDB
@@ -36,6 +37,7 @@ MODELS: Final = (
     EquipmentDB,
     IngestRunDB,
     MaterialDB,
+    MechanicalDesignerDB,
     MobileSuitAppearanceDB,
     MobileSuitDB,
     MobileSuitRelationDB,
