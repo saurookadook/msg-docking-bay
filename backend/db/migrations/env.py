@@ -9,6 +9,7 @@ from sqlalchemy import MetaData, create_engine, pool, text
 from db.base_db import BaseDB
 from db.db_session_manager import DBSessionManager
 from models.armament.db import ArmamentDB
+from models.character.db import CharacterDB
 from models.continuity.db import ContinuityDB
 from models.equipment.db import EquipmentDB
 from models.ingest_run.db import IngestRunDB
@@ -29,6 +30,7 @@ from models.work_short_name.db import WorkShortNameDB
 
 MODELS: Final = (
     ArmamentDB,
+    CharacterDB,
     ContinuityDB,
     EquipmentDB,
     IngestRunDB,
