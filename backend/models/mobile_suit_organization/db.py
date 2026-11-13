@@ -1,4 +1,8 @@
-"""The ``mobile_suit_organizations`` table: who builds a suit."""
+"""The ``mobile_suit_organizations`` table: a suit's organizations.
+
+Each row gives the organization's role: manufacturer, operator or
+developer.
+"""
 
 import uuid
 
