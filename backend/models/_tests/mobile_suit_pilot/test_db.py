@@ -148,16 +148,20 @@ class TestMobileSuitPilotDB:
 
         assert pilot_works(test_db_session) == [None]
 
-    @pytest.mark.parametrize("deleted", [CharacterDB, MobileSuitDB])
+    @pytest.mark.parametrize(
+        ("deleted", "deleted_id"), [(CharacterDB, AMURO_ID), (MobileSuitDB, GUNDAM_ID)]
+    )
     def test_deletes_every_pilot_row_when_the_character_or_suit_is_deleted(
-        self, test_db_session: Session, deleted: type[CharacterDB | MobileSuitDB]
+        self,
+        test_db_session: Session,
+        deleted: type[CharacterDB | MobileSuitDB],
+        deleted_id: uuid.UUID,
     ) -> None:
         """The plain FK removes the no-work row too."""
         pilot(work_id=MSG_ID)
         pilot(work_id=None)
         test_db_session.commit()
 
-        deleted_id = AMURO_ID if deleted is CharacterDB else GUNDAM_ID
         test_db_session.delete(test_db_session.get_one(deleted, deleted_id))
         test_db_session.commit()
 

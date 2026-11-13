@@ -165,16 +165,21 @@ class TestMobileSuitOrganizationDB:
 
         assert link_works(test_db_session) == [None]
 
-    @pytest.mark.parametrize("deleted", [MobileSuitDB, OrganizationDB])
+    @pytest.mark.parametrize(
+        ("deleted", "deleted_id"),
+        [(MobileSuitDB, ZETA_GUNDAM_ID), (OrganizationDB, ANAHEIM_ID)],
+    )
     def test_deletes_every_link_when_the_suit_or_organization_is_deleted(
-        self, test_db_session: Session, deleted: type[MobileSuitDB | OrganizationDB]
+        self,
+        test_db_session: Session,
+        deleted: type[MobileSuitDB | OrganizationDB],
+        deleted_id: uuid.UUID,
     ) -> None:
         """The plain FK removes the no-work row too."""
         link(work_id=ZETA_ID)
         link(work_id=None)
         test_db_session.commit()
 
-        deleted_id = ZETA_GUNDAM_ID if deleted is MobileSuitDB else ANAHEIM_ID
         test_db_session.delete(test_db_session.get_one(deleted, deleted_id))
         test_db_session.commit()
 

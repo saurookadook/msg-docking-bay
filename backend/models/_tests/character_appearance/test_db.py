@@ -84,14 +84,18 @@ class TestCharacterAppearanceDB:
 
         test_db_session.flush()
 
-    @pytest.mark.parametrize("deleted", [CharacterDB, WorkDB])
+    @pytest.mark.parametrize(
+        ("deleted", "deleted_id"), [(CharacterDB, CHARACTER_ID), (WorkDB, MSG_ID)]
+    )
     def test_deletes_the_appearance_when_the_character_or_work_is_deleted(
-        self, test_db_session: Session, deleted: type[CharacterDB | WorkDB]
+        self,
+        test_db_session: Session,
+        deleted: type[CharacterDB | WorkDB],
+        deleted_id: uuid.UUID,
     ) -> None:
         appear()
         test_db_session.commit()
 
-        deleted_id = CHARACTER_ID if deleted is CharacterDB else MSG_ID
         test_db_session.delete(test_db_session.get_one(deleted, deleted_id))
         test_db_session.commit()
 

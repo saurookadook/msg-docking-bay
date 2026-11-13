@@ -139,23 +139,27 @@ class TestMobileSuitDesignerDBConstraints:
         assert violated_constraint(exc_info.value) == ("23503", constraint)
 
     @pytest.mark.parametrize(
-        "deleted, constraint",
+        ("deleted", "deleted_id", "constraint"),
         [
-            (MechanicalDesignerDB, "mobile_suit_designers_mechanical_designer_id_fkey"),
-            (SourceDB, "mobile_suit_designers_source_id_fkey"),
+            (
+                MechanicalDesignerDB,
+                OKAWARA_ID,
+                "mobile_suit_designers_mechanical_designer_id_fkey",
+            ),
+            (SourceDB, SOURCE_ID, "mobile_suit_designers_source_id_fkey"),
         ],
     )
     def test_blocks_deleting_a_designer_or_source_a_credit_cites(
         self,
         test_db_session: Session,
         deleted: type[MechanicalDesignerDB | SourceDB],
+        deleted_id: uuid.UUID,
         constraint: str,
     ) -> None:
         """RESTRICT: a credit cannot lose its designer or provenance."""
         credit()
         test_db_session.commit()
 
-        deleted_id = OKAWARA_ID if deleted is MechanicalDesignerDB else SOURCE_ID
         test_db_session.delete(test_db_session.get_one(deleted, deleted_id))
         with pytest.raises(IntegrityError) as exc_info:
             test_db_session.flush()
