@@ -95,10 +95,14 @@ class TestOrganizationHierarchy:
     def test_finds_every_parent_up_to_the_top(self, test_db_session: Session) -> None:
         assert walk(test_db_session, PARENTS, T3_ID) == {TITANS_ID, EFF_ID}
 
-    def test_finds_nothing_for_an_organization_with_no_units_or_parent(
+    def test_finds_no_sub_units_for_an_organization_with_none(
         self, test_db_session: Session
     ) -> None:
         assert walk(test_db_session, SUB_UNITS, ZEON_ID) == set()
+
+    def test_finds_no_parents_for_a_top_level_organization(
+        self, test_db_session: Session
+    ) -> None:
         assert walk(test_db_session, PARENTS, ZEON_ID) == set()
 
     def test_stops_at_a_two_organization_cycle_instead_of_looping(
