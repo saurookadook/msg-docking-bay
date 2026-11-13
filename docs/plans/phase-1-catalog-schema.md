@@ -158,9 +158,9 @@ Notation: `?` marks a nullable column. *E* marks an enum.
 | Table | Key columns and constraints |
 | --- | --- |
 | `characters` / `mechanical_designers` | name, `name_ja?`, slug, `fandom_page_title?` unique |
-| `organizations` | name, slug, `fandom_page_title?`, `parent_organization_id?` → self (SET NULL, CHECK not self) |
+| `organizations` | name, slug, `fandom_page_title?` unique, `parent_organization_id?` → self (SET NULL, CHECK not self) |
 | `character_appearances` / `organization_appearances` | On `JunctionBaseDB`. PK (entity_id, work_id), CASCADE, `source_id` (RESTRICT, indexed), index `work_id` |
-| `mobile_suit_pilots` | On `BaseDB` (the deviation above): surrogate `id`, `mobile_suit_id`, `character_id`, `work_id?`, `source_id` (RESTRICT, indexed); UNIQUE NULLS NOT DISTINCT (suit, character, work); composite FKs (character_id, work_id) → `character_appearances` and (mobile_suit_id, work_id) → `mobile_suit_appearances` (CASCADE), each with an index |
+| `mobile_suit_pilots` | On `BaseDB` (the deviation above): surrogate `id`, `mobile_suit_id`, `character_id`, `work_id?`, `source_id` (RESTRICT, indexed); UNIQUE NULLS NOT DISTINCT (suit, character, work); composite FKs (character_id, work_id) → `character_appearances` and (mobile_suit_id, work_id) → `mobile_suit_appearances` (CASCADE), each with an index. *Added in PR C:* plain FKs on `character_id` and `mobile_suit_id` (CASCADE) too, since MATCH SIMPLE skips the composite check when `work_id` is NULL |
 | `mobile_suit_organizations` | same shape, plus `role` *E* (manufacturer, operator, developer) in the unique key; composite FKs to `organization_appearances` and `mobile_suit_appearances` |
 | `mobile_suit_designers` | On `JunctionBaseDB`. PK (`mechanical_designer_id`, `mobile_suit_id`), designer RESTRICT, suit CASCADE, `source_id` (RESTRICT, indexed; settled in PR A review), index `mobile_suit_id` (it does not lead the key) |
 
@@ -218,6 +218,7 @@ Branch: `feat/add-mobile-suit-schema`, off `main` after PR A merges.
   explicitly, as the `work_relations` tests do.
 
 ### PR C — `feat(backend): add character, organization and designer tables`
+**Detailed plan: [`phase-1c-people-and-organization-schema.md`](phase-1c-people-and-organization-schema.md).**
 Branch: `feat/add-people-and-organization-schema`, off `main` after PR B merges.
 - One checkpoint per table: `characters` → `organizations` → `mechanical_designers` →
   `character_appearances` / `organization_appearances` → `mobile_suit_pilots` →

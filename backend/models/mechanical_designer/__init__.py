@@ -1,0 +1,1 @@
+"""The mechanical designer entity."""

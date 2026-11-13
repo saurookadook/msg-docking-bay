@@ -9,13 +9,21 @@ from sqlalchemy import MetaData, create_engine, pool, text
 from db.base_db import BaseDB
 from db.db_session_manager import DBSessionManager
 from models.armament.db import ArmamentDB
+from models.character.db import CharacterDB
+from models.character_appearance.db import CharacterAppearanceDB
 from models.continuity.db import ContinuityDB
 from models.equipment.db import EquipmentDB
 from models.ingest_run.db import IngestRunDB
 from models.material.db import MaterialDB
+from models.mechanical_designer.db import MechanicalDesignerDB
 from models.mobile_suit.db import MobileSuitDB
 from models.mobile_suit_appearance.db import MobileSuitAppearanceDB
+from models.mobile_suit_designer.db import MobileSuitDesignerDB
+from models.mobile_suit_organization.db import MobileSuitOrganizationDB
+from models.mobile_suit_pilot.db import MobileSuitPilotDB
 from models.mobile_suit_relation.db import MobileSuitRelationDB
+from models.organization.db import OrganizationDB
+from models.organization_appearance.db import OrganizationAppearanceDB
 from models.powerplant.db import PowerplantDB
 from models.source.db import SourceDB
 from models.spec_sheet.db import SpecSheetDB
@@ -29,13 +37,21 @@ from models.work_short_name.db import WorkShortNameDB
 
 MODELS: Final = (
     ArmamentDB,
+    CharacterAppearanceDB,
+    CharacterDB,
     ContinuityDB,
     EquipmentDB,
     IngestRunDB,
     MaterialDB,
+    MechanicalDesignerDB,
     MobileSuitAppearanceDB,
     MobileSuitDB,
+    MobileSuitDesignerDB,
+    MobileSuitOrganizationDB,
+    MobileSuitPilotDB,
     MobileSuitRelationDB,
+    OrganizationAppearanceDB,
+    OrganizationDB,
     PowerplantDB,
     SourceDB,
     SpecSheetArmamentDB,
