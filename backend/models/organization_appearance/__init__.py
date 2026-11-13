@@ -1,1 +1,1 @@
-"""The an organization appearance junction."""
+"""The organization appearance junction."""

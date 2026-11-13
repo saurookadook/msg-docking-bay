@@ -1,1 +1,1 @@
-"""The a character appearance junction."""
+"""The character appearance junction."""
