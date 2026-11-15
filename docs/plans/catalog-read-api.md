@@ -254,8 +254,10 @@ repo's standards.
   generated `paths` type, for example `'/api/mobile-suits/{mobile_suit_slug}'`. Its handler's return
   type is derived from that path's 200 response. A config for a route the API doesn't have, or a
   fixture of the wrong shape, fails typecheck (TEST-10, MONO-14). aoam's configs are untyped
-  (`KeyedObject`, `any`). The route builder turns `{mobile_suit_slug}` into Mirage's
-  `:mobile_suit_slug`.
+  (`KeyedObject`, `any`). The route builder strips the leading `/api`, because `makeMirageServer`
+  already sets that namespace, and turns `{mobile_suit_slug}` into Mirage's `:mobile_suit_slug`. So
+  `/api/mobile-suits/{mobile_suit_slug}` registers as `/mobile-suits/:mobile_suit_slug`. The keys stay
+  the exact OpenAPI paths, since that's what lets `paths` check them.
 - **Fixtures are typed TypeScript modules, not gzipped JSON.** They live in `__mocks__/<entity>Mocks.ts`
   (TEST-2), named `mock<Thing>`, `create<Thing>Mock` and `find<Thing>Mock`, with fixed values
   (TEST-20). Imported JSON would widen enum strings like `unit_type` to `string`, so it can't satisfy
@@ -429,12 +431,17 @@ Branch `build/generate-api-contract`. This assumes D1 Option 1; Option 2 changes
      unchanged.
    - Add a typecheck test: a config naming an unknown path, or returning the wrong shape, fails with
      `@ts-expect-error` and a reason (TEST-22).
+   - Add a unit test of the route builder: `/api/health-check` → `/health-check` and
+     `/api/mobile-suits/{mobile_suit_slug}` → `/mobile-suits/:mobile_suit_slug`, so no route
+     registers as `/api/api/...`.
 5. **Mock mode** (Checkpoint → `feat(frontend): add a mock API mode to the dev server`).
    - `MOCK_API` in `vite.config.ts` (forced off for builds), the dynamic Mirage start in `main.tsx`,
      the `frontend` service's `environment`, `.env.example`, and the root `dev-mock` moon task (D7).
-   - Verify: `moon run root:dev-mock` serves the health check page from the fixture with the backend
-     stopped, and `moon run root:dev` still reaches the real API. A production build's `dist/` has
-     no `miragejs`.
+   - Verify, with the full stack running in both modes (the proxy needs a healthy backend, D7):
+     - Under `moon run root:dev-mock`, the page shows the fixture's values, and the backend's log has
+       no `/api/health-check` line. Mirage answered it in the browser.
+     - Under `moon run root:dev`, the same page load shows the request in the backend's log.
+     - A production build's `dist/` has no `miragejs`.
 6. **Standard** (Checkpoint → `docs(standards): describe the typed Mirage endpoint table`).
    The TEST-18 paragraph (D7), plus a line in `docker-and-environment.md` or `nodejs.md` if their
    task or env tables list `dev` and `LOG_LEVEL`.
