@@ -548,6 +548,8 @@ real data.
   single word. The fields inside `meta` belong to a plain model, so they stay snake_case.
 - **Work-unknown rows.** Pilot and organization links with `work_id` NULL (from PR C's schema) need a
   defined place in responses. For example, group them under "work not recorded"; don't drop them.
+  3a's loader keeps a pair to either a work-unknown row or work-specific rows, never both
+  ([`data-ingestion.md`](data-ingestion.md) 3a), so that group holds only pairs with no specific row.
 - **Empty database.** Every list returns `{"data": [], "meta": {..., "total": 0}}` before the first load
   (FAPI-12), never a 404.
 

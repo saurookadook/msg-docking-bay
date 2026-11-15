@@ -169,10 +169,17 @@ written permission for any automated access, `api.php` included (see
     - **Appearances come first.** A pilot or organization link for a work needs both sides'
       appearance rows in that work, because of the composite foreign keys. Write the appearances,
       then the links.
-    - **One "work unknown" row per pair.** When the dump doesn't say which work, write `work_id`
-      NULL. The `NULLS NOT DISTINCT` keys allow one such row per pair, or per pair and role for
-      organizations. Decide whether to drop that row once a work-specific row exists for the same
-      pair; nothing in the schema does it.
+    - **A pair is "work unknown" or work-specific, never both.** When the dump doesn't say which
+      work, write `work_id` NULL. The `NULLS NOT DISTINCT` keys allow one such row per pair, or per
+      pair and role for organizations, but they also allow it next to work-specific rows, so the
+      loader keeps the invariant itself:
+      - It gathers all of a pair's links from the dump before writing any of them.
+      - It writes the NULL row only when the pair has no work-specific row. Otherwise it deletes any
+        existing NULL row for the pair, in the same transaction as the specific rows.
+      - Tests: a specific claim loaded before the unknown one, and after it, each leaves only the
+        specific row. A no-change re-load leaves the rows as they were.
+      - The read API's "work not recorded" group relies on this
+        ([`catalog-read-api.md`](catalog-read-api.md), Risks).
     - **Upserts target the unique keys.** `ON CONFLICT` on `mobile_suit_pilots_character_id_mobile_suit_id_work_id_key`
       and on `mobile_suit_organizations_link_key`, which is named by hand (SQLA-3).
     - **Map infobox fields onto the three roles** (`manufacturer`, `operator`, `developer`); a field
