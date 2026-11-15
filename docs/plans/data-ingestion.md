@@ -108,6 +108,17 @@ written permission for any automated access, `api.php` included (see
 **downloaded by hand**, and the service makes no requests to Fandom.
 - Before this PR: download `gundam_pages_current.xml.7z` by hand. Email Fandom (support@fandom.com) to
   ask for written API permission, and use Special:Contact to request a fresh dump.
+- **The 2025-08-26 dumps cannot be downloaded** (S3 Deep Archive; see
+  [`ingestion-spike.md`](../research/notes/ingestion-spike.md#dumps-and-delta-sync)). Until a fresh dump
+  arrives, build and test this PR against the **2022-05-04 full-history dump** from the Wayback Machine.
+  It is fine for building the parser and loader, but too old to be the real seed: it has no *Witch from
+  Mercury* or *GQuuuuuuX* pages. That changes three things here:
+  - The dump reader takes the newest `<revision>` of each page, so it works with both `pages_full` and
+    `pages_current` files.
+  - The dump is 4.47 GB uncompressed. Decide here whether to extract it to disk first or stream it out
+    of `py7zr`.
+  - The real seed, and the GQuuuuuuX and Witch from Mercury checks under Verification, wait for the
+    fresh dump or for API permission.
 - `ingest/ingest/services/fandom_dump.py` streams a **local** 7z XML file (`py7zr` with
   `xml.etree.iterparse`). It selects ns-0 pages in the `Mobile Weapons` categories that use
   `{{Infobox/Mobile Weapon}}`.

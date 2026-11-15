@@ -130,6 +130,25 @@ without written permission. Quoted:
   - `https://s3.amazonaws.com/wikia_xml_dumps/g/gu/gundam_pages_current.xml.7z`: 21.0 MB, last
     modified **2025-08-26**
   - `…/gundam_pages_full.xml.7z`: 76.1 MB, same date
+- **Neither S3 dump can be downloaded** (checked 2026-11-13). Both objects are in the `DEEP_ARCHIVE`
+  storage class, so a GET returns `InvalidObjectState`. Their metadata is still readable, which is why
+  the size and date above could be seen. Only Fandom, as the bucket owner, can restore them.
+- **Older copies exist on the Internet Archive** (searched 2026-11-13). Nothing newer than 2022 was found:
+  - Wayback capture of `gundam_pages_full.xml.7z`, taken 2022-10-24:
+    `https://web.archive.org/web/20221024071421id_/https://s3.amazonaws.com/wikia_xml_dumps/g/gu/gundam_pages_full.xml.7z`.
+    It is 55.9 MB, SHA-256 `3f681e15da53a004660ae207dd732cd90949e2f964674461b1ea1bc99c48ba87`.
+    It unpacks to one 4.47 GB `gundam_pages_full.xml`, created 2022-05-04, with MediaWiki 1.33.3 and the
+    newest revision at `2022-05-04T21:09:27Z`. It holds 114,636 pages and 521,225 revisions. 11,421 pages
+    are in ns 0, and 3,191 of those use `{{Infobox/Mobile Weapon}}`. RX-78-2, RX-78-02 and RX-78F00 are
+    present; nothing from *The Witch from Mercury* or *GQuuuuuuX* is.
+  - WikiTeam item `wiki-gundamfandomcom`: `gundamfandomcom-20200223-history.xml.7z`, 69.3 MB, full
+    history, made through `api.php`. The Feb 2020 bulk mirror `wikia_dump_20200214/g.zip` holds the
+    same file. A 2018 item, `wiki-gundamwikiacom`, is older still.
+- **Notes for the parser, from the 2022 copy:**
+  - `py7zr` reads it, but `bsdtar` skips its single entry because the entry has no filename.
+  - Both full-history files keep every revision, so a loader has to take the newest `<revision>` per
+    page.
+  - In `series`, the `~` carries episode numbers (`Mobile Suit Gundam~1~43`), not only a note.
 - Only an admin can request a new dump. Anyone else must go through Special:Contact, at most once every
   7 days (Fandom Help:Database download, read through the community wiki's `api.php`).
 - `list=recentchanges` works (ns 0, with `revid`, `old_revid`, `timestamp` and `rccontinue`), so
