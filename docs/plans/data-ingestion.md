@@ -101,6 +101,18 @@ original `mobile_suit` → `suit_version` → `spec_claim` sketch:
   command` → `build(docker): add the ingest service to Compose`.
 - **PR 3:** `feat(ingest): add the ingest service scaffold`.
 
+### Parallel track: catalog read API
+**Detailed plan: [`catalog-read-api.md`](catalog-read-api.md).** Read routes for the catalog, plus the
+generated API contract, so frontend work can start before a real dump is loaded. It needs no dump.
+Four parts touch this plan:
+
+- It creates the entities and facades that 3a's loader writes through.
+- It sets the slug rules the loader must follow.
+- It adds `fandom_page_id` to four tables.
+- It takes over Phase 5's per-record attribution.
+
+The rules are folded into 3a and Phase 5 below.
+
 ### Phase 3: Gundam Wiki ingestion (two PRs)
 **3a. Seed from the dump.** Branch `feat/add-fandom-dump-ingest`. The Fandom Terms of Use require
 written permission for any automated access, `api.php` included (see
@@ -108,6 +120,17 @@ written permission for any automated access, `api.php` included (see
 **downloaded by hand**, and the service makes no requests to Fandom.
 - Before this PR: download `gundam_pages_current.xml.7z` by hand. Email Fandom (support@fandom.com) to
   ask for written API permission, and use Special:Contact to request a fresh dump.
+- **The 2025-08-26 dumps cannot be downloaded** (S3 Deep Archive; see
+  [`ingestion-spike.md`](../research/notes/ingestion-spike.md#dumps-and-delta-sync)). Until a fresh dump
+  arrives, build and test this PR against the **2022-05-04 full-history dump** from the Wayback Machine.
+  It is fine for building the parser and loader, but too old to be the real seed: it has no *Witch from
+  Mercury* or *GQuuuuuuX* pages. That changes three things here:
+  - The dump reader takes the newest `<revision>` of each page, so it works with both `pages_full` and
+    `pages_current` files.
+  - The dump is 4.47 GB uncompressed. Decide here whether to extract it to disk first or stream it out
+    of `py7zr`.
+  - The real seed, and the GQuuuuuuX and Witch from Mercury checks under Verification, wait for the
+    fresh dump or for API permission.
 - `ingest/ingest/services/fandom_dump.py` streams a **local** 7z XML file (`py7zr` with
   `xml.etree.iterparse`). It selects ns-0 pages in the `Mobile Weapons` categories that use
   `{{Infobox/Mobile Weapon}}`.
@@ -118,11 +141,50 @@ written permission for any automated access, `api.php` included (see
   an error (SOUP-12).
 - A loader does idempotent upserts into the Phase 1 tables (`continuities`, `mobile_suits`,
   `mobile_suit_relations`, `spec_sheets` and the part junctions, appearances, `sources`), using the
-  dump's revision ID as the attribution anchor. Pydantic entities and facades for these tables are
-  added here, with the loader as their first caller.
+  dump's revision ID as the attribution anchor.
+  - *From the catalog read API ([`catalog-read-api.md`](catalog-read-api.md), D2, D4, D5):*
+    - **Write through the existing facades.** The read API's PR B and PR C create the entities and
+      read-only facades. This PR adds `create_or_update` (SQLA-25), and a batch upsert method if
+      loading needs one, to those facades, never as SQL in `ingest/`. It creates entities only for
+      tables no route reads yet, such as the review list. The dependency and parser checkpoints can
+      run before PR B merges; the loader checkpoint starts from PR B's facades.
+    - **Match rows on `fandom_page_id`.** `works`, `characters`, `organizations` and
+      `mechanical_designers` gain the column in the read API's PRs, as `mobile_suits` already has it.
+      A renamed page updates its row in place.
+    - **Slugs follow titles.** On a rename, write the new slug and record the old one in the entity's
+      `<entity>_slug_redirects` table. If a row takes a slug listed as another row's old one, delete
+      that redirect in the same transaction.
+    - **Slug collisions.** An existing row keeps its slug. A new or renamed row whose slug is taken
+      gets `-<fandom_page_id>`, or `-<qid>` for a work with no Fandom page.
+    - **Non-ASCII titles.** Titles are ASCII-folded, with a hand-kept symbol map (`∀` → `turn-a`).
+      A title that still has an unmapped character goes to the review list, with no guessed slug.
+    - **`updated_at` changes only with the data.** The upsert's `DO UPDATE` has a `WHERE` that skips
+      rows whose values are unchanged. Test it with a no-change re-load.
+    - **Cap part notes.** A `note` on a part junction longer than the cap goes to the review list,
+      not into the table.
   - It also reads **character and organization pages**, to fill `characters`, `organizations`, their
     appearances, and the pilot and organization links. Their infobox fields are unverified: confirm
     them from the dump.
+  - *From PR C ([`phase-1c-people-and-organization-schema.md`](phase-1c-people-and-organization-schema.md)):*
+    - **Appearances come first.** A pilot or organization link for a work needs both sides'
+      appearance rows in that work, because of the composite foreign keys. Write the appearances,
+      then the links.
+    - **A pair is "work unknown" or work-specific, never both.** When the dump doesn't say which
+      work, write `work_id` NULL. The `NULLS NOT DISTINCT` keys allow one such row per pair, or per
+      pair and role for organizations, but they also allow it next to work-specific rows, so the
+      loader keeps the invariant itself:
+      - It gathers all of a pair's links from the dump before writing any of them.
+      - It writes the NULL row only when the pair has no work-specific row. Otherwise it deletes any
+        existing NULL row for the pair, in the same transaction as the specific rows.
+      - Tests: a specific claim loaded before the unknown one, and after it, each leaves only the
+        specific row. A no-change re-load leaves the rows as they were.
+      - The read API's "work not recorded" group relies on this
+        ([`catalog-read-api.md`](catalog-read-api.md), Risks).
+    - **Upserts target the unique keys.** `ON CONFLICT` on `mobile_suit_pilots_character_id_mobile_suit_id_work_id_key`
+      and on `mobile_suit_organizations_link_key`, which is named by hand (SQLA-3).
+    - **Map infobox fields onto the three roles** (`manufacturer`, `operator`, `developer`); a field
+      that fits none goes to the review list.
+    - **Designers are RESTRICT.** A re-load cannot delete a designer that a suit still cites.
   - It resolves `[SERIES]` tags through `work_short_names` and names through the dump's redirect
     pages. Anything it cannot resolve goes to a review list, whose table is added in this PR.
   - It creates `continuity` rows from the distinct `era` values, such as `Universal Century`,
@@ -165,10 +227,10 @@ Branch `feat/add-wikimedia-ingest`.
 ### Phase 5: Operations and attribution
 Branch `feat/add-ingest-scheduling`.
 - `ingest run-all` runs the steps in order (Wikidata → Fandom dump or delta → link). A schedule is set (e.g. weekly, via a cron Compose service). Each run records counts and errors in `ingest_run`.
-- Attribution: the backend exposes source URL, license and revision per record, through a backend route plus `pnpm api:generate` (MONO-13 to MONO-17).
+- Attribution: **site-wide only.** Per-record source, license and revision links ship with the catalog read API ([`catalog-read-api.md`](catalog-read-api.md), D6). This phase adds the footer and a license page, with "Gundam Wiki contributors" wording linking to page history, and the copyleft notice for derived text.
 - A runbook, `docs/ingestion.md`, covers how to run it, how to download and request a dump, how to re-seed and how to review conflicts.
-- Checkpoints: `feat(ingest): add the run-all pipeline and schedule` → `feat(backend): expose source attribution on catalog records` → `docs(docs): add the ingestion runbook`.
-- **PR 7:** `feat(ingest): schedule ingestion and surface attribution`. This can be split into ingest and backend PRs if it grows.
+- Checkpoints: `feat(ingest): add the run-all pipeline and schedule` → `feat(frontend): add site-wide content attribution` → `docs(docs): add the ingestion runbook`.
+- **PR 7:** `feat(ingest): schedule ingestion and surface attribution`. This can be split into ingest and frontend PRs if it grows.
 
 ### Later (out of scope now)
 - **MAHQ:** ask Accidental Pilot for permission first. Check `wp-sitemap.xml` and `/wp-json/`. Write `ingest/ingest/services/mahq.py` as a polite crawler that adds a second `spec_sheets` row per suit (MAHQ as its own source) and flags disagreements for review. The schema already supports a second source.
@@ -180,4 +242,4 @@ Branch `feat/add-ingest-scheduling`.
 - **Phase 1:** run `moon run backend:migrate` on a clean database, then confirm in `psql` that the migration upgrades and downgrades cleanly.
 - **Phase 3a:** load the real dump locally (`docker compose --profile ingest run --rm ingest fandom seed <path>`). Spot-check RX-78-2, RX-78-02 and RX-78F00 as separate versions, each with its spec claims and source revision. Re-run the load and confirm no duplicate rows (idempotency).
 - **Phase 3b/4:** run the delta sync twice and confirm the second run is a no-op. Confirm that works such as GQuuuuuuX and Witch from Mercury exist with QIDs and are linked to their suits.
-- **Phase 5:** run `run-all` end to end, then inspect `ingest_run` and the attribution fields in an API response.
+- **Phase 5:** run `run-all` end to end, then inspect `ingest_run`. Confirm the footer and license page render, and that the per-record source fields from the read API still match the loaded revisions.
