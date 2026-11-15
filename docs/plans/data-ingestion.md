@@ -101,6 +101,18 @@ original `mobile_suit` → `suit_version` → `spec_claim` sketch:
   command` → `build(docker): add the ingest service to Compose`.
 - **PR 3:** `feat(ingest): add the ingest service scaffold`.
 
+### Parallel track: catalog read API
+**Detailed plan: [`catalog-read-api.md`](catalog-read-api.md).** Read routes for the catalog, plus the
+generated API contract, so frontend work can start before a real dump is loaded. It needs no dump.
+Four parts touch this plan:
+
+- It creates the entities and facades that 3a's loader writes through.
+- It sets the slug rules the loader must follow.
+- It adds `fandom_page_id` to four tables.
+- It takes over Phase 5's per-record attribution.
+
+The rules are folded into 3a and Phase 5 below.
+
 ### Phase 3: Gundam Wiki ingestion (two PRs)
 **3a. Seed from the dump.** Branch `feat/add-fandom-dump-ingest`. The Fandom Terms of Use require
 written permission for any automated access, `api.php` included (see
@@ -129,8 +141,27 @@ written permission for any automated access, `api.php` included (see
   an error (SOUP-12).
 - A loader does idempotent upserts into the Phase 1 tables (`continuities`, `mobile_suits`,
   `mobile_suit_relations`, `spec_sheets` and the part junctions, appearances, `sources`), using the
-  dump's revision ID as the attribution anchor. Pydantic entities and facades for these tables are
-  added here, with the loader as their first caller.
+  dump's revision ID as the attribution anchor.
+  - *From the catalog read API ([`catalog-read-api.md`](catalog-read-api.md), D2, D4, D5):*
+    - **Write through the existing facades.** The read API's PR B and PR C create the entities and
+      read-only facades. This PR adds `create_or_update` (SQLA-25), and a batch upsert method if
+      loading needs one, to those facades, never as SQL in `ingest/`. It creates entities only for
+      tables no route reads yet, such as the review list. The dependency and parser checkpoints can
+      run before PR B merges; the loader checkpoint starts from PR B's facades.
+    - **Match rows on `fandom_page_id`.** `works`, `characters`, `organizations` and
+      `mechanical_designers` gain the column in the read API's PRs, as `mobile_suits` already has it.
+      A renamed page updates its row in place.
+    - **Slugs follow titles.** On a rename, write the new slug and record the old one in the entity's
+      `<entity>_slug_redirects` table. If a row takes a slug listed as another row's old one, delete
+      that redirect in the same transaction.
+    - **Slug collisions.** An existing row keeps its slug. A new or renamed row whose slug is taken
+      gets `-<fandom_page_id>`, or `-<qid>` for a work with no Fandom page.
+    - **Non-ASCII titles.** Titles are ASCII-folded, with a hand-kept symbol map (`∀` → `turn-a`).
+      A title that still has an unmapped character goes to the review list, with no guessed slug.
+    - **`updated_at` changes only with the data.** The upsert's `DO UPDATE` has a `WHERE` that skips
+      rows whose values are unchanged. Test it with a no-change re-load.
+    - **Cap part notes.** A `note` on a part junction longer than the cap goes to the review list,
+      not into the table.
   - It also reads **character and organization pages**, to fill `characters`, `organizations`, their
     appearances, and the pilot and organization links. Their infobox fields are unverified: confirm
     them from the dump.
@@ -176,10 +207,10 @@ Branch `feat/add-wikimedia-ingest`.
 ### Phase 5: Operations and attribution
 Branch `feat/add-ingest-scheduling`.
 - `ingest run-all` runs the steps in order (Wikidata → Fandom dump or delta → link). A schedule is set (e.g. weekly, via a cron Compose service). Each run records counts and errors in `ingest_run`.
-- Attribution: the backend exposes source URL, license and revision per record, through a backend route plus `pnpm api:generate` (MONO-13 to MONO-17).
+- Attribution: **site-wide only.** Per-record source, license and revision links ship with the catalog read API ([`catalog-read-api.md`](catalog-read-api.md), D6). This phase adds the footer and a license page, with "Gundam Wiki contributors" wording linking to page history, and the copyleft notice for derived text.
 - A runbook, `docs/ingestion.md`, covers how to run it, how to download and request a dump, how to re-seed and how to review conflicts.
-- Checkpoints: `feat(ingest): add the run-all pipeline and schedule` → `feat(backend): expose source attribution on catalog records` → `docs(docs): add the ingestion runbook`.
-- **PR 7:** `feat(ingest): schedule ingestion and surface attribution`. This can be split into ingest and backend PRs if it grows.
+- Checkpoints: `feat(ingest): add the run-all pipeline and schedule` → `feat(frontend): add site-wide content attribution` → `docs(docs): add the ingestion runbook`.
+- **PR 7:** `feat(ingest): schedule ingestion and surface attribution`. This can be split into ingest and frontend PRs if it grows.
 
 ### Later (out of scope now)
 - **MAHQ:** ask Accidental Pilot for permission first. Check `wp-sitemap.xml` and `/wp-json/`. Write `ingest/ingest/services/mahq.py` as a polite crawler that adds a second `spec_sheets` row per suit (MAHQ as its own source) and flags disagreements for review. The schema already supports a second source.
@@ -191,4 +222,4 @@ Branch `feat/add-ingest-scheduling`.
 - **Phase 1:** run `moon run backend:migrate` on a clean database, then confirm in `psql` that the migration upgrades and downgrades cleanly.
 - **Phase 3a:** load the real dump locally (`docker compose --profile ingest run --rm ingest fandom seed <path>`). Spot-check RX-78-2, RX-78-02 and RX-78F00 as separate versions, each with its spec claims and source revision. Re-run the load and confirm no duplicate rows (idempotency).
 - **Phase 3b/4:** run the delta sync twice and confirm the second run is a no-op. Confirm that works such as GQuuuuuuX and Witch from Mercury exist with QIDs and are linked to their suits.
-- **Phase 5:** run `run-all` end to end, then inspect `ingest_run` and the attribution fields in an API response.
+- **Phase 5:** run `run-all` end to end, then inspect `ingest_run`. Confirm the footer and license page render, and that the per-record source fields from the read API still match the loaded revisions.
