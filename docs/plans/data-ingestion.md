@@ -165,6 +165,19 @@ written permission for any automated access, `api.php` included (see
   - It also reads **character and organization pages**, to fill `characters`, `organizations`, their
     appearances, and the pilot and organization links. Their infobox fields are unverified: confirm
     them from the dump.
+  - *From PR C ([`phase-1c-people-and-organization-schema.md`](phase-1c-people-and-organization-schema.md)):*
+    - **Appearances come first.** A pilot or organization link for a work needs both sides'
+      appearance rows in that work, because of the composite foreign keys. Write the appearances,
+      then the links.
+    - **One "work unknown" row per pair.** When the dump doesn't say which work, write `work_id`
+      NULL. The `NULLS NOT DISTINCT` keys allow one such row per pair, or per pair and role for
+      organizations. Decide whether to drop that row once a work-specific row exists for the same
+      pair; nothing in the schema does it.
+    - **Upserts target the unique keys.** `ON CONFLICT` on `mobile_suit_pilots_character_id_mobile_suit_id_work_id_key`
+      and on `mobile_suit_organizations_link_key`, which is named by hand (SQLA-3).
+    - **Map infobox fields onto the three roles** (`manufacturer`, `operator`, `developer`); a field
+      that fits none goes to the review list.
+    - **Designers are RESTRICT.** A re-load cannot delete a designer that a suit still cites.
   - It resolves `[SERIES]` tags through `work_short_names` and names through the dump's redirect
     pages. Anything it cannot resolve goes to a review list, whose table is added in this PR.
   - It creates `continuity` rows from the distinct `era` values, such as `Universal Century`,
