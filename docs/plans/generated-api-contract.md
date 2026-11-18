@@ -41,10 +41,24 @@ is a follow-up PR (see the end).
 - Ruff and pyright strict cover the new package.
 
 ### 2. Generator → `build(frontend): generate API types with openapi-typescript`
-- `pnpm add -D openapi-typescript@7.13.0` (the version validated in `catalog-read-api.md` Risks).
+- **The generator gets its own TypeScript** (found while implementing, 2026-11-17).
+  `openapi-typescript` 7.13.0, the latest release, builds its output with TypeScript's JS compiler
+  API (`ts.factory`). The app's TypeScript 7.0.2 is the native compiler and ships no JS API, so
+  `ts.factory` is undefined and the generator crashes. pnpm `overrides` and `packageExtensions`
+  can't redirect a peer dependency (both tried). So:
+  - `frontend/tools/api-codegen/package.json` is a private workspace package (`@app/api-codegen`)
+    holding `openapi-typescript ^7.13.0` and `typescript 5.9.3`, inside its `^5.x` peer range.
+    The app's `tsc` stays 7.0.2, and the generated types typecheck under it.
+  - `frontend/pnpm-workspace.yaml` gains `packages: ['tools/*']`, so the package shares
+    `frontend/`'s one lockfile. The Dockerfile needs no change: `pnpm fetch` reads the lockfile,
+    and `COPY . .` brings `tools/` in before the install.
+  - `.github/dependabot.yml` ignores TypeScript majors for `/frontend`, so 5.9.3 is never bumped
+    to 7. The rule can't target one workspace package, so the app's TypeScript majors become
+    manual upgrades too.
 - `frontend/package.json` script `api:generate`. It runs on the host, as CI does:
-  `uv --directory ../backend run python -m scripts.export_openapi ../frontend/src/api/generated/openapi.json && openapi-typescript src/api/generated/openapi.json -o src/api/generated/api.ts && oxfmt src/api/generated`
-  (`uv --directory` changes the working directory, so the output path is relative to `backend/`.)
+  `uv --directory ../backend run python -m scripts.export_openapi ../frontend/src/api/generated/openapi.json && pnpm --filter @app/api-codegen exec openapi-typescript ../../src/api/generated/openapi.json -o ../../src/api/generated/api.ts && oxfmt src/api/generated`
+  (`uv --directory` and `pnpm --filter … exec` each change the working directory, so each path is
+  relative to the directory that step runs in.)
 - A `frontend/moon.yml` task `api-generate` (`pnpm run api:generate`, `utility` preset). There's no
   cache, because its inputs live in `backend/`.
 - `.oxlintrc.json` `ignorePatterns` gains `src/api/generated/**` (FMT-11). oxfmt still formats it.

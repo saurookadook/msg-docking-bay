@@ -537,6 +537,11 @@ real data.
   operation-ID function, under FastAPI 0.143 and Pydantic 2.14. Its schema went through
   `openapi-typescript` 7.13.0 and was typechecked with the frontend's `tsc` (7.0.2) and
   `tsconfig.common.json`.
+  - *Added 2026-11-17 in PR A:* the generator itself can't run on TypeScript 7. It builds its
+    output with TypeScript's JS compiler API (`ts.factory`), which the native TS 7 compiler doesn't
+    ship, and its peer range is `typescript ^5.x`. PR A runs it from a `frontend/tools/api-codegen`
+    workspace package with its own TypeScript 5.9.3. The generated types still typecheck under
+    7.0.2 (see [`generated-api-contract.md`](generated-api-contract.md) step 2).
   - Direct indexing of
     `paths[P]['get']['responses'][200]['content']['application/json']` works without a cast, and so
     does reading path parameters from `paths[P]['get']['parameters']`.
