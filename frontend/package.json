@@ -4,6 +4,7 @@
     "private": true,
     "type": "module",
     "scripts": {
+        "api:generate": "uv --directory ../backend run python -m scripts.export_openapi ../frontend/src/api/generated/openapi.json && pnpm --filter @app/api-codegen exec openapi-typescript ../../src/api/generated/openapi.json -o ../../src/api/generated/api.ts && oxfmt src/api/generated",
         "build": "tsc -b && vite build",
         "build-storybook": "storybook build",
         "format": "oxfmt",

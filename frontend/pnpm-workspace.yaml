@@ -1,4 +1,8 @@
-# NOTE: frontend/ is a standalone pnpm project; this file only holds pnpm settings.
+# NOTE: frontend/ is the repo's only pnpm root. Besides pnpm's settings, this file lists
+# tools/*: private build tools that need dependencies the app can't share, such as
+# api-codegen's TypeScript 5. They share this lockfile.
+packages:
+  - 'tools/*'
 allowBuilds:
   esbuild: true
 minimumReleaseAgeExclude:

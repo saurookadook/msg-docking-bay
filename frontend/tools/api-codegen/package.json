@@ -1,0 +1,11 @@
+{
+    "name": "@app/api-codegen",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Runs openapi-typescript for `pnpm run api:generate`. openapi-typescript builds its output with TypeScript's JS compiler API (ts.factory), which the app's native TypeScript 7 doesn't ship, so it gets its own TypeScript 5 here.",
+    "type": "module",
+    "devDependencies": {
+        "openapi-typescript": "^7.13.0",
+        "typescript": "5.9.3"
+    }
+}

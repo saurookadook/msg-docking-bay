@@ -9,6 +9,12 @@ project:
   owner: 'team-web'
 
 tasks:
+  # Regenerates the API contract in src/api/generated/ from the backend's OpenAPI schema
+  # (MONO-13). Uncached: its real input is the backend's code, outside this project.
+  api-generate:
+    command: 'pnpm'
+    args: ['run', 'api:generate']
+    preset: 'utility'
   build:
     script: 'tsc -b && vite build'
     deps: ['^:build']
