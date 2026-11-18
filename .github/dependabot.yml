@@ -9,6 +9,13 @@ updates:
     cooldown: { default-days: 7 }
     groups:
       npm-minor-and-patch: { update-types: ["minor", "patch"] }
+    ignore:
+      # tools/api-codegen pins TypeScript 5: openapi-typescript needs its JS compiler
+      # API, which TypeScript 7 doesn't ship. Ignore rules can't target one workspace
+      # package, so this also holds back the app's TypeScript majors; upgrade those by
+      # hand.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "uv"
     directory: "/backend"
     schedule: { interval: "weekly" }
