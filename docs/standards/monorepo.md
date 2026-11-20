@@ -157,9 +157,17 @@ the backend defines them, `snake_case` ([python/fastapi.md](python/fastapi.md) F
 the frontend uses them as generated, with no renaming or mapping layer
 ([typescript.md](typescript.md) TS-4).
 
-A repository with no `shared` workspace, whose frontend workspace is its only Node root,
-generates into the frontend instead: `frontend/src/api/generated/`, with the aliases of
-MONO-15 in `frontend/src/api/index.ts`, imported as `@/api`. The steps don't change.
+MONO-13 to MONO-15 describe the layout with a `shared` workspace. A repository with no
+`shared` workspace, whose frontend workspace is its only Node root, generates into the
+frontend instead. The steps and rules don't change; read each path in them as its
+frontend counterpart:
+
+| With `shared`                  | Frontend only                             |
+| ------------------------------ | ----------------------------------------- |
+| `shared/openapi/openapi.json`  | `frontend/src/api/generated/openapi.json` |
+| `shared/src/generated/api.ts`  | `frontend/src/api/generated/api.ts`       |
+| `shared/src/api/index.ts`      | `frontend/src/api/index.ts`               |
+| imported from `@app/shared`    | imported from `@/api`                     |
 
 `openapi-typescript` builds its output with TypeScript's JS compiler API, which the native
 TypeScript compiler (7 and later) doesn't ship. When the workspaces use a native
