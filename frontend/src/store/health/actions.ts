@@ -1,10 +1,10 @@
+import type { HealthCheckResponse, HealthCheckStatus } from '@/api';
 import {
   REQUEST_HEALTH_CHECK, // force formatting
   SET_HEALTH_CHECK,
   SET_HEALTH_CHECK_ERROR,
 } from '@/store/actionTypes';
 import type { BaseAction } from '@/store/types';
-import type { HealthCheck, HealthCheckResponse } from '@/types';
 import { safeFetch, SafeFetchError } from '@/utils';
 
 const FALLBACK_HEALTH_CHECK_ERROR_MESSAGE = 'The health check request failed.';
@@ -16,7 +16,7 @@ export function requestHealthCheck({ dispatch }: BaseAction) {
 export function setHealthCheck({
   dispatch, // force formatting
   healthCheck,
-}: BaseAction & { healthCheck: HealthCheck }) {
+}: BaseAction & { healthCheck: HealthCheckStatus }) {
   return dispatch({ type: SET_HEALTH_CHECK, payload: { health: { healthCheck } } });
 }
 

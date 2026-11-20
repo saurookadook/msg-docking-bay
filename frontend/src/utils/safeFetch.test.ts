@@ -6,7 +6,7 @@ import {
   mockHealthCheckResponse,
 } from '@/__mocks__/healthMocks';
 import { makeMirageServer } from '@/__mocks__/mirageServer';
-import type { HealthCheckResponse } from '@/types';
+import type { HealthCheckResponse } from '@/api';
 
 import { safeFetch } from './safeFetch';
 

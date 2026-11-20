@@ -1,4 +1,4 @@
-import type { HealthCheckResponse } from '@/types';
+import type { HealthCheckResponse } from '@/api';
 
 export const mockHealthCheckResponse: HealthCheckResponse = {
   data: { status: 'ok' },
