@@ -268,6 +268,11 @@ runs:
       run: pnpm install --frozen-lockfile
 ```
 
+In a repository whose frontend workspace is its only Node root, with no root
+`package.json`, each step reads that workspace's files: `package_json_file:
+frontend/package.json` for pnpm, `frontend/.nvmrc` and `frontend/pnpm-lock.yaml` for
+setup-node, and the install runs with `working-directory: frontend`.
+
 pnpm's documentation now recommends its own `pnpm/setup` action _(non-GitHub)_, which
 installs pnpm and Node and runs the install in one step. It is not used here because it
 takes the Node version as an input, which would be a second copy of `.nvmrc`. Re-evaluate

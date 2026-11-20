@@ -143,6 +143,25 @@ server = makeMirageServer({
 });
 ```
 
+The server's routes come from one table, `endpointConfigs` in `__mocks__/endpoints.ts`.
+Each config names its route by the exact OpenAPI path from the generated `paths` type
+([monorepo.md](monorepo.md) MONO-13), and its handler returns that path's 200 body, so a
+config for a route the API doesn't have, or a fixture of the wrong shape, fails typecheck:
+
+```ts
+export const endpointConfigs: readonly AnyEndpointConfig[] = [
+  { path: '/api/projects', handler: (request) => paginate(mockProjects, request) },
+  { path: '/api/projects/{project_id}', handler: (request) => findProjectMock(request) },
+];
+```
+
+`buildRoutePath` turns each key into a Mirage route under the `/api` namespace
+(`/api/projects/{project_id}` registers as `/projects/:project_id`), and list routes page
+their fixtures through `paginate`, which reads `limit` and `offset` as the API does. The
+table holds only the happy path: error responses stay in each test's `overrides`, which
+run after it. A test that the table rejects a bad config uses `@ts-expect-error` with a
+reason (TEST-22).
+
 In the `test` environment an unhandled request throws, so a test cannot reach a real
 service by accident (TEST-13). Storybook starts the same server for each story in
 `.storybook/preview.tsx`, taking overrides from the story's `parameters.mirage`. Import
