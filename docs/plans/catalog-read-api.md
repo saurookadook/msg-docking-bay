@@ -19,9 +19,11 @@ development but too old to be the real seed (see
 a dump. Tests build rows with the backend's factories, and the frontend develops against typed Mirage
 mocks until a real load exists.
 
-**Outcome:** four PRs.
+**Outcome:** five PRs.
 
 - **PR A:** the generated API contract (MONO-13 to MONO-15), proven on the health check.
+- **Mock mode PR:** the running app on Mirage fixtures (D7), after PR A. It was split out of PR A on
+  2026-11-17 because it's a `feat` and PR B doesn't need it.
 - **PR B:** read routes for continuities, works and mobile suits.
 - **PR C:** read routes for characters, organizations and mechanical designers.
 - **PR D:** suit parts (armaments, equipment, materials and powerplants) on each spec sheet. It
@@ -300,7 +302,7 @@ the fixtures, started with `moon run root:dev-mock`.
 - **Starting Mirage:** `main.tsx` checks the flag before rendering. When it's set, a dynamic `import()`
   loads `@/__mocks__/mirageServer` and calls `makeMirageServer({ environment: 'development' })`.
   When it's off, the constant `false` lets Vite drop the import, so neither Mirage nor the fixtures
-  reach the production bundle. PR A checks that by searching `dist/` for `miragejs`.
+  reach the production bundle. The mock mode PR checks that by searching `dist/` for `miragejs`.
 - **Unmocked routes go to the real API.** The `development` environment passes unhandled requests
   through, so routes in the endpoint table are mocked and everything else reaches the backend behind
   the proxy. A page can be built on fixtures while its other routes stay live.
@@ -408,6 +410,7 @@ This file, plus `data-ingestion.md`:
 
 ### PR A — `build(frontend): generate API types from the backend's OpenAPI schema`
 Branch `build/generate-api-contract`. This assumes D1 Option 1; Option 2 changes the paths and scopes.
+**Detailed plan: [`generated-api-contract.md`](generated-api-contract.md).**
 
 1. **Export script** (Checkpoint → `feat(backend): add an OpenAPI schema export script`).
    `backend/scripts/export_openapi.py`, a runnable module (PY-36), writes `app.openapi()` with sorted
@@ -434,7 +437,18 @@ Branch `build/generate-api-contract`. This assumes D1 Option 1; Option 2 changes
    - Add a unit test of the route builder: `/api/health-check` → `/health-check` and
      `/api/mobile-suits/{mobile_suit_slug}` → `/mobile-suits/:mobile_suit_slug`, so no route
      registers as `/api/api/...`.
-5. **Mock mode** (Checkpoint → `feat(frontend): add a mock API mode to the dev server`).
+5. **Standard** (Checkpoint → `docs(standards): describe the typed Mirage endpoint table`).
+   The TEST-18 paragraph (D7), plus notes in MONO-13 and CI-5 that the contract and `node-setup` are
+   rooted at `frontend/` here.
+6. **Drift check** (Checkpoint → `ci(repo): fail when the generated API contract is stale`).
+   CI runs `api:generate` and fails on any change to the generated files, new files included
+   (MONO-14, CI-9). The `contract` job starts `backend-test.yml`.
+
+### Mock mode PR — `feat(frontend): add a mock API mode to the dev server`
+Branch `feat/add-mock-api-mode`, after PR A merges. **Detailed plan: the "Follow-up PR" section of
+[`generated-api-contract.md`](generated-api-contract.md).**
+
+1. **Mock mode** (Checkpoint → `feat(frontend): add a mock API mode to the dev server`).
    - `MOCK_API` in `vite.config.ts` (forced off for builds), the dynamic Mirage start in `main.tsx`,
      the `frontend` service's `environment`, `.env.example`, and the root `dev-mock` moon task (D7).
    - Verify, with the full stack running in both modes (the proxy needs a healthy backend, D7):
@@ -442,11 +456,9 @@ Branch `build/generate-api-contract`. This assumes D1 Option 1; Option 2 changes
        no `/api/health-check` line. Mirage answered it in the browser.
      - Under `moon run root:dev`, the same page load shows the request in the backend's log.
      - A production build's `dist/` has no `miragejs`.
-6. **Standard** (Checkpoint → `docs(standards): describe the typed Mirage endpoint table`).
-   The TEST-18 paragraph (D7), plus a line in `docker-and-environment.md` or `nodejs.md` if their
-   task or env tables list `dev` and `LOG_LEVEL`.
-7. **Drift check** (Checkpoint → `ci(repo): fail when the generated API contract is stale`).
-   CI runs `api:generate` and fails on any diff (MONO-14, CI-9).
+2. **Standard** (Checkpoint → `docs(standards): document the mock API mode`).
+   A line in `docker-and-environment.md` or `nodejs.md` if their task or env tables list `dev` and
+   `LOG_LEVEL`.
 
 ### PR B — `feat(backend): serve mobile suits, works and continuities`
 Branch `feat/add-catalog-read-routes`.
@@ -490,6 +502,9 @@ Branch `feat/add-catalog-read-routes`.
    - Add an endpoint table entry for each route, with hand-written fixtures in
      `__mocks__/<entity>Mocks.ts` for the fixed set of suits and works (D7). Cover pagination, a 404
      and an old slug.
+   - Make PR A's `paginate()` validate `limit` and `offset` as step 5's routes do: the
+     `MAX_PAGE_SIZE` cap, and a 422 with the route's error body for a bad value, so a mock never
+     serves a page the API would reject. *Deferred from PR A's review, 2026-11-20.*
 
 ### PR C — `feat(backend): serve characters, organizations and designers`
 Branch `feat/add-people-read-routes`. The same steps as PR B:
@@ -525,6 +540,11 @@ real data.
   operation-ID function, under FastAPI 0.143 and Pydantic 2.14. Its schema went through
   `openapi-typescript` 7.13.0 and was typechecked with the frontend's `tsc` (7.0.2) and
   `tsconfig.common.json`.
+  - *Added 2026-11-17 in PR A:* the generator itself can't run on TypeScript 7. It builds its
+    output with TypeScript's JS compiler API (`ts.factory`), which the native TS 7 compiler doesn't
+    ship, and its peer range is `typescript ^5.x`. PR A runs it from a `frontend/tools/api-codegen`
+    workspace package with its own TypeScript 5.9.3. The generated types still typecheck under
+    7.0.2 (see [`generated-api-contract.md`](generated-api-contract.md) step 2).
   - Direct indexing of
     `paths[P]['get']['responses'][200]['content']['application/json']` works without a cast, and so
     does reading path parameters from `paths[P]['get']['parameters']`.

@@ -1,0 +1,40 @@
+name: "Backend Test"
+
+on:
+  workflow_call:
+
+defaults:
+  run:
+    shell: bash
+
+# CI-9's `check` and `test` jobs join `contract` here later. Until the first path-gated
+# area adds a `changes` job (GHA-6), this workflow runs on every CI run.
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: "Check out code"
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: "Set up Python and dependencies"
+        uses: ./.github/actions/python-setup
+
+      - name: "Set up Node.js and dependencies"
+        uses: ./.github/actions/node-setup
+
+      - name: "🏗️ Regenerate the API contract"
+        working-directory: frontend
+        run: pnpm run api:generate
+
+      # `git status` also catches new and deleted files, which `git diff` misses.
+      - name: "🔎 Check the committed contract is current"
+        run: |
+          git diff -- frontend/src/api/generated
+          if [[ -n "$(git status --porcelain -- frontend/src/api/generated)" ]]; then
+            git status --short -- frontend/src/api/generated
+            echo "::error::The generated API contract is stale. Run 'pnpm run api:generate' in frontend/ and commit the result (MONO-14)."
+            exit 1
+          fi

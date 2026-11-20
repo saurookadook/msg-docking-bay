@@ -89,7 +89,10 @@ type for an API request or response; use the generated one (MONO-13).
 **MONO-10 — Keep framework versions aligned across workspaces.** Any package used by more
 than one workspace (`typescript`, test runners) MUST resolve to the same major
 everywhere. Use a pnpm `catalog` in `pnpm-workspace.yaml` to pin shared versions in one
-place.
+place. The one exception is a private build tool that needs an older major of a package
+the code workspaces share, such as the TypeScript 5 that runs `openapi-typescript`
+(MONO-13). It never imports, or is imported by, a code workspace, and its
+`package.json` `description` says why it pins that major.
 
 ---
 
@@ -153,6 +156,24 @@ the single definition of every request, response, and error shape. Field names s
 the backend defines them, `snake_case` ([python/fastapi.md](python/fastapi.md) FAPI-12):
 the frontend uses them as generated, with no renaming or mapping layer
 ([typescript.md](typescript.md) TS-4).
+
+MONO-13 to MONO-15 describe the layout with a `shared` workspace. A repository with no
+`shared` workspace, whose frontend workspace is its only Node root, generates into the
+frontend instead. The steps and rules don't change; read each path in them as its
+frontend counterpart:
+
+| With `shared`                  | Frontend only                             |
+| ------------------------------ | ----------------------------------------- |
+| `shared/openapi/openapi.json`  | `frontend/src/api/generated/openapi.json` |
+| `shared/src/generated/api.ts`  | `frontend/src/api/generated/api.ts`       |
+| `shared/src/api/index.ts`      | `frontend/src/api/index.ts`               |
+| imported from `@app/shared`    | imported from `@/api`                     |
+
+`openapi-typescript` builds its output with TypeScript's JS compiler API, which the native
+TypeScript compiler (7 and later) doesn't ship. When the workspaces use a native
+TypeScript, run the generator from a private tool package (`tools/api-codegen`) that
+depends on a TypeScript 5 within its peer range. The generated types still typecheck
+under the native compiler.
 
 **MONO-14 — Regenerate the contract in the same PR that changes it.** Any change to a
 route, a request or response model, an entity a response contains, or a WebSocket message

@@ -3,7 +3,12 @@
     "plugins": ["typescript", "react", "unicorn", "oxc"],
     "categories": { "correctness": "error" },
     "env": { "browser": true, "node": true },
-    "ignorePatterns": ["**/dist/**", "**/coverage/**", "**/storybook-static/**"],
+    "ignorePatterns": [
+        "**/dist/**",
+        "**/coverage/**",
+        "**/storybook-static/**",
+        "src/api/generated/**"
+    ],
     "rules": {
         "eslint/no-case-declarations": "error",
         "react/rules-of-hooks": "error",

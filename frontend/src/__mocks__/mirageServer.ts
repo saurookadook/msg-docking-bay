@@ -2,7 +2,7 @@ import { createServer, type Server } from 'miragejs';
 
 import { BASE_API_URL } from '@/constants';
 
-import { mockHealthCheckResponse } from './healthMocks';
+import { buildRoutePath, endpointConfigs } from './endpoints';
 
 /**
  * @description Replaces or adds routes on a server built by `makeMirageServer`. Paths
@@ -11,8 +11,8 @@ import { mockHealthCheckResponse } from './healthMocks';
 export type MirageRouteOverrides = (server: Server) => void;
 
 /**
- * @description Starts a Mirage server that answers every API route the app calls with
- * the fixtures in `__mocks__/`. Tests and Storybook share it.
+ * @description Starts a Mirage server that answers every route in `endpointConfigs`
+ * with its fixture. Tests and Storybook share it.
  * @note Call `server.shutdown()` when finished. In the `test` environment an unhandled
  * request throws; in `development` (Storybook) it passes through to the network.
  * @example
@@ -38,7 +38,9 @@ export function makeMirageServer({
       this.urlPrefix = BASE_API_URL;
       this.namespace = 'api';
 
-      this.get('/health-check', () => mockHealthCheckResponse);
+      for (const { path, handler } of endpointConfigs) {
+        this.get(buildRoutePath(path), (_schema, request) => handler(request));
+      }
 
       overrides?.(this);
 

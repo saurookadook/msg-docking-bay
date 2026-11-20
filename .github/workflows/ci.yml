@@ -18,15 +18,20 @@ defaults:
     shell: bash
 
 jobs:
-  # `repo` runs on every run, so nothing needs a `changes` job yet
-  # (GHA-6); add it with the first path-gated area.
+  # `repo` and `backend` run on every run, so nothing needs a `changes` job
+  # yet (GHA-6); add it with the first path-gated area.
   repo:
     permissions:
       contents: read # check out the code
     uses: ./.github/workflows/repo-lint.yml
 
+  backend:
+    permissions:
+      contents: read # check out the code
+    uses: ./.github/workflows/backend-test.yml
+
   ci-success:
-    needs: [repo]
+    needs: [repo, backend]
     # Must report even when a needed job fails or the run is cancelled (GHA-7).
     if: always()
     runs-on: ubuntu-24.04
