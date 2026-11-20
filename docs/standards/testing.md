@@ -164,7 +164,11 @@ reason (TEST-22).
 
 In the `test` environment an unhandled request throws, so a test cannot reach a real
 service by accident (TEST-13). Storybook starts the same server for each story in
-`.storybook/preview.tsx`, taking overrides from the story's `parameters.mirage`. Import
+`.storybook/preview.tsx`, taking overrides from the story's `parameters.mirage`. The dev
+app can run on it too: with `MOCK_API=true`, `vite.config.ts` defines
+`import.meta.env.MOCK_API` as `true`, and `main.tsx` imports and starts the server before
+rendering. The config defines it as `false` for `vite build`, so the bundler drops the
+import and a production bundle never contains Mirage. Import
 Mirage's `Response` as `MirageResponse` so it does not shadow the global.
 
 Mirage cannot mock WebSockets. Until that is decided, WebSocket tests follow
