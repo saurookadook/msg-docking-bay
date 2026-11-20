@@ -3,6 +3,10 @@
 // after changing the backend's API, and import these from `@/api`, never from `./generated`.
 import type { components } from './generated/api';
 
+// Every route's operations, keyed by its OpenAPI path. The Mirage endpoint table checks its
+// configs against it.
+export type { paths } from './generated/api';
+
 type Schemas = components['schemas'];
 
 export type HealthCheckStatus = Schemas['HealthCheckStatus'];
