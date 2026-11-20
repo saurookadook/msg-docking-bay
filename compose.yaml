@@ -105,6 +105,10 @@ services:
       context: ./frontend
       target: frontend-dev
     env_file: [.env]
+    # Interpolated from the shell first, so `moon run root:dev-mock` can turn it on
+    # without editing .env.
+    environment:
+      MOCK_API: "${MOCK_API:-false}"
     init: true # pnpm is PID 1 (ENV-19)
     develop:
       watch:

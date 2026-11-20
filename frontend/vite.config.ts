@@ -21,7 +21,7 @@ function requireEnv(name: string): string {
 }
 
 export default defineConfig(({ command, mode }) => {
-  const { FRONTEND_PORT, LOG_LEVEL } = process.env;
+  const { FRONTEND_PORT, LOG_LEVEL, MOCK_API } = process.env;
   // Only the dev server sits behind the proxy; Vitest (mode `test`) and Storybook also
   // load this file without it.
   const isProxiedDevServer =
@@ -45,6 +45,10 @@ export default defineConfig(({ command, mode }) => {
     },
     define: {
       'import.meta.env.LOG_LEVEL': JSON.stringify(LOG_LEVEL || 'INFO'),
+      // Always false for `vite build`, so a production bundle never contains Mirage.
+      'import.meta.env.MOCK_API': JSON.stringify(
+        command !== 'build' && MOCK_API === 'true',
+      ),
     },
   };
 });

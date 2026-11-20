@@ -19,6 +19,13 @@ tasks:
     command: 'docker'
     args: ['compose', 'up', '--build', '--watch', '--attach-dependencies', 'all']
     preset: 'server'
+  # `dev`, with the frontend's API calls answered by its Mirage fixtures (MOCK_API).
+  dev-mock:
+    command: 'docker'
+    args: ['compose', 'up', '--build', '--watch', '--attach-dependencies', 'all']
+    env:
+      MOCK_API: 'true'
+    preset: 'server'
   down:
     command: 'docker'
     args: ['compose', 'down']
