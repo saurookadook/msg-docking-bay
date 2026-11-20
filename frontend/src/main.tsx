@@ -1,6 +1,4 @@
-import { createRoot } from 'react-dom/client';
-
-import App from '@/app/App';
+import { startApp } from '@/app/startApp';
 import { sharedLog } from '@/utils';
 
 import './index.css';
@@ -14,20 +12,17 @@ if (rootElement == null) {
   throw new Error("[main] : Missing the '#root' element in index.html");
 }
 
-/**
- * @description Renders the app, first starting the Mirage server when `MOCK_API` is on.
- * @note `MOCK_API` is the constant `false` in a build, so Vite drops the import.
- */
-async function start(root: HTMLElement): Promise<void> {
-  if (import.meta.env.MOCK_API) {
-    const { makeMirageServer } = await import('@/__mocks__/mirageServer');
-    makeMirageServer({ environment: 'development' });
-    logger.info('[start] : Answering API calls from the Mirage fixtures (MOCK_API)');
-  }
-
-  createRoot(root).render(<App />);
+// `MOCK_API` is the constant `false` in a build, so Vite drops this import (TEST-18).
+async function startMockApi(): Promise<void> {
+  const { makeMirageServer } = await import('@/__mocks__/mirageServer');
+  makeMirageServer({ environment: 'development' });
+  logger.info(
+    '[startMockApi] : Answering API calls from the Mirage fixtures (MOCK_API)',
+  );
 }
 
-start(rootElement).catch((error: unknown) => {
-  logger.error('[start] : The app failed to start', error);
+startApp(rootElement, {
+  startMockApi: import.meta.env.MOCK_API ? startMockApi : undefined,
+}).catch((error: unknown) => {
+  logger.error('[main] : The app failed to start', error);
 });
