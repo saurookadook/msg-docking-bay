@@ -502,6 +502,9 @@ Branch `feat/add-catalog-read-routes`.
    - Add an endpoint table entry for each route, with hand-written fixtures in
      `__mocks__/<entity>Mocks.ts` for the fixed set of suits and works (D7). Cover pagination, a 404
      and an old slug.
+   - Make PR A's `paginate()` validate `limit` and `offset` as step 5's routes do: the
+     `MAX_PAGE_SIZE` cap, and a 422 with the route's error body for a bad value, so a mock never
+     serves a page the API would reject. *Deferred from PR A's review, 2026-11-20.*
 
 ### PR C — `feat(backend): serve characters, organizations and designers`
 Branch `feat/add-people-read-routes`. The same steps as PR B:
