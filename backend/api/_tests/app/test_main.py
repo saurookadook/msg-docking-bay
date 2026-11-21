@@ -51,5 +51,11 @@ class TestOperationIds:
 
         assert operation_ids == {
             "/api": ["read_home"],
+            "/api/continuities": ["read_continuities_list"],
             "/api/health-check": ["read_health_check"],
+            "/api/mobile-suits": ["read_mobile_suits_list"],
+            "/api/mobile-suits/{mobile_suit_slug}": ["read_mobile_suit"],
+            "/api/works": ["read_works_list"],
+            "/api/works/{work_slug}": ["read_work"],
+            "/api/works/{work_slug}/mobile-suits": ["read_work_mobile_suits"],
         }
