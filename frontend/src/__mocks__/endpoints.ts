@@ -156,10 +156,11 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
   {
     path: '/api/works/{work_slug}/mobile-suits',
     handler: (request) => {
-      const workSlug = request.params['work_slug'] ?? '';
-      return findWorkMock(workSlug) === undefined
+      // Resolved first, so an old slug lists the renamed work's suits (D2).
+      const work = findWorkMock(request.params['work_slug'] ?? '');
+      return work === undefined
         ? notFound('Work not found')
-        : paginate(findWorkMobileSuitsMock(workSlug), request);
+        : paginate(findWorkMobileSuitsMock(work.slug), request);
     },
   },
 ];

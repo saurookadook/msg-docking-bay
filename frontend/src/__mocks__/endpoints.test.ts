@@ -11,6 +11,7 @@ import {
   type ApiGetPath,
 } from './endpoints';
 import { findMobileSuitMock, findWorkMobileSuitsMock } from './mobileSuitMocks';
+import { findWorkMock } from './workMocks';
 
 describe('buildRoutePath', () => {
   it.each([
@@ -116,6 +117,18 @@ describe('endpointConfigs', () => {
       data: findMobileSuitMock('rx-78-2-gundam'),
     });
     expect(findMobileSuitMock('rx-78-2')?.slug).toBe('rx-78-2-gundam');
+  });
+
+  it('answers an old work slug on both work routes with the renamed work', () => {
+    expect(handle('/api/works/{work_slug}', { work_slug: 'msg' })).toEqual({
+      data: findWorkMock('mobile-suit-gundam'),
+    });
+    expect(
+      handle('/api/works/{work_slug}/mobile-suits', { work_slug: 'msg' }),
+    ).toMatchObject({
+      data: [{ slug: 'rx-78-2-gundam' }, { slug: 'ms-06f-zaku-ii' }],
+      meta: { total: 2 },
+    });
   });
 
   it.each([

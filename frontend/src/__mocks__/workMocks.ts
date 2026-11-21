@@ -109,10 +109,18 @@ export const mockWorkDetails: Readonly<Record<string, WorkDetailEntity>> = {
   [mockItMoves.slug]: detail(mockItMoves, []),
 };
 
+/** @description Old slugs that answer for a work, as `work_slug_redirects` holds. */
+export const mockWorkSlugRedirects: Readonly<Record<string, string>> = {
+  // The wiki's `MSG` redirect page.
+  msg: mockMobileSuitGundam.slug,
+};
+
 /**
- * @description Finds a work's detail by slug, as `GET /api/works/{work_slug}` does.
+ * @description Finds a work's detail by its current or an old slug, as
+ * `GET /api/works/{work_slug}` does. An old slug returns the renamed work, whose `slug` is
+ * the current one (D2).
  * @returns `undefined` for an unknown slug, which the route answers with a 404.
  */
 export function findWorkMock(slug: string): WorkDetailEntity | undefined {
-  return mockWorkDetails[slug];
+  return mockWorkDetails[slug] ?? mockWorkDetails[mockWorkSlugRedirects[slug] ?? ''];
 }
