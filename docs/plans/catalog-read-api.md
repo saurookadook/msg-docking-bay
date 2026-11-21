@@ -7,7 +7,7 @@
 
 - [x] PR A: `build(frontend): generate API types from the backend's OpenAPI schema`
 - [x] Mock mode PR: `feat(frontend): add a mock API mode to the dev server`
-- [ ] PR B: `feat(backend): serve mobile suits, works and continuities`
+- [x] PR B: `feat(backend): serve mobile suits, works and continuities`
 - [ ] PR C: `feat(backend): serve characters, organizations and designers`
 - [ ] PR D: `feat(backend): serve suit parts on spec sheets`
 
