@@ -6,7 +6,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.base_db import BaseDB
-from models.mixins.checks import not_empty, not_own_parent, slug_format
+from models.mixins.checks import not_empty, not_own_parent, positive, slug_format
 from models.mixins.db import TimestampsDB
 
 
@@ -20,6 +20,8 @@ class OrganizationDB(BaseDB, TimestampsDB):
     table, as mobile suits have.
     """
 
+    fandom_page_id: Mapped[int | None] = mapped_column(unique=True)
+    """The Gundam Wiki page ID, which survives a page rename (D2)."""
     fandom_page_title: Mapped[str | None] = mapped_column(unique=True)
     """The Gundam Wiki page title; null when it has no page."""
     name: Mapped[str]
@@ -31,6 +33,7 @@ class OrganizationDB(BaseDB, TimestampsDB):
     slug: Mapped[str] = mapped_column(unique=True)
 
     __table_args__ = (
+        positive("fandom_page_id"),
         not_empty("fandom_page_title"),
         not_empty("name"),
         not_own_parent("parent_organization_id"),

@@ -3,7 +3,7 @@
 from sqlalchemy import CheckConstraint
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 
-from models.mixins.checks import not_empty, slug_format
+from models.mixins.checks import not_empty, positive, slug_format
 
 
 class PersonDB:
@@ -13,6 +13,8 @@ class PersonDB:
     however many works or suits they are linked to.
     """
 
+    fandom_page_id: Mapped[int | None] = mapped_column(unique=True)
+    """The Gundam Wiki page ID, which survives a page rename (D2)."""
     fandom_page_title: Mapped[str | None] = mapped_column(unique=True)
     """The Gundam Wiki page title; null when they have no page."""
     name: Mapped[str]
@@ -25,6 +27,7 @@ class PersonDB:
     def __table_args__(cls) -> tuple[CheckConstraint, ...]:
         """Build the checks per table: a constraint has one table."""
         return (
+            positive("fandom_page_id"),
             not_empty("fandom_page_title"),
             not_empty("name"),
             not_empty("name_ja"),

@@ -30,6 +30,7 @@ class TestMechanicalDesignerDB:
     ) -> None:
         MechanicalDesignerDBFactory(
             id=OKAWARA_ID,
+            fandom_page_id=2204,
             fandom_page_title="Kunio Okawara",
             name="Kunio Okawara",
             name_ja="大河原邦男",
@@ -42,6 +43,7 @@ class TestMechanicalDesignerDB:
             select(MechanicalDesignerDB).where(MechanicalDesignerDB.id == OKAWARA_ID)
         ).scalar_one()
 
+        assert designer.fandom_page_id == 2204
         assert designer.fandom_page_title == "Kunio Okawara"
         assert designer.name == "Kunio Okawara"
         assert designer.name_ja == "大河原邦男"
@@ -70,6 +72,7 @@ class TestMechanicalDesignerDBConstraints:
     @pytest.mark.parametrize(
         "column, value, constraint",
         [
+            ("fandom_page_id", 2204, "mechanical_designers_fandom_page_id_key"),
             (
                 "fandom_page_title",
                 "Kunio Okawara",
@@ -79,7 +82,11 @@ class TestMechanicalDesignerDBConstraints:
         ],
     )
     def test_rejects_a_duplicate(
-        self, test_db_session: Session, column: str, value: str, constraint: str
+        self,
+        test_db_session: Session,
+        column: str,
+        value: str | int,
+        constraint: str,
     ) -> None:
         MechanicalDesignerDBFactory(**{column: value})
         MechanicalDesignerDBFactory(**{column: value})
@@ -92,6 +99,7 @@ class TestMechanicalDesignerDBConstraints:
     @pytest.mark.parametrize(
         "overrides, constraint",
         [
+            ({"fandom_page_id": 0}, "ck_mechanical_designers_fandom_page_id_positive"),
             (
                 {"fandom_page_title": ""},
                 "ck_mechanical_designers_fandom_page_title_not_empty",

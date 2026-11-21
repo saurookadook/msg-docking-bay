@@ -25,6 +25,7 @@ class OrganizationDBFactory(
         sqlalchemy_session = DBSessionManager().scoped_session
 
     id = LazyFunction(uuid7)
+    fandom_page_id = None
     fandom_page_title = None
     name = numbered("Organization {n}")
     parent_organization_id = None  # a real foreign key: pass an existing id

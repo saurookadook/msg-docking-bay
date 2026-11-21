@@ -25,6 +25,7 @@ class MechanicalDesignerDBFactory(
         sqlalchemy_session = DBSessionManager().scoped_session
 
     id = LazyFunction(uuid7)
+    fandom_page_id = None
     fandom_page_title = None
     name = numbered("Mechanical Designer {n}")
     name_ja = None

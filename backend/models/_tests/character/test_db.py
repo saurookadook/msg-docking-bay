@@ -27,6 +27,7 @@ class TestCharacterDB:
     ) -> None:
         CharacterDBFactory(
             id=AMURO_ID,
+            fandom_page_id=1012,
             fandom_page_title="Amuro Ray",
             name="Amuro Ray",
             name_ja="アムロ・レイ",
@@ -39,6 +40,7 @@ class TestCharacterDB:
             select(CharacterDB).where(CharacterDB.id == AMURO_ID)
         ).scalar_one()
 
+        assert character.fandom_page_id == 1012
         assert character.fandom_page_title == "Amuro Ray"
         assert character.name == "Amuro Ray"
         assert character.name_ja == "アムロ・レイ"
@@ -67,12 +69,17 @@ class TestCharacterDBConstraints:
     @pytest.mark.parametrize(
         "column, value, constraint",
         [
+            ("fandom_page_id", 1012, "characters_fandom_page_id_key"),
             ("fandom_page_title", "Amuro Ray", "characters_fandom_page_title_key"),
             ("slug", "amuro-ray", "characters_slug_key"),
         ],
     )
     def test_rejects_a_duplicate(
-        self, test_db_session: Session, column: str, value: str, constraint: str
+        self,
+        test_db_session: Session,
+        column: str,
+        value: str | int,
+        constraint: str,
     ) -> None:
         CharacterDBFactory(**{column: value})
         CharacterDBFactory(**{column: value})
@@ -85,6 +92,7 @@ class TestCharacterDBConstraints:
     @pytest.mark.parametrize(
         "overrides, constraint",
         [
+            ({"fandom_page_id": 0}, "ck_characters_fandom_page_id_positive"),
             ({"fandom_page_title": ""}, "ck_characters_fandom_page_title_not_empty"),
             ({"name": ""}, "ck_characters_name_not_empty"),
             ({"name_ja": ""}, "ck_characters_name_ja_not_empty"),
