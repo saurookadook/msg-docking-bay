@@ -291,6 +291,9 @@ APPEARANCES: Final[list[dict[str, Any]]] = [
 SUIT_SLUG_REDIRECTS: Final[dict[str, str]] = {"rx-78-2": "rx-78-2-gundam"}
 """The wiki's ``RX-78-2`` redirect page, as an old slug (D2)."""
 
+WORK_SLUG_REDIRECTS: Final[dict[str, str]] = {"msg": "mobile-suit-gundam"}
+"""The wiki's ``MSG`` redirect page, as an old slug (D2)."""
+
 
 def check_environment() -> None:
     """Refuse a database outside dev and test.
@@ -372,6 +375,10 @@ def seed(db_session: Session) -> None:
                 "source_id": source_ids[work_pages[from_slug]],
                 "to_work_id": work_ids[to_slug],
             }
+        )
+    for old_slug, work_slug in WORK_SLUG_REDIRECTS.items():
+        works.create_or_update_slug_redirect(
+            payload={"old_slug": old_slug, "work_id": work_ids[work_slug]}
         )
 
     suits = MobileSuitFacade(db_session=db_session)

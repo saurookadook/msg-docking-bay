@@ -46,6 +46,7 @@ class TestRun:
         work_suits = test_app_client.get("/api/works/mobile-suit-gundam/mobile-suits")
         gundam = test_app_client.get("/api/mobile-suits/rx-78-2").json()["data"]
         work = test_app_client.get("/api/works/mobile-suit-gundam-i").json()["data"]
+        renamed_work = test_app_client.get("/api/works/msg").json()["data"]
 
         assert [c["slug"] for c in continuities] == ["universal-century"]
         assert works["meta"]["total"] == 5
@@ -60,6 +61,7 @@ class TestRun:
             ("ms-06f-zaku-ii", True),
         ]
         assert gundam["slug"] == "rx-78-2-gundam"
+        assert renamed_work["slug"] == "mobile-suit-gundam"
         base, magnet_coating = gundam["spec_sheets"]
         assert (base["configuration"], base["turn_time_s"]) == (None, 1.5)
         assert magnet_coating["configuration"] == "Magnet Coating"
