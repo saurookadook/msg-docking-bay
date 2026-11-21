@@ -10,22 +10,34 @@ from sqlalchemy.orm import aliased, contains_eager, joinedload
 from constants.catalog import UnitType
 from models.base.facade import BaseFacade, normalize_search
 from models.base.page import Page
+from models.character.db import CharacterDB
+from models.character.entity import CharacterRefEntity
 from models.continuity.db import ContinuityDB
+from models.mechanical_designer.db import MechanicalDesignerDB
+from models.mechanical_designer.entity import MechanicalDesignerRefEntity
 from models.mobile_suit.db import MobileSuitDB
 from models.mobile_suit.entity import (
+    DesignerCreditEntity,
     MobileSuitAppearanceCardEntity,
     MobileSuitCardEntity,
     MobileSuitDetailEntity,
     MobileSuitEntity,
+    OrganizationCreditEntity,
+    PilotCreditEntity,
     RelatedMobileSuitEntity,
     WorkAppearanceEntity,
 )
 from models.mobile_suit_appearance.db import MobileSuitAppearanceDB
 from models.mobile_suit_appearance.entity import MobileSuitAppearanceEntity
+from models.mobile_suit_designer.db import MobileSuitDesignerDB
+from models.mobile_suit_organization.db import MobileSuitOrganizationDB
+from models.mobile_suit_pilot.db import MobileSuitPilotDB
 from models.mobile_suit_relation.db import MobileSuitRelationDB
 from models.mobile_suit_relation.entity import MobileSuitRelationEntity
 from models.mobile_suit_slug_redirect.db import MobileSuitSlugRedirectDB
 from models.mobile_suit_slug_redirect.entity import MobileSuitSlugRedirectEntity
+from models.organization.db import OrganizationDB
+from models.organization.entity import OrganizationRefEntity
 from models.source.db import SourceDB
 from models.source.entity import SourceCitationEntity
 from models.spec_sheet.db import SpecSheetDB
@@ -37,7 +49,7 @@ from models.spec_sheet.entity import (
 )
 from models.work.db import WorkDB
 from models.work.entity import WorkCardEntity
-from models.work.facade import WorkFacade
+from models.work.facade import WorkFacade, optional_work_ref
 
 
 class MobileSuitFacade(BaseFacade):
@@ -151,10 +163,10 @@ class MobileSuitFacade(BaseFacade):
         )
 
     def get_one_by_slug(self, slug: str) -> MobileSuitDetailEntity:
-        """Return a suit with its sheets, relations and appearances.
+        """Return a suit with its sheets, relations, works and credits.
 
         An old slug finds the renamed suit, whose ``slug`` then holds
-        the current one (D2). Four statements, however many rows each
+        the current one (D2). Seven statements, however many rows each
         list holds: the suit, then one per list (PYTEST-24).
 
         Raises:
@@ -184,6 +196,9 @@ class MobileSuitFacade(BaseFacade):
             {
                 **MobileSuitCardEntity.model_validate(suit).model_dump(),
                 "appearances": self._get_appearances(suit.id),
+                "designers": self._get_designers(suit.id),
+                "organizations": self._get_organizations(suit.id),
+                "pilots": self._get_pilots(suit.id),
                 "relations": self._get_relations(suit.id),
                 "spec_sheets": self._get_spec_sheets(suit.id),
             }
@@ -342,6 +357,100 @@ class MobileSuitFacade(BaseFacade):
                 }
             )
             for appearance in appearances
+        ]
+
+    def _get_designers(self, mobile_suit_id: uuid.UUID) -> list[DesignerCreditEntity]:
+        """Return the suit's designers, by name."""
+        rows = self.db_session.execute(
+            select(MobileSuitDesignerDB, MechanicalDesignerDB)
+            .join(
+                MechanicalDesignerDB,
+                MechanicalDesignerDB.id == MobileSuitDesignerDB.mechanical_designer_id,
+            )
+            .options(joinedload(MobileSuitDesignerDB.source))
+            .where(MobileSuitDesignerDB.mobile_suit_id == mobile_suit_id)
+            .order_by(MechanicalDesignerDB.name, MechanicalDesignerDB.slug)
+        ).all()
+        return [
+            DesignerCreditEntity.model_validate(
+                {
+                    "created_at": credit.created_at,
+                    "mechanical_designer": MechanicalDesignerRefEntity.model_validate(
+                        designer
+                    ),
+                    "source": SourceCitationEntity.model_validate(credit.source),
+                }
+            )
+            for credit, designer in rows
+        ]
+
+    def _get_organizations(
+        self, mobile_suit_id: uuid.UUID
+    ) -> list[OrganizationCreditEntity]:
+        """Return the suit's organizations, by role, work, then name.
+
+        Links with no recorded work come after a role's other links.
+        """
+        rows = self.db_session.execute(
+            select(MobileSuitOrganizationDB, OrganizationDB, WorkDB)
+            .join(
+                OrganizationDB,
+                OrganizationDB.id == MobileSuitOrganizationDB.organization_id,
+            )
+            .outerjoin(WorkDB, WorkDB.id == MobileSuitOrganizationDB.work_id)
+            .options(joinedload(MobileSuitOrganizationDB.source))
+            .where(MobileSuitOrganizationDB.mobile_suit_id == mobile_suit_id)
+            .order_by(
+                MobileSuitOrganizationDB.role,
+                MobileSuitOrganizationDB.work_id.is_(None),
+                WorkDB.start_date.asc().nulls_last(),
+                WorkDB.title,
+                OrganizationDB.name,
+                OrganizationDB.slug,
+            )
+        ).all()
+        return [
+            OrganizationCreditEntity.model_validate(
+                {
+                    "created_at": link.created_at,
+                    "organization": OrganizationRefEntity.model_validate(organization),
+                    "role": link.role,
+                    "source": SourceCitationEntity.model_validate(link.source),
+                    "work": optional_work_ref(work),
+                }
+            )
+            for link, organization, work in rows
+        ]
+
+    def _get_pilots(self, mobile_suit_id: uuid.UUID) -> list[PilotCreditEntity]:
+        """Return the suit's pilots, by work, then by name.
+
+        Pairings with no recorded work come after the ones with a work.
+        """
+        rows = self.db_session.execute(
+            select(MobileSuitPilotDB, CharacterDB, WorkDB)
+            .join(CharacterDB, CharacterDB.id == MobileSuitPilotDB.character_id)
+            .outerjoin(WorkDB, WorkDB.id == MobileSuitPilotDB.work_id)
+            .options(joinedload(MobileSuitPilotDB.source))
+            .where(MobileSuitPilotDB.mobile_suit_id == mobile_suit_id)
+            .order_by(
+                MobileSuitPilotDB.work_id.is_(None),
+                WorkDB.start_date.asc().nulls_last(),
+                WorkDB.title,
+                CharacterDB.name,
+                CharacterDB.slug,
+            )
+        ).all()
+        return [
+            PilotCreditEntity.model_validate(
+                {
+                    "character": CharacterRefEntity.model_validate(character),
+                    "created_at": pilot.created_at,
+                    "source": SourceCitationEntity.model_validate(pilot.source),
+                    "work": optional_work_ref(work),
+                }
+            )
+            for pilot, character, work in rows
         ]
 
 
