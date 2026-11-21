@@ -3,11 +3,12 @@
 import uuid
 
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from constants.catalog import UnitType
 from constants.db_types import UNIT_TYPE_DB_TYPE
 from db.base_db import BaseDB
+from models.continuity.db import ContinuityDB
 from models.mixins.checks import not_empty, positive, slug_format
 from models.mixins.db import TimestampsDB
 
@@ -36,6 +37,9 @@ class MobileSuitDB(BaseDB, TimestampsDB):
     name_ja: Mapped[str | None]
     slug: Mapped[str] = mapped_column(unique=True)
     unit_type: Mapped[UnitType] = mapped_column(UNIT_TYPE_DB_TYPE)
+
+    continuity: Mapped[ContinuityDB | None] = relationship(lazy="raise")
+    """Loaded only by facades that ask for it (SQLA-10, SQLA-22)."""
 
     __table_args__ = (
         positive("fandom_page_id"),

@@ -3,11 +3,13 @@
 import uuid
 
 from sqlalchemy import ForeignKey, false
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base_db import JunctionBaseDB
 from models.mixins.checks import ordered_range, positive
 from models.mixins.db import CreatedAtDB
+from models.source.db import SourceDB
+from models.work.db import WorkDB
 
 
 class MobileSuitAppearanceDB(JunctionBaseDB, CreatedAtDB):
@@ -36,6 +38,10 @@ class MobileSuitAppearanceDB(JunctionBaseDB, CreatedAtDB):
         ForeignKey("works.id", ondelete="CASCADE"), primary_key=True, index=True
     )
     """Indexed: it does not lead the primary key (RDB-18)."""
+
+    source: Mapped[SourceDB] = relationship(lazy="raise")
+    work: Mapped[WorkDB] = relationship(lazy="raise")
+    """Both load only when a facade asks for them (SQLA-10, SQLA-22)."""
 
     __table_args__ = (
         *ordered_range("first_episode", "last_episode", name="episodes"),

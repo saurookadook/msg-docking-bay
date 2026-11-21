@@ -1,8 +1,12 @@
 """Entities for ``sources`` (PYD-2, PYD-3)."""
 
-from pydantic import AwareDatetime
+from collections.abc import Callable
+from typing import Final
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from constants.catalog import ContentLicense, SourceKind
+from pydantic import AwareDatetime, computed_field
+
+from constants.catalog import LICENSES, ContentLicense, SourceKind
 from models.base.entity import BaseEntityModel
 from models.mixins.entity import IdEntityMixin, TimestampsEntityMixin
 
@@ -16,6 +20,37 @@ class SourceEntity(BaseEntityModel, IdEntityMixin, TimestampsEntityMixin):
     retrieved_at: AwareDatetime
     revision_id: int | None = None
     url: str
+
+
+def _with_oldid(url: str, revision_id: int) -> str:
+    """Add ``oldid`` to a MediaWiki page URL, keeping its query.
+
+    ``https://gundam.fandom.com/?curid=2034`` keeps its ``curid``.
+    """
+    parts = urlsplit(url)
+    query = [*parse_qsl(parts.query), ("oldid", str(revision_id))]
+    return urlunsplit(parts._replace(query=urlencode(query)))
+
+
+def _wikidata_revision(url: str, revision_id: int) -> str:
+    """Link a Wikidata item's revision through ``index.php``.
+
+    ``https://www.wikidata.org/wiki/Q1134906`` becomes
+    ``https://www.wikidata.org/w/index.php?title=Q1134906&oldid=N``.
+    """
+    parts = urlsplit(url)
+    qid = parts.path.rsplit("/", 1)[-1]
+    query = urlencode({"title": qid, "oldid": str(revision_id)})
+    return urlunsplit(parts._replace(path="/w/index.php", query=query))
+
+
+_REVISION_URL_BUILDERS: Final[dict[SourceKind, Callable[[str, int], str]]] = {
+    SourceKind.FANDOM_PAGE: _with_oldid,
+    SourceKind.WIKIDATA_ITEM: _wikidata_revision,
+    SourceKind.WIKIPEDIA_EN_PAGE: _with_oldid,
+    SourceKind.WIKIPEDIA_JA_PAGE: _with_oldid,
+}
+"""How each kind of source links one revision (PY-35, D6)."""
 
 
 class SourceCitationEntity(BaseEntityModel):
@@ -34,3 +69,27 @@ class SourceCitationEntity(BaseEntityModel):
     retrieved_at: AwareDatetime
     revision_id: int | None = None
     url: str
+
+    @computed_field
+    @property
+    def license_name(self) -> str:
+        """The license's name, such as ``CC BY-SA 3.0`` (D6)."""
+        return LICENSES[self.content_license].name
+
+    @computed_field
+    @property
+    def license_url(self) -> str:
+        """The license's deed URL (D6)."""
+        return LICENSES[self.content_license].url
+
+    @computed_field
+    @property
+    def revision_url(self) -> str | None:
+        """A permalink to the revision the catalog holds, or ``None``.
+
+        Share-alike attribution points at the version used, not the
+        live page (D6). ``None`` when no revision was recorded.
+        """
+        if self.revision_id is None:
+            return None
+        return _REVISION_URL_BUILDERS[self.kind](self.url, self.revision_id)

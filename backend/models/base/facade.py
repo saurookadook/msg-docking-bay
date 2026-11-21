@@ -1,6 +1,7 @@
 """The base every facade inherits from (sqlalchemy.md SQLA-16)."""
 
 import re
+import uuid
 from collections.abc import Mapping, Sequence
 from typing import Any, Final
 
@@ -74,6 +75,31 @@ class BaseFacade:
         """Rank rows that start with the needle first (D8)."""
         starts = or_(*(_normalized(column).startswith(needle) for column in columns))
         return case((starts, 0), else_=1)
+
+    @staticmethod
+    def _has_slug(
+        slug_column: SQLColumnExpression[str],
+        id_column: SQLColumnExpression[uuid.UUID],
+        redirect_old_slug: SQLColumnExpression[str],
+        redirect_target: SQLColumnExpression[uuid.UUID],
+        slug: str,
+    ) -> ColumnElement[bool]:
+        """Match the row whose current or old slug this is (D2).
+
+        Order by ``_current_slug_first`` too: an old slug can name
+        another row's current one.
+        """
+        return or_(
+            slug_column == slug,
+            id_column.in_(select(redirect_target).where(redirect_old_slug == slug)),
+        )
+
+    @staticmethod
+    def _current_slug_first(
+        slug_column: SQLColumnExpression[str], slug: str
+    ) -> ColumnElement[int]:
+        """Rank a current slug before an old one (D2)."""
+        return case((slug_column == slug, 0), else_=1)
 
     def _upsert[T: RootDB](
         self,

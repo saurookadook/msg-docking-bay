@@ -1,6 +1,10 @@
-"""Fixed sets of catalog values, mirrored by enum types (PG-5)."""
+"""Fixed sets of catalog values, mirrored by enum types (PG-5).
+
+Also the license details served with every cited source (D6).
+"""
 
 from enum import StrEnum
+from typing import Final, NamedTuple
 
 
 class WorkType(StrEnum):
@@ -144,3 +148,27 @@ class IngestRunStatus(StrEnum):
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
+
+
+class LicenseDetails(NamedTuple):
+    """How a license is named and linked in an attribution (D6)."""
+
+    name: str
+    url: str
+
+
+LICENSES: Final[dict[ContentLicense, LicenseDetails]] = {
+    ContentLicense.CC_BY_SA_3_0: LicenseDetails(
+        "CC BY-SA 3.0", "https://creativecommons.org/licenses/by-sa/3.0/"
+    ),
+    ContentLicense.CC_BY_SA_4_0: LicenseDetails(
+        "CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0/"
+    ),
+    ContentLicense.CC0_1_0: LicenseDetails(
+        "CC0 1.0", "https://creativecommons.org/publicdomain/zero/1.0/"
+    ),
+}
+"""Each license's name and URL, served beside every cited source.
+
+The frontend shows them as given, so it keeps no copy of this table.
+"""

@@ -78,8 +78,8 @@ class WorkFacade(BaseFacade):
         """
         work_id = self.db_session.scalars(
             select(WorkDB.id)
-            .where(self._has_slug(slug))
-            .order_by(self._current_slug_first(slug))
+            .where(self._work_has_slug(slug))
+            .order_by(self._current_slug_first(WorkDB.slug, slug))
             .limit(1)
         ).first()
         if work_id is None:
@@ -100,8 +100,8 @@ class WorkFacade(BaseFacade):
         work = self.db_session.scalars(
             select(WorkDB)
             .options(joinedload(WorkDB.continuity), joinedload(WorkDB.parent_work))
-            .where(self._has_slug(slug))
-            .order_by(self._current_slug_first(slug))
+            .where(self._work_has_slug(slug))
+            .order_by(self._current_slug_first(WorkDB.slug, slug))
             .limit(1)
         ).first()
         if work is None:
@@ -146,22 +146,16 @@ class WorkFacade(BaseFacade):
         )
         return WorkSlugRedirectEntity.model_validate(redirect)
 
-    @staticmethod
-    def _has_slug(slug: str) -> ColumnElement[bool]:
-        """Match the work whose current or old slug this is."""
-        return or_(
-            WorkDB.slug == slug,
-            WorkDB.id.in_(
-                select(WorkSlugRedirectDB.work_id).where(
-                    WorkSlugRedirectDB.old_slug == slug
-                )
-            ),
+    @classmethod
+    def _work_has_slug(cls, slug: str) -> ColumnElement[bool]:
+        """Match the work whose current or old slug this is (D2)."""
+        return cls._has_slug(
+            WorkDB.slug,
+            WorkDB.id,
+            WorkSlugRedirectDB.old_slug,
+            WorkSlugRedirectDB.work_id,
+            slug,
         )
-
-    @staticmethod
-    def _current_slug_first(slug: str) -> ColumnElement[int]:
-        """Rank a current slug before an old one (D2)."""
-        return case((WorkDB.slug == slug, 0), else_=1)
 
     def _get_relations(self, work_id: uuid.UUID) -> list[RelatedWorkEntity]:
         """Return every edge that touches the work, from its side (D5).
