@@ -26,6 +26,15 @@ tasks:
     preset: 'utility'
     options:
       runFromWorkspaceRoot: true
+  # Seeds a small, real slice of the catalog into the dev database (scripts/seed_dev.py).
+  # --build, because the image holds the code: a stale one would lack the script.
+  seed-dev:
+    command: 'docker'
+    args: ['compose', 'run', '--rm', '--build', 'backend', 'python', '-m', 'scripts.seed_dev']
+    preset: 'utility'
+    options:
+      runFromWorkspaceRoot: true
+      runInCI: false
   # Builds backend-prod and pushes it to Docker Hub (ENV-41); credentials from 1Password.
   publish:
     command: 'scripts/publish-images.sh backend'
