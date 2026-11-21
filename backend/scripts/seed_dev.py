@@ -5,7 +5,7 @@ five works they appear in, the Universal Century, and the Gundam Wiki
 pages each fact came from. Every value was read by hand from the
 Gundam Wiki's ``gundam_pages_current.xml.7z`` dump of 2026-11-15
 (``ingest/data/dumps/``, SHA-256 ``89a91167…``). The frontend's Mirage
-fixtures (``frontend/src/api/__mocks__/``) hold a second copy of the
+fixtures (``frontend/src/__mocks__/``) hold a second copy of the
 same rows; change both together.
 
 Every row is written through a facade's ``create_or_update``, so a
