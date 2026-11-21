@@ -3,13 +3,27 @@ import { Response as MirageResponse, type Request } from 'miragejs';
 import type { PageMeta, paths, ValidationError } from '@/api';
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/constants';
 
+import { findCharacterMock } from './characterMocks';
 import { mockContinuitiesListResponse } from './continuityMocks';
 import { mockHealthCheckResponse } from './healthMocks';
+import {
+  findMechanicalDesignerMobileSuitsMock,
+  findMechanicalDesignerMock,
+} from './mechanicalDesignerMocks';
 import {
   findMobileSuitMock,
   findWorkMobileSuitsMock,
   mockMobileSuits,
 } from './mobileSuitMocks';
+import {
+  findOrganizationMobileSuitsMock,
+  findOrganizationMock,
+} from './organizationMocks';
+import {
+  mockCharacters,
+  mockMechanicalDesigners,
+  mockOrganizations,
+} from './peopleMocks';
 import { findWorkMock, mockWorks } from './workMocks';
 
 /** @description The API's paths that have a `GET` operation. */
@@ -130,8 +144,45 @@ export function notFound(detail: string): MirageResponse {
  * Error responses belong in each test's `overrides`.
  */
 export const endpointConfigs: readonly AnyEndpointConfig[] = [
+  { path: '/api/characters', handler: (request) => paginate(mockCharacters, request) },
+  {
+    path: '/api/characters/{character_slug}',
+    handler: ({ params }) => {
+      const character = findCharacterMock(params['character_slug'] ?? '');
+      return character === undefined
+        ? notFound('Character not found')
+        : { data: character };
+    },
+  },
   { path: '/api/continuities', handler: () => mockContinuitiesListResponse },
   { path: '/api/health-check', handler: () => mockHealthCheckResponse },
+  {
+    path: '/api/mechanical-designers',
+    handler: (request) => paginate(mockMechanicalDesigners, request),
+  },
+  {
+    path: '/api/mechanical-designers/{mechanical_designer_slug}',
+    handler: ({ params }) => {
+      const designer = findMechanicalDesignerMock(
+        params['mechanical_designer_slug'] ?? '',
+      );
+      return designer === undefined
+        ? notFound('Mechanical designer not found')
+        : { data: designer };
+    },
+  },
+  {
+    path: '/api/mechanical-designers/{mechanical_designer_slug}/mobile-suits',
+    handler: (request) => {
+      // Resolved first, so an old slug lists the renamed designer's suits (D2).
+      const designer = findMechanicalDesignerMock(
+        request.params['mechanical_designer_slug'] ?? '',
+      );
+      return designer === undefined
+        ? notFound('Mechanical designer not found')
+        : paginate(findMechanicalDesignerMobileSuitsMock(designer.slug), request);
+    },
+  },
   {
     path: '/api/mobile-suits',
     handler: (request) => paginate(mockMobileSuits, request),
@@ -143,6 +194,31 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
       return mobileSuit === undefined
         ? notFound('Mobile suit not found')
         : { data: mobileSuit };
+    },
+  },
+  {
+    path: '/api/organizations',
+    handler: (request) => paginate(mockOrganizations, request),
+  },
+  {
+    path: '/api/organizations/{organization_slug}',
+    handler: ({ params }) => {
+      const organization = findOrganizationMock(params['organization_slug'] ?? '');
+      return organization === undefined
+        ? notFound('Organization not found')
+        : { data: organization };
+    },
+  },
+  {
+    path: '/api/organizations/{organization_slug}/mobile-suits',
+    handler: (request) => {
+      // Resolved first, so an old slug lists the renamed organization's suits (D2).
+      const organization = findOrganizationMock(
+        request.params['organization_slug'] ?? '',
+      );
+      return organization === undefined
+        ? notFound('Organization not found')
+        : paginate(findOrganizationMobileSuitsMock(organization.slug), request);
     },
   },
   { path: '/api/works', handler: (request) => paginate(mockWorks, request) },

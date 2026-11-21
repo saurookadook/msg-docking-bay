@@ -1,17 +1,34 @@
 // Read from the 2026-11-15 Gundam Wiki dump; `backend/scripts/seed_dev.py` holds the
 // other copy (see `catalogMocks.ts`).
 import type {
+  DesignerCreditEntity,
+  MechanicalDesignerRefEntity,
   MobileSuitAppearanceCardEntity,
   MobileSuitCardEntity,
   MobileSuitDetailEntity,
+  MobileSuitOrganizationRole,
   MobileSuitSpecSheetEntity,
+  OrganizationCreditEntity,
+  OrganizationRefEntity,
+  PilotCreditEntity,
   RelatedMobileSuitEntity,
   SourceCitationEntity,
   WorkAppearanceEntity,
   WorkCardEntity,
+  WorkRefEntity,
 } from '@/api';
 
 import { mockNow, mockSources, mockUniversalCenturyRef } from './catalogMocks';
+import {
+  mockAmuroRayOriginRef,
+  mockAmuroRayRef,
+  mockEarthFederationRef,
+  mockHajimeKatokiRef,
+  mockKunioOkawaraRef,
+  mockMasakiKawaharaRef,
+  mockPrincipalityOfZeonRef,
+  mockZeonicRef,
+} from './peopleMocks';
 import {
   mockItMoves,
   mockMobileSuitGundam,
@@ -145,7 +162,44 @@ function alternateVersion(
   };
 }
 
-/** @description Each suit's detail, keyed by its current slug. */
+/** @description Just a work's `slug` and `title`, as a credit's `work` carries them. */
+export function toWorkRef({ slug, title }: WorkCardEntity): WorkRefEntity {
+  return { slug, title };
+}
+
+function pilot(
+  character: PilotCreditEntity['character'],
+  source: SourceCitationEntity,
+  work: WorkCardEntity | null,
+): PilotCreditEntity {
+  return {
+    character,
+    created_at: mockNow,
+    source,
+    work: work === null ? null : toWorkRef(work),
+  };
+}
+
+// None of the seeded organization links is tagged with a work.
+function organization(
+  ref: OrganizationRefEntity,
+  role: MobileSuitOrganizationRole,
+  source: SourceCitationEntity,
+): OrganizationCreditEntity {
+  return { created_at: mockNow, organization: ref, role, source, work: null };
+}
+
+function designer(
+  ref: MechanicalDesignerRefEntity,
+  source: SourceCitationEntity,
+): DesignerCreditEntity {
+  return { created_at: mockNow, mechanical_designer: ref, source };
+}
+
+/**
+ * @description Each suit's detail, keyed by its current slug. Credits follow the API's
+ * order: pilots by work (none last), organizations by role, designers by name.
+ */
 export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEntity>> = {
   [mockRx782Gundam.slug]: {
     ...mockRx782Gundam,
@@ -157,6 +211,11 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
       }),
       appearance(mockMobileSuitGundamI, mockSources.rx782Gundam),
     ],
+    designers: [designer(mockKunioOkawaraRef, mockSources.rx782Gundam)],
+    organizations: [
+      organization(mockEarthFederationRef, 'manufacturer', mockSources.rx782Gundam),
+    ],
+    pilots: [pilot(mockAmuroRayRef, mockSources.rx782Gundam, mockMobileSuitGundam)],
     relations: [
       alternateVersion('incoming', mockRx7802Gundam, mockSources.rx7802Gundam),
       alternateVersion('incoming', mockRx78f00Gundam, mockSources.rx78f00Gundam),
@@ -189,6 +248,14 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
       appearance(mockTheOrigin, mockSources.rx7802Gundam),
       appearance(mockTheOriginAdvent, mockSources.rx7802Gundam),
     ],
+    // Okawara for the manga, Katoki for the anime.
+    designers: [
+      designer(mockHajimeKatokiRef, mockSources.rx7802Gundam),
+      designer(mockKunioOkawaraRef, mockSources.rx7802Gundam),
+    ],
+    organizations: [],
+    // The infobox gives this pairing no work.
+    pilots: [pilot(mockAmuroRayOriginRef, mockSources.rx7802Gundam, null)],
     relations: [
       alternateVersion('outgoing', mockRx782Gundam, mockSources.rx7802Gundam),
     ],
@@ -199,6 +266,9 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
     appearances: [
       appearance(mockItMoves, mockSources.rx78f00Gundam, { is_debut: true }),
     ],
+    designers: [designer(mockMasakiKawaharaRef, mockSources.rx78f00Gundam)],
+    organizations: [],
+    pilots: [],
     relations: [
       alternateVersion('outgoing', mockRx782Gundam, mockSources.rx78f00Gundam),
     ],
@@ -215,6 +285,12 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
       appearance(mockMobileSuitGundam, mockSources.ms06fZakuII, { is_debut: true }),
       appearance(mockMobileSuitGundamI, mockSources.ms06fZakuII),
     ],
+    designers: [designer(mockKunioOkawaraRef, mockSources.ms06fZakuII)],
+    organizations: [
+      organization(mockZeonicRef, 'manufacturer', mockSources.ms06fZakuII),
+      organization(mockPrincipalityOfZeonRef, 'operator', mockSources.ms06fZakuII),
+    ],
+    pilots: [],
     relations: [],
     spec_sheets: [
       specSheet(mockSources.ms06fZakuII, {

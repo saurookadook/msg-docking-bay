@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/constants';
 
+import { findCharacterMock } from './characterMocks';
 import {
   buildRoutePath,
   endpointConfigs,
@@ -10,7 +11,9 @@ import {
   type AnyEndpointConfig,
   type ApiGetPath,
 } from './endpoints';
+import { findMechanicalDesignerMobileSuitsMock } from './mechanicalDesignerMocks';
 import { findMobileSuitMock, findWorkMobileSuitsMock } from './mobileSuitMocks';
+import { findOrganizationMobileSuitsMock } from './organizationMocks';
 import { findWorkMock } from './workMocks';
 
 describe('buildRoutePath', () => {
@@ -100,10 +103,18 @@ function handle(path: ApiGetPath, params: Record<string, string>): unknown {
 describe('endpointConfigs', () => {
   it('registers every GET route in the contract', () => {
     expect(endpointConfigs.map(({ path }) => path).toSorted()).toEqual([
+      '/api/characters',
+      '/api/characters/{character_slug}',
       '/api/continuities',
       '/api/health-check',
+      '/api/mechanical-designers',
+      '/api/mechanical-designers/{mechanical_designer_slug}',
+      '/api/mechanical-designers/{mechanical_designer_slug}/mobile-suits',
       '/api/mobile-suits',
       '/api/mobile-suits/{mobile_suit_slug}',
+      '/api/organizations',
+      '/api/organizations/{organization_slug}',
+      '/api/organizations/{organization_slug}/mobile-suits',
       '/api/works',
       '/api/works/{work_slug}',
       '/api/works/{work_slug}/mobile-suits',
@@ -139,6 +150,21 @@ describe('endpointConfigs', () => {
     ],
     ['/api/works/{work_slug}', { work_slug: 'turn-a-gundam' }, 'Work not found'],
     [
+      '/api/characters/{character_slug}',
+      { character_slug: 'char-aznable' },
+      'Character not found',
+    ],
+    [
+      '/api/organizations/{organization_slug}/mobile-suits',
+      { organization_slug: 'aeug' },
+      'Organization not found',
+    ],
+    [
+      '/api/mechanical-designers/{mechanical_designer_slug}/mobile-suits',
+      { mechanical_designer_slug: 'yutaka-izubuchi' },
+      'Mechanical designer not found',
+    ],
+    [
       '/api/works/{work_slug}/mobile-suits',
       { work_slug: 'turn-a-gundam' },
       'Work not found',
@@ -167,5 +193,49 @@ describe('endpointConfigs', () => {
         ({ slug }) => slug,
       ),
     ).toEqual(['rx-78f00-gundam']);
+  });
+
+  it('answers old people slugs on their detail and suit routes', () => {
+    expect(
+      handle('/api/characters/{character_slug}', { character_slug: 'amuro' }),
+    ).toEqual({ data: findCharacterMock('amuro-ray') });
+    expect(
+      handle('/api/organizations/{organization_slug}/mobile-suits', {
+        organization_slug: 'earth-federation-universal-century',
+      }),
+    ).toMatchObject({
+      data: [{ mobile_suit: { slug: 'rx-78-2-gundam' } }],
+      meta: { total: 1 },
+    });
+    expect(
+      handle('/api/mechanical-designers/{mechanical_designer_slug}/mobile-suits', {
+        mechanical_designer_slug: 'katoki-hajime',
+      }),
+    ).toMatchObject({ data: [{ mobile_suit: { slug: 'rx-78-02-gundam' } }] });
+  });
+
+  it("derives a character's piloted suits from the suit fixtures", () => {
+    expect(
+      findCharacterMock('amuro-ray-origin')?.piloted_mobile_suits.map(
+        ({ mobile_suit, work }) => [mobile_suit.slug, work],
+      ),
+    ).toEqual([['rx-78-02-gundam', null]]);
+  });
+
+  it("lists an organization's suits once each, with every link", () => {
+    expect(
+      findOrganizationMobileSuitsMock('zeonic').map(({ links, mobile_suit }) => [
+        mobile_suit.slug,
+        links.map(({ role }) => role),
+      ]),
+    ).toEqual([['ms-06f-zaku-ii', ['manufacturer']]]);
+  });
+
+  it("lists a designer's suits by name", () => {
+    expect(
+      findMechanicalDesignerMobileSuitsMock('kunio-okawara').map(
+        ({ mobile_suit }) => mobile_suit.slug,
+      ),
+    ).toEqual(['rx-78-2-gundam', 'rx-78-02-gundam', 'ms-06f-zaku-ii']);
   });
 });

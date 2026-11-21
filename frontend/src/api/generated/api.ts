@@ -26,6 +26,52 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/characters': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Characters List
+     * @description Return one page of characters, by name.
+     *
+     *     A page past the end is 200 with an empty ``data`` and the real
+     *     ``total`` (D3). Reads only, and calls no external API.
+     */
+    get: operations['read_characters_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/characters/{character_slug}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Character
+     * @description Return a character with their works and the suits they pilot.
+     *
+     *     An old slug returns 200 with the renamed character, whose ``slug``
+     *     is the current one; the frontend replaces its URL (D2). Reads only.
+     */
+    get: operations['read_character'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/continuities': {
     parameters: {
       query?: never;
@@ -64,6 +110,77 @@ export interface paths {
      *     health checks stay cheap (FAPI-3).
      */
     get: operations['read_health_check'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/mechanical-designers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Mechanical Designers List
+     * @description Return one page of mechanical designers, by name.
+     *
+     *     A page past the end is 200 with an empty ``data`` and the real
+     *     ``total`` (D3). Reads only, and calls no external API.
+     */
+    get: operations['read_mechanical_designers_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/mechanical-designers/{mechanical_designer_slug}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Mechanical Designer
+     * @description Return a mechanical designer.
+     *
+     *     Their suits are a separate, paginated route, since one designer can
+     *     have hundreds (Q1). An old slug returns 200 with the renamed
+     *     designer, whose ``slug`` is the current one (D2). Reads only.
+     */
+    get: operations['read_mechanical_designer'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/mechanical-designers/{mechanical_designer_slug}/mobile-suits': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Mechanical Designer Mobile Suits
+     * @description Return one page of the suits credited to a designer, by name.
+     *
+     *     Each carries the source that credits the designer. An unknown
+     *     designer is a 404; a known one with no suits is 200 with an empty
+     *     ``data`` (FAPI-12). Reads only.
+     */
+    get: operations['read_mechanical_designer_mobile_suits'];
     put?: never;
     post?: never;
     delete?: never;
@@ -114,6 +231,78 @@ export interface paths {
      *     whose ``slug`` is the current one (D2). Reads only.
      */
     get: operations['read_mobile_suit'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Organizations List
+     * @description Return one page of organizations, by name, each with its parent.
+     *
+     *     A page past the end is 200 with an empty ``data`` and the real
+     *     ``total`` (D3). Reads only, and calls no external API.
+     */
+    get: operations['read_organizations_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organization_slug}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Organization
+     * @description Return an organization with its parent, units and works.
+     *
+     *     Its suits are a separate, paginated route, since one organization
+     *     can have hundreds (Q1). An old slug returns 200 with the renamed
+     *     organization, whose ``slug`` is the current one (D2). Reads only.
+     */
+    get: operations['read_organization'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organization_slug}/mobile-suits': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Organization Mobile Suits
+     * @description Return one page of an organization's suits, by name.
+     *
+     *     One item per suit, with its links (role, work and source) grouped;
+     *     ``total`` counts suits (Q7). An unknown organization is a 404; a
+     *     known one with no suits is 200 with an empty ``data`` (FAPI-12).
+     *     Reads only.
+     */
+    get: operations['read_organization_mobile_suits'];
     put?: never;
     post?: never;
     delete?: never;
@@ -198,6 +387,103 @@ export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
     /**
+     * CharacterCardEntity
+     * @description One character in a list.
+     *
+     *     Deliberately not ``CharacterEntity``: ``id`` and the wiki page keys
+     *     are not public (D5). Appearances and piloted suits are on the
+     *     detail only (``models.character.detail``).
+     */
+    CharacterCardEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Name */
+      name: string;
+      /** Name Ja */
+      name_ja: string | null;
+      /** Slug */
+      slug: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * CharacterDetailEntity
+     * @description A character, with their works and the suits they pilot.
+     *
+     *     Both lists are bounded (a character pilots tens of suits, not
+     *     hundreds), so they nest instead of paging.
+     */
+    CharacterDetailEntity: {
+      /** Appearances */
+      appearances: components['schemas']['CitedWorkEntity'][];
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Name */
+      name: string;
+      /** Name Ja */
+      name_ja: string | null;
+      /** Piloted Mobile Suits */
+      piloted_mobile_suits: components['schemas']['PilotedMobileSuitEntity'][];
+      /** Slug */
+      slug: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * CharacterRefEntity
+     * @description Just enough of a character to name and link them elsewhere.
+     */
+    CharacterRefEntity: {
+      /** Name */
+      name: string;
+      /** Slug */
+      slug: string;
+    };
+    /**
+     * CharacterResponse
+     * @description One character, with their works and the suits they pilot.
+     */
+    CharacterResponse: {
+      data: components['schemas']['CharacterDetailEntity'];
+    };
+    /**
+     * CharactersListResponse
+     * @description One page of characters.
+     */
+    CharactersListResponse: {
+      /** Data */
+      data: components['schemas']['CharacterCardEntity'][];
+      meta: components['schemas']['PageMeta'];
+    };
+    /**
+     * CitedWorkEntity
+     * @description A work someone or something appears in, with the page saying so.
+     *
+     *     Shared by character and organization details, whose appearance
+     *     rows carry no episode range (unlike a suit's).
+     */
+    CitedWorkEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      source: components['schemas']['SourceCitationEntity'];
+      work: components['schemas']['WorkCardEntity'];
+    };
+    /**
      * ContentLicense
      * @description The terms a source's content is published under (ADR 0002).
      * @enum {string}
@@ -247,6 +533,32 @@ export interface components {
       /** Slug */
       slug: string;
     };
+    /**
+     * DesignedMobileSuitEntity
+     * @description A suit in a designer's list, with the page crediting them.
+     */
+    DesignedMobileSuitEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      mobile_suit: components['schemas']['MobileSuitCardEntity'];
+      source: components['schemas']['SourceCitationEntity'];
+    };
+    /**
+     * DesignerCreditEntity
+     * @description A mechanical designer credited with the suit.
+     */
+    DesignerCreditEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      mechanical_designer: components['schemas']['MechanicalDesignerRefEntity'];
+      source: components['schemas']['SourceCitationEntity'];
+    };
     /** HTTPValidationError */
     HTTPValidationError: {
       /** Detail */
@@ -286,6 +598,67 @@ export interface components {
      */
     HomeResponse: {
       data: components['schemas']['HomeInfo'];
+    };
+    /**
+     * MechanicalDesignerCardEntity
+     * @description One mechanical designer, in a list or on their own page.
+     *
+     *     Deliberately not ``MechanicalDesignerEntity``: ``id`` and the wiki
+     *     page keys are not public (D5). Their suits are a paginated route of
+     *     their own, since one designer can have hundreds (RDB-23).
+     */
+    MechanicalDesignerCardEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Name */
+      name: string;
+      /** Name Ja */
+      name_ja: string | null;
+      /** Slug */
+      slug: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * MechanicalDesignerMobileSuitsListResponse
+     * @description One page of the suits a designer is credited with.
+     */
+    MechanicalDesignerMobileSuitsListResponse: {
+      /** Data */
+      data: components['schemas']['DesignedMobileSuitEntity'][];
+      meta: components['schemas']['PageMeta'];
+    };
+    /**
+     * MechanicalDesignerRefEntity
+     * @description Just enough of a designer to name and link them elsewhere.
+     */
+    MechanicalDesignerRefEntity: {
+      /** Name */
+      name: string;
+      /** Slug */
+      slug: string;
+    };
+    /**
+     * MechanicalDesignerResponse
+     * @description One mechanical designer.
+     */
+    MechanicalDesignerResponse: {
+      data: components['schemas']['MechanicalDesignerCardEntity'];
+    };
+    /**
+     * MechanicalDesignersListResponse
+     * @description One page of mechanical designers.
+     */
+    MechanicalDesignersListResponse: {
+      /** Data */
+      data: components['schemas']['MechanicalDesignerCardEntity'][];
+      meta: components['schemas']['PageMeta'];
     };
     /**
      * MobileSuitAppearanceCardEntity
@@ -351,11 +724,12 @@ export interface components {
     };
     /**
      * MobileSuitDetailEntity
-     * @description A suit, with its spec sheets, direct relations and appearances.
+     * @description A suit, with its sheets, relations, appearances and credits.
      *
      *     Each nested list is read in one query, so a detail read costs the
-     *     same few statements however many rows it holds (PYTEST-24). Parts
-     *     join the spec sheets in a later PR; pilots and organizations too.
+     *     same few statements however many rows it holds (PYTEST-24). The
+     *     people and organizations are refs: their own pages hold the rest
+     *     (Q5). Parts join the spec sheets in a later PR.
      */
     MobileSuitDetailEntity: {
       /** Appearances */
@@ -366,12 +740,18 @@ export interface components {
        * Format: date-time
        */
       created_at: string;
+      /** Designers */
+      designers: components['schemas']['DesignerCreditEntity'][];
       /** Model Number */
       model_number: string | null;
       /** Name */
       name: string;
       /** Name Ja */
       name_ja: string | null;
+      /** Organizations */
+      organizations: components['schemas']['OrganizationCreditEntity'][];
+      /** Pilots */
+      pilots: components['schemas']['PilotCreditEntity'][];
       /** Relations */
       relations: components['schemas']['RelatedMobileSuitEntity'][];
       /** Slug */
@@ -385,6 +765,12 @@ export interface components {
        */
       updated_at: string;
     };
+    /**
+     * MobileSuitOrganizationRole
+     * @description What an organization does for a mobile suit.
+     * @enum {string}
+     */
+    MobileSuitOrganizationRole: 'manufacturer' | 'operator' | 'developer';
     /**
      * MobileSuitRelationType
      * @description How one mobile suit descends from another, read from → to.
@@ -475,6 +861,135 @@ export interface components {
       meta: components['schemas']['PageMeta'];
     };
     /**
+     * OrganizationCardEntity
+     * @description One organization in a list.
+     *
+     *     Deliberately not ``OrganizationEntity``: ``id`` and the wiki page
+     *     keys are not public (D5). The parent is a ref, so a list costs no
+     *     query per card.
+     */
+    OrganizationCardEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Name */
+      name: string;
+      parent_organization: components['schemas']['OrganizationRefEntity'] | null;
+      /** Slug */
+      slug: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * OrganizationCreditEntity
+     * @description An organization's role for the suit, in one work or in none.
+     */
+    OrganizationCreditEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      organization: components['schemas']['OrganizationRefEntity'];
+      role: components['schemas']['MobileSuitOrganizationRole'];
+      source: components['schemas']['SourceCitationEntity'];
+      work: components['schemas']['WorkRefEntity'] | null;
+    };
+    /**
+     * OrganizationDetailEntity
+     * @description An organization, with its units and the works it appears in.
+     *
+     *     Leaves out its suits, which have their own paginated route: the
+     *     Earth Federation alone operates hundreds (RDB-23).
+     */
+    OrganizationDetailEntity: {
+      /** Appearances */
+      appearances: components['schemas']['CitedWorkEntity'][];
+      /** Child Organizations */
+      child_organizations: components['schemas']['OrganizationRefEntity'][];
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Name */
+      name: string;
+      parent_organization: components['schemas']['OrganizationRefEntity'] | null;
+      /** Slug */
+      slug: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * OrganizationLinkEntity
+     * @description One role an organization has for a suit, in one work or none.
+     */
+    OrganizationLinkEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      role: components['schemas']['MobileSuitOrganizationRole'];
+      source: components['schemas']['SourceCitationEntity'];
+      work: components['schemas']['WorkRefEntity'] | null;
+    };
+    /**
+     * OrganizationMobileSuitEntity
+     * @description A suit in an organization's list, with every role it has there.
+     *
+     *     One item per suit, not per link, so a page of cards holds distinct
+     *     suits; its links (one per role and work) are grouped in ``links``.
+     */
+    OrganizationMobileSuitEntity: {
+      /** Links */
+      links: components['schemas']['OrganizationLinkEntity'][];
+      mobile_suit: components['schemas']['MobileSuitCardEntity'];
+    };
+    /**
+     * OrganizationMobileSuitsListResponse
+     * @description One page of an organization's suits, each with its links.
+     */
+    OrganizationMobileSuitsListResponse: {
+      /** Data */
+      data: components['schemas']['OrganizationMobileSuitEntity'][];
+      meta: components['schemas']['PageMeta'];
+    };
+    /**
+     * OrganizationRefEntity
+     * @description Just enough of an organization to name and link it elsewhere.
+     */
+    OrganizationRefEntity: {
+      /** Name */
+      name: string;
+      /** Slug */
+      slug: string;
+    };
+    /**
+     * OrganizationResponse
+     * @description One organization, with its parent, units and works.
+     */
+    OrganizationResponse: {
+      data: components['schemas']['OrganizationDetailEntity'];
+    };
+    /**
+     * OrganizationsListResponse
+     * @description One page of organizations.
+     */
+    OrganizationsListResponse: {
+      /** Data */
+      data: components['schemas']['OrganizationCardEntity'][];
+      meta: components['schemas']['PageMeta'];
+    };
+    /**
      * PageMeta
      * @description Where a page sits in its list (fastapi.md FAPI-12).
      *
@@ -488,6 +1003,37 @@ export interface components {
       offset: number;
       /** Total */
       total: number;
+    };
+    /**
+     * PilotCreditEntity
+     * @description A character who pilots the suit, in one work or in none.
+     */
+    PilotCreditEntity: {
+      character: components['schemas']['CharacterRefEntity'];
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      source: components['schemas']['SourceCitationEntity'];
+      work: components['schemas']['WorkRefEntity'] | null;
+    };
+    /**
+     * PilotedMobileSuitEntity
+     * @description A suit a character pilots, in one work or in a work not recorded.
+     *
+     *     ``work`` is null when the page names no work for the pairing; such
+     *     rows sort after the ones with a work.
+     */
+    PilotedMobileSuitEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      mobile_suit: components['schemas']['MobileSuitCardEntity'];
+      source: components['schemas']['SourceCitationEntity'];
+      work: components['schemas']['WorkRefEntity'] | null;
     };
     /**
      * RelatedMobileSuitEntity
@@ -780,6 +1326,76 @@ export interface operations {
       };
     };
   };
+  read_characters_list: {
+    parameters: {
+      query?: {
+        /** @description Only characters in this work (its slug). */
+        work?: string | null;
+        /** @description Search slugs, ignoring case, spaces and punctuation: `amuro` finds Amuro Ray. Prefix matches come first. */
+        q?: string | null;
+        /** @description Rows per page, at most 100. */
+        limit?: number;
+        /** @description Rows to skip. */
+        offset?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CharactersListResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  read_character: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The character's current or an old slug. */
+        character_slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CharacterResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
   read_continuities_list: {
     parameters: {
       query?: never;
@@ -816,6 +1432,111 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['HealthCheckResponse'];
+        };
+      };
+    };
+  };
+  read_mechanical_designers_list: {
+    parameters: {
+      query?: {
+        /** @description Search slugs, ignoring case, spaces and punctuation: `okawara` finds Kunio Okawara. Prefix matches come first. */
+        q?: string | null;
+        /** @description Rows per page, at most 100. */
+        limit?: number;
+        /** @description Rows to skip. */
+        offset?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MechanicalDesignersListResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  read_mechanical_designer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The designer's current or an old slug. */
+        mechanical_designer_slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MechanicalDesignerResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  read_mechanical_designer_mobile_suits: {
+    parameters: {
+      query?: {
+        /** @description Rows per page, at most 100. */
+        limit?: number;
+        /** @description Rows to skip. */
+        offset?: number;
+      };
+      header?: never;
+      path: {
+        /** @description The designer's current or an old slug. */
+        mechanical_designer_slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MechanicalDesignerMobileSuitsListResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
         };
       };
     };
@@ -881,6 +1602,115 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['MobileSuitResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  read_organizations_list: {
+    parameters: {
+      query?: {
+        /** @description Only organizations in this work (its slug). */
+        work?: string | null;
+        /** @description Search slugs, ignoring case, spaces and punctuation: `zeon` finds the Principality of Zeon. Prefix matches come first. */
+        q?: string | null;
+        /** @description Rows per page, at most 100. */
+        limit?: number;
+        /** @description Rows to skip. */
+        offset?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrganizationsListResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  read_organization: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The organization's current or an old slug. */
+        organization_slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrganizationResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  read_organization_mobile_suits: {
+    parameters: {
+      query?: {
+        /** @description Only suits with this role, and only those links. */
+        role?: components['schemas']['MobileSuitOrganizationRole'] | null;
+        /** @description Rows per page, at most 100. */
+        limit?: number;
+        /** @description Rows to skip. */
+        offset?: number;
+      };
+      header?: never;
+      path: {
+        /** @description The organization's current or an old slug. */
+        organization_slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrganizationMobileSuitsListResponse'];
         };
       };
       /** @description Validation Error */
