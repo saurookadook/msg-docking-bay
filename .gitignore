@@ -170,3 +170,6 @@ htmlcov/
 # Local environment: generated secrets (scripts/setup-local.sh). mkcert certificates are
 # ignored by nginx-reverse-proxy/certs/.gitignore.
 .docker/
+
+# Downloaded source dumps (3a's loader reads them; record each in ingestion-spike.md).
+ingest/data/

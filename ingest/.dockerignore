@@ -10,3 +10,4 @@ Dockerfile
 .dockerignore
 moon.yml
 CLAUDE.md
+data/
