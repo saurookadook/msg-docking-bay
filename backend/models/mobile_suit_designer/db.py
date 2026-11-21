@@ -3,10 +3,11 @@
 import uuid
 
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base_db import JunctionBaseDB
 from models.mixins.db import CreatedAtDB
+from models.source.db import SourceDB
 
 
 class MobileSuitDesignerDB(JunctionBaseDB, CreatedAtDB):
@@ -31,3 +32,6 @@ class MobileSuitDesignerDB(JunctionBaseDB, CreatedAtDB):
         ForeignKey("sources.id", ondelete="RESTRICT"), index=True
     )
     """RESTRICT: a source still cited cannot be deleted (RDB-15)."""
+
+    source: Mapped[SourceDB] = relationship(lazy="raise")
+    """Loaded only by facades that ask for it (SQLA-10, SQLA-22)."""

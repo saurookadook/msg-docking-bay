@@ -86,3 +86,16 @@ class WorkDetailEntity(WorkCardEntity):
     parent_work: WorkRefEntity | None = None
     # ----- from `work_relations`, in either direction
     relations: list[RelatedWorkEntity] = Field(default_factory=list[RelatedWorkEntity])
+
+
+class CitedWorkEntity(BaseEntityModel, CreatedAtEntityMixin):
+    """A work someone or something appears in, with the page saying so.
+
+    Shared by character and organization details, whose appearance
+    rows carry no episode range (unlike a suit's).
+    """
+
+    # ----- from `sources`, through the appearance's `source_id`
+    source: SourceCitationEntity
+    # ----- from `works`, through the appearance's `work_id`
+    work: WorkCardEntity

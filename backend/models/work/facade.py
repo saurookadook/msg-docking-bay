@@ -187,3 +187,12 @@ class WorkFacade(BaseFacade):
             )
             for relation, other_work, row_direction in rows
         ]
+
+
+def optional_work_ref(work: WorkDB | None) -> WorkRefEntity | None:
+    """Serve an outer-joined work, which is null when none is recorded.
+
+    SQLAlchemy types an outer-joined entity in a result row as present,
+    so the ``None`` it can hold is spelled out here.
+    """
+    return None if work is None else WorkRefEntity.model_validate(work)

@@ -4,7 +4,11 @@ import uuid
 
 from pydantic import Field
 
-from constants.catalog import MobileSuitRelationType, UnitType
+from constants.catalog import (
+    MobileSuitOrganizationRole,
+    MobileSuitRelationType,
+    UnitType,
+)
 from models.base.entity import BaseEntityModel
 from models.continuity.entity import ContinuityRefEntity
 from models.mixins.entity import (
@@ -14,7 +18,7 @@ from models.mixins.entity import (
 )
 from models.source.entity import SourceCitationEntity
 from models.spec_sheet.entity import MobileSuitSpecSheetEntity
-from models.work.entity import WorkCardEntity
+from models.work.entity import WorkCardEntity, WorkRefEntity
 from models.work_relation.entity import RelationDirection
 
 
@@ -56,6 +60,55 @@ class MobileSuitAppearanceCardEntity(MobileSuitCardEntity):
     is_debut: bool
     """True in the work the suit first appeared in."""
     last_episode: int | None = None
+
+
+class PilotedMobileSuitEntity(BaseEntityModel, CreatedAtEntityMixin):
+    """A suit a character pilots, in one work or in a work not recorded.
+
+    ``work`` is null when the page names no work for the pairing; such
+    rows sort after the ones with a work.
+    """
+
+    # ----- from `mobile_suits`, through `mobile_suit_pilots`
+    mobile_suit: MobileSuitCardEntity
+    # ----- from `sources`, through `mobile_suit_pilots.source_id`
+    source: SourceCitationEntity
+    # ----- from `works`, through `mobile_suit_pilots.work_id`
+    work: WorkRefEntity | None = None
+
+
+class OrganizationLinkEntity(BaseEntityModel, CreatedAtEntityMixin):
+    """One role an organization has for a suit, in one work or none."""
+
+    role: MobileSuitOrganizationRole
+    # ----- from `sources`, through the link's `source_id`
+    source: SourceCitationEntity
+    # ----- from `works`, through `mobile_suit_organizations.work_id`
+    work: WorkRefEntity | None = None
+
+
+class OrganizationMobileSuitEntity(BaseEntityModel):
+    """A suit in an organization's list, with every role it has there.
+
+    One item per suit, not per link, so a page of cards holds distinct
+    suits; its links (one per role and work) are grouped in ``links``.
+    """
+
+    # ----- from `mobile_suits`
+    mobile_suit: MobileSuitCardEntity
+    # ----- from `mobile_suit_organizations`
+    links: list[OrganizationLinkEntity] = Field(
+        default_factory=list[OrganizationLinkEntity]
+    )
+
+
+class DesignedMobileSuitEntity(BaseEntityModel, CreatedAtEntityMixin):
+    """A suit in a designer's list, with the page crediting them."""
+
+    # ----- from `mobile_suits`
+    mobile_suit: MobileSuitCardEntity
+    # ----- from `sources`, through `mobile_suit_designers.source_id`
+    source: SourceCitationEntity
 
 
 class RelatedMobileSuitEntity(BaseEntityModel, CreatedAtEntityMixin):

@@ -3,7 +3,7 @@
 import uuid
 
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base_db import BaseDB
 from models.mixins.checks import not_empty, not_own_parent, positive, slug_format
@@ -31,6 +31,11 @@ class OrganizationDB(BaseDB, TimestampsDB):
     )
     """The organization this one is a unit of: Titans → EFF."""
     slug: Mapped[str] = mapped_column(unique=True)
+
+    parent_organization: Mapped[OrganizationDB | None] = relationship(
+        lazy="raise", remote_side="OrganizationDB.id"
+    )
+    """Loaded only by facades that ask for it (SQLA-10, SQLA-22)."""
 
     __table_args__ = (
         positive("fandom_page_id"),
