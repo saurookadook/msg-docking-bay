@@ -60,14 +60,22 @@ class TestRun:
             ("ms-06f-zaku-ii", True),
         ]
         assert gundam["slug"] == "rx-78-2-gundam"
-        assert [
-            (s["configuration"], s["inherited_fields"]) for s in gundam["spec_sheets"]
-        ][1] == (
-            "Magnet Coating",
-            [f for f in gundam["spec_sheets"][1]["inherited_fields"]],
-        )
-        assert gundam["spec_sheets"][1]["turn_time_s"] == 1.1
-        assert gundam["spec_sheets"][1]["head_height_m"] == 18.0
+        base, magnet_coating = gundam["spec_sheets"]
+        assert (base["configuration"], base["turn_time_s"]) == (None, 1.5)
+        assert magnet_coating["configuration"] == "Magnet Coating"
+        assert magnet_coating["turn_time_s"] == 1.1
+        assert magnet_coating["head_height_m"] == 18.0
+        # Every base value but the turn time, which this sheet states.
+        assert magnet_coating["inherited_fields"] == [
+            "empty_weight_kg",
+            "generator_output_kw",
+            "gross_weight_kg",
+            "head_height_m",
+            "max_acceleration_g",
+            "max_speed_kmh",
+            "sensor_range_m",
+            "total_thrust_kg",
+        ]
         assert [r["mobile_suit"]["slug"] for r in gundam["relations"]] == [
             "rx-78-02-gundam",
             "rx-78f00-gundam",
