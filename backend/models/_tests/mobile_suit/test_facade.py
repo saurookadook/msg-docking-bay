@@ -645,3 +645,68 @@ class TestMobileSuitFacadeCredits:
         zaku = MobileSuitFacade(db_session=test_db_session).get_one_by_slug("zaku-ii")
 
         assert (zaku.pilots, zaku.organizations, zaku.designers) == ([], [], [])
+
+
+@pytest.mark.usefixtures("suits")
+class TestMobileSuitFacadeCreditWrites:
+    def test_create_or_update_pilot_with_no_work(
+        self, test_db_session: Session
+    ) -> None:
+        """A rerun finds the null-work pairing, not a second one."""
+        amuro = CharacterDBFactory()
+        new_source = SourceDBFactory()
+        test_db_session.commit()
+        facade = MobileSuitFacade(db_session=test_db_session)
+        payload = {
+            "character_id": amuro.id,
+            "mobile_suit_id": GUNDAM_ID,
+            "source_id": WIKI_ID,
+            "work_id": None,
+        }
+
+        first = facade.create_or_update_pilot(payload=payload)
+        rerun = facade.create_or_update_pilot(
+            payload={**payload, "source_id": new_source.id}
+        )
+
+        assert rerun.id == first.id
+        assert rerun.source_id == new_source.id
+
+    def test_create_or_update_organization(self, test_db_session: Session) -> None:
+        federation = OrganizationDBFactory()
+        test_db_session.commit()
+        facade = MobileSuitFacade(db_session=test_db_session)
+        payload = {
+            "mobile_suit_id": GUNDAM_ID,
+            "organization_id": federation.id,
+            "role": MobileSuitOrganizationRole.MANUFACTURER,
+            "source_id": WIKI_ID,
+            "work_id": None,
+        }
+
+        first = facade.create_or_update_organization(payload=payload)
+        rerun = facade.create_or_update_organization(payload=payload)
+        operator = facade.create_or_update_organization(
+            payload={**payload, "role": MobileSuitOrganizationRole.OPERATOR}
+        )
+
+        assert rerun.id == first.id
+        assert operator.id != first.id
+
+    def test_create_or_update_designer(self, test_db_session: Session) -> None:
+        okawara = MechanicalDesignerDBFactory()
+        new_source = SourceDBFactory()
+        test_db_session.commit()
+        facade = MobileSuitFacade(db_session=test_db_session)
+        payload = {
+            "mechanical_designer_id": okawara.id,
+            "mobile_suit_id": GUNDAM_ID,
+            "source_id": WIKI_ID,
+        }
+
+        facade.create_or_update_designer(payload=payload)
+        credit = facade.create_or_update_designer(
+            payload={**payload, "source_id": new_source.id}
+        )
+
+        assert credit.source_id == new_source.id

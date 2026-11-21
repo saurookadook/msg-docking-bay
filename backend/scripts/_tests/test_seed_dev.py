@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from datetime import datetime
+from typing import Any
 
 import pytest
 from fastapi import status
@@ -10,7 +11,10 @@ from sqlalchemy.orm import Session
 from _factories.ingest_run.db import IngestRunDBFactory
 from config.env_vars import EnvVarManager
 from constants.catalog import IngestRunStatus
+from models.character.db import CharacterDB
+from models.mechanical_designer.db import MechanicalDesignerDB
 from models.mobile_suit.db import MobileSuitDB
+from models.organization.db import OrganizationDB
 from models.source.db import SourceDB
 from models.spec_sheet.db import SpecSheetDB
 from models.work.db import WorkDB
@@ -28,7 +32,15 @@ def prod_environment(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 def updated_ats(db_session: Session) -> dict[str, datetime]:
     stamps: dict[str, datetime] = {}
-    for model in (SourceDB, WorkDB, MobileSuitDB, SpecSheetDB):
+    for model in (
+        SourceDB,
+        WorkDB,
+        MobileSuitDB,
+        SpecSheetDB,
+        CharacterDB,
+        OrganizationDB,
+        MechanicalDesignerDB,
+    ):
         for row in db_session.scalars(select(model)):
             stamps[f"{model.__name__}:{row.id}"] = row.updated_at
     return stamps
@@ -88,6 +100,75 @@ class TestRun:
         assert [(r["relation_type"], r["work"]["slug"]) for r in work["relations"]] == [
             ("compilation_of", "mobile-suit-gundam")
         ]
+
+    def test_seeds_every_people_route(
+        self, test_db_session: Session, test_app_client: TestClient
+    ) -> None:
+        run(test_db_session, force=False)
+
+        def get(path: str) -> dict[str, Any]:
+            response = test_app_client.get(path)
+            assert response.status_code == status.HTTP_200_OK, path
+            return response.json()
+
+        characters = get("/api/characters?q=amuro")
+        amuro = get("/api/characters/amuro")["data"]
+        organizations = get("/api/organizations?work=mobile-suit-gundam")
+        federation = get("/api/organizations/earth-federation-universal-century")
+        zeon_suits = get("/api/organizations/principality-of-zeon/mobile-suits")
+        designers = get("/api/mechanical-designers")
+        katoki = get("/api/mechanical-designers/katoki-hajime")["data"]
+        okawara_suits = get("/api/mechanical-designers/kunio-okawara/mobile-suits")
+        origin_gundam = get("/api/mobile-suits/rx-78-02-gundam")["data"]
+        gundam = get("/api/mobile-suits/rx-78-2-gundam")["data"]
+
+        assert [c["slug"] for c in characters["data"]] == [
+            "amuro-ray",
+            "amuro-ray-origin",
+        ]
+        assert amuro["slug"] == "amuro-ray"
+        assert [a["work"]["slug"] for a in amuro["appearances"]] == [
+            "mobile-suit-gundam",
+            "mobile-suit-gundam-i",
+        ]
+        assert [
+            (p["mobile_suit"]["slug"], p["work"]["slug"])
+            for p in amuro["piloted_mobile_suits"]
+        ] == [("rx-78-2-gundam", "mobile-suit-gundam")]
+        assert amuro["appearances"][0]["source"]["url"] == (
+            "https://gundam.fandom.com/wiki/Amuro_Ray"
+        )
+        assert [o["slug"] for o in organizations["data"]] == [
+            "earth-federation",
+            "principality-of-zeon",
+        ]
+        assert federation["data"]["slug"] == "earth-federation"
+        assert [
+            (item["mobile_suit"]["slug"], [link["role"] for link in item["links"]])
+            for item in zeon_suits["data"]
+        ] == [("ms-06f-zaku-ii", ["operator"])]
+        assert [d["slug"] for d in designers["data"]] == [
+            "hajime-katoki",
+            "kunio-okawara",
+            "masaki-kawahara",
+        ]
+        assert katoki["slug"] == "hajime-katoki"
+        assert okawara_suits["meta"]["total"] == 3
+        assert [
+            d["mechanical_designer"]["slug"] for d in origin_gundam["designers"]
+        ] == [
+            "hajime-katoki",
+            "kunio-okawara",
+        ]
+        assert [
+            (p["character"]["slug"], p["work"]) for p in origin_gundam["pilots"]
+        ] == [("amuro-ray-origin", None)]
+        assert [
+            (o["organization"]["slug"], o["role"]) for o in gundam["organizations"]
+        ] == [("earth-federation", "manufacturer")]
+        assert gundam["pilots"][0]["source"]["url"] == (
+            "https://gundam.fandom.com/wiki/RX-78-2_Gundam"
+        )
 
     def test_rerun_changes_nothing(self, test_db_session: Session) -> None:
         run(test_db_session, force=False)

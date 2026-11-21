@@ -30,8 +30,11 @@ from models.mobile_suit.entity import (
 from models.mobile_suit_appearance.db import MobileSuitAppearanceDB
 from models.mobile_suit_appearance.entity import MobileSuitAppearanceEntity
 from models.mobile_suit_designer.db import MobileSuitDesignerDB
+from models.mobile_suit_designer.entity import MobileSuitDesignerEntity
 from models.mobile_suit_organization.db import MobileSuitOrganizationDB
+from models.mobile_suit_organization.entity import MobileSuitOrganizationEntity
 from models.mobile_suit_pilot.db import MobileSuitPilotDB
+from models.mobile_suit_pilot.entity import MobileSuitPilotEntity
 from models.mobile_suit_relation.db import MobileSuitRelationDB
 from models.mobile_suit_relation.entity import MobileSuitRelationEntity
 from models.mobile_suit_slug_redirect.db import MobileSuitSlugRedirectDB
@@ -258,6 +261,46 @@ class MobileSuitFacade(BaseFacade):
             MobileSuitSlugRedirectDB, payload=payload, conflict_columns=["old_slug"]
         )
         return MobileSuitSlugRedirectEntity.model_validate(redirect)
+
+    def create_or_update_pilot(
+        self, *, payload: Mapping[str, Any]
+    ) -> MobileSuitPilotEntity:
+        """Upsert a pilot link on its character, suit and work.
+
+        A null ``work_id`` is one pairing too: the key treats nulls as
+        equal, so a rerun finds it.
+        """
+        pilot = self._upsert(
+            MobileSuitPilotDB,
+            payload=payload,
+            conflict_columns=["character_id", "mobile_suit_id", "work_id"],
+        )
+        return MobileSuitPilotEntity.model_validate(pilot)
+
+    def create_or_update_organization(
+        self, *, payload: Mapping[str, Any]
+    ) -> MobileSuitOrganizationEntity:
+        """Upsert an organization link on its suit, role and work.
+
+        As with pilots, the key treats a null ``work_id`` as one value.
+        """
+        link = self._upsert(
+            MobileSuitOrganizationDB,
+            payload=payload,
+            conflict_columns=["mobile_suit_id", "organization_id", "role", "work_id"],
+        )
+        return MobileSuitOrganizationEntity.model_validate(link)
+
+    def create_or_update_designer(
+        self, *, payload: Mapping[str, Any]
+    ) -> MobileSuitDesignerEntity:
+        """Upsert a design credit on its designer and suit."""
+        credit = self._upsert(
+            MobileSuitDesignerDB,
+            payload=payload,
+            conflict_columns=["mechanical_designer_id", "mobile_suit_id"],
+        )
+        return MobileSuitDesignerEntity.model_validate(credit)
 
     def _get_spec_sheets(
         self, mobile_suit_id: uuid.UUID
