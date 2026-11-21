@@ -133,6 +133,15 @@ without written permission. Quoted:
 - **Neither S3 dump can be downloaded** (checked 2026-11-13). Both objects are in the `DEEP_ARCHIVE`
   storage class, so a GET returns `InvalidObjectState`. Their metadata is still readable, which is why
   the size and date above could be seen. Only Fandom, as the bucket owner, can restore them.
+- **Fresh dumps, regenerated 2026-11-15** (checked 2026-11-21, after a request to Fandom support):
+  both objects were rewritten and can be downloaded again.
+  - `gundam_pages_current.xml.7z`: 22,054,848 bytes, `Last-Modified: Sun, 15 Nov 2026 23:32:58 GMT`,
+    SHA-256 `89a91167cbed2da90ace0086f45c6ccd2e8740cc5e4d12a0aa525d0b90e93154`.
+  - `gundam_pages_full.xml.7z`: 80,320,837 bytes, `Last-Modified: Sun, 15 Nov 2026 23:31:32 GMT`.
+    Not downloaded.
+  - The current-revisions copy is kept as
+    `ingest/data/dumps/gundam_pages_current-2026-11-15.xml.7z` (gitignored). PR B's dev seed and
+    Mirage fixtures read their values from it.
 - **Older copies exist on the Internet Archive** (searched 2026-11-13). Nothing newer than 2022 was found:
   - Wayback capture of `gundam_pages_full.xml.7z`, taken 2022-10-24:
     `https://web.archive.org/web/20221024071421id_/https://s3.amazonaws.com/wikia_xml_dumps/g/gu/gundam_pages_full.xml.7z`.

@@ -327,6 +327,7 @@ for scripts. Facade methods follow these names:
 | `get_one_by_<key>(value, *, include_...)` | one entity, or raises `NotFoundError`    |
 | `get_all()`                               | a list of entities, in a defined order   |
 | `get_all_by_<key>(value, *, filters...)`  | a list, possibly empty                   |
+| `get_page(*, filters..., limit, offset)`  | a `Page` of entities with the total      |
 | `get_latest_<...>(...)`                   | one entity or `None`, documented as such |
 | `create_or_update(*, payload)`            | the written entity                       |
 | `update(*, payload)`                      | the updated entity                       |
@@ -432,6 +433,25 @@ return SiteEntity.model_validate(site)
 
 `populate_existing` refreshes a row the session already holds; without it the identity
 map hands back its stale copy.
+
+When `updated_at` must mean "this row's data last changed", as it does for rows a
+loader rewrites on every run, guard the update so an unchanged row is left alone:
+
+```python
+excluded = insert_stmt.excluded
+stmt = insert_stmt.on_conflict_do_update(
+    index_elements=[SiteDB.external_id],
+    set_={**{col: excluded[col] for col in columns}, "updated_at": func.now()},
+    where=tuple_(*(SiteDB.__table__.c[col] for col in columns)).is_distinct_from(
+        tuple_(*(excluded[col] for col in columns))
+    ),
+).returning(SiteDB)
+site = self.db_session.scalars(stmt, execution_options={"populate_existing": True}).one_or_none()
+if site is None:  # nothing changed, so the guarded update returned no row
+    site = self.db_session.execute(select(SiteDB).where(...)).scalar_one()
+```
+
+Test it with a no-change rerun that leaves `updated_at` as it was.
 
 Do not decide between insert and update by reading first (`_find_one_if_exists` then
 `update`): two requests can both see "missing" and both insert (RDB-29). Use the

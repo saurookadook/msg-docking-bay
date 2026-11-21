@@ -211,6 +211,29 @@ Routes return the envelope model, which is also their return annotation
 (pydantic.md PYD-13). When a parent exists but has nothing to report yet, return 200 with
 `{"data": null}` or `{"data": []}`; reserve 404 for a parent that does not exist.
 
+A paginated list (RDB-23) takes `limit` and `offset` query parameters, with a default and
+a cap from module constants (`limit: Annotated[int, Query(ge=1, le=MAX_PAGE_SIZE)] =
+DEFAULT_PAGE_SIZE`, `offset: Annotated[int, Query(ge=0)] = 0`), and its envelope adds a
+`meta` with the page's position and the total across every page:
+
+```python
+class PageMeta(BaseModel):
+    limit: int
+    offset: int
+    total: int
+
+
+class ProjectsListResponse(BaseResponseModel):
+    data: list[ProjectCardEntity]
+    meta: PageMeta
+```
+
+Each resource keeps its own `<Entities>ListResponse`; a generic `ListResponse[T]` would
+put Pydantic's generated names (`ListResponse_ProjectCardEntity_`) into the contract.
+`PageMeta` is a plain `BaseModel`, so its fields stay `snake_case` (PYD-13). The facade
+counts with a separate `SELECT count(*)` under the same filters, so a page past the end
+returns 200 with `data: []` and the real `total`, never a 404.
+
 **FAPI-13 — Translate exceptions to HTTP errors in the route, from most to least
 specific,** and always chain with `from e`:
 
