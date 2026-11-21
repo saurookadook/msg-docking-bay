@@ -4,11 +4,12 @@ import uuid
 from datetime import date
 
 from sqlalchemy import CheckConstraint, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from constants.catalog import WorkType
 from constants.db_types import WORK_TYPE_DB_TYPE
 from db.base_db import BaseDB
+from models.continuity.db import ContinuityDB
 from models.mixins.checks import not_empty, not_own_parent, positive, slug_format
 from models.mixins.db import TimestampsDB
 
@@ -46,6 +47,12 @@ class WorkDB(BaseDB, TimestampsDB):
     title_ja: Mapped[str | None]
     wikidata_qid: Mapped[str | None] = mapped_column(unique=True)
     work_type: Mapped[WorkType] = mapped_column(WORK_TYPE_DB_TYPE)
+
+    continuity: Mapped[ContinuityDB | None] = relationship(lazy="raise")
+    parent_work: Mapped[WorkDB | None] = relationship(
+        lazy="raise", remote_side="WorkDB.id"
+    )
+    """Both load only when a facade asks for them (SQLA-10, SQLA-22)."""
 
     __table_args__ = (
         CheckConstraint("anilist_id > 0", name="anilist_id_positive"),

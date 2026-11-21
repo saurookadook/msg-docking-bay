@@ -111,6 +111,12 @@ class TestUpsert:
         assert row.id == existing.id
         assert row.updated_at == mock_utcnow
 
+    def test_rejects_a_key_that_is_not_a_column(self, test_db_session: Session) -> None:
+        facade = ContinuityProbeFacade(db_session=test_db_session)
+
+        with pytest.raises(ValueError, match="Not columns of continuities: tags"):
+            facade.upsert({"name": "Cosmic Era", "slug": "cosmic-era", "tags": []})
+
     def test_rejects_a_payload_of_only_its_key(self, test_db_session: Session) -> None:
         facade = ContinuityProbeFacade(db_session=test_db_session)
 

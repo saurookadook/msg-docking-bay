@@ -99,10 +99,16 @@ class BaseFacade:
             The row as stored after the statement.
 
         Raises:
-            ValueError: when every payload column is in the key, so
-                there is nothing to compare or update.
+            ValueError: when a payload key is not a column (SQLA-26), or
+                every payload column is in the key, so there is nothing
+                to compare or update.
         """
         table = model.__table__
+        unknown = sorted(set(payload) - set(table.c.keys()))
+        if unknown:
+            raise ValueError(
+                f"Not columns of {model.__tablename__}: {', '.join(unknown)}"
+            )
         stmt = insert(model).values(**payload)
         changing = [name for name in payload if name not in conflict_columns]
         if not changing:
