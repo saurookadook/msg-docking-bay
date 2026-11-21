@@ -3,6 +3,14 @@
 > **Agreed** (2026-11-13 to 2026-11-15): D1 to D8 were reviewed one at a time. D7 follows
 > `aoam-property-plan`'s Mirage pattern and adds a mock mode. No code until asked.
 
+## PRs
+
+- [x] PR A: `build(frontend): generate API types from the backend's OpenAPI schema`
+- [x] Mock mode PR: `feat(frontend): add a mock API mode to the dev server`
+- [ ] PR B: `feat(backend): serve mobile suits, works and continuities`
+- [ ] PR C: `feat(backend): serve characters, organizations and designers`
+- [ ] PR D: `feat(backend): serve suit parts on spec sheets`
+
 ## Context
 
 The frontend has nothing to read. The backend serves only `GET /api/health-check` and `GET /api`, and

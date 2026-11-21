@@ -1,5 +1,11 @@
 # Plan: Phase 1 — Catalog database schema (backend)
 
+## PRs
+
+- [x] PR A: `feat(backend): add catalog foundations, works and provenance tables`
+- [x] PR B: `feat(backend): add mobile suit, spec sheet and part tables`
+- [x] PR C: `feat(backend): add character, organization and designer tables`
+
 ## Context
 
 Phase 1 of [`data-ingestion.md`](data-ingestion.md) builds the PostgreSQL schema that the ingest service (Phases 2–5) will write to. The original sketch

@@ -1,5 +1,17 @@
 # Plan: Data ingestion from Gundam Wiki (Fandom) + Wikimedia
 
+## PRs
+
+- [x] PR 1: `docs(docs): add ingestion plan, spike findings and ADR`
+- [x] PR 2a: `feat(backend): add catalog foundations, works and provenance tables`
+- [x] PR 2b: `feat(backend): add mobile suit, spec sheet and part tables`
+- [x] PR 2c: `feat(backend): add character, organization and designer tables`
+- [x] PR 3: `feat(ingest): add the ingest service scaffold`
+- [ ] PR 4: `feat(ingest): seed mobile suits from a Gundam Wiki dump`
+- [ ] PR 5: `feat(ingest): sync Gundam Wiki changes through the MediaWiki API`
+- [ ] PR 6: `feat(ingest): ingest works from Wikimedia`
+- [ ] PR 7: `feat(ingest): schedule ingestion and surface attribution`
+
 ## Context
 
 `docs/research/notes/crawlable-sites.md` and its synthesis `docs/research/trusted-gundam-data-sources.md`
