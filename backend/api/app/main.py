@@ -9,9 +9,12 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
 from api.models.health_check import HealthCheckResponse, HealthCheckStatus
+from api.routes.characters import characters_router
 from api.routes.continuities import continuities_router
 from api.routes.home import home_router
+from api.routes.mechanical_designers import mechanical_designers_router
 from api.routes.mobile_suits import mobile_suits_router
+from api.routes.organizations import organizations_router
 from api.routes.works import works_router
 from utils.logging.init import init_logging
 
@@ -73,7 +76,10 @@ def read_health_check() -> HealthCheckResponse:
 
 
 # Alphabetical (FAPI-4).
+app.include_router(characters_router)
 app.include_router(continuities_router)
 app.include_router(home_router)
+app.include_router(mechanical_designers_router)
 app.include_router(mobile_suits_router)
+app.include_router(organizations_router)
 app.include_router(works_router)

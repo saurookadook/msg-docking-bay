@@ -178,6 +178,12 @@ class TestReadMobileSuit:
             ("mobile-suit-gundam", True)
         ]
         assert suit["appearances"][0]["source"]["revision_url"] is None
+        # Empty here; the facade tests cover their contents.
+        assert (suit["pilots"], suit["organizations"], suit["designers"]) == (
+            [],
+            [],
+            [],
+        )
 
     def test_old_slug_returns_the_current_one(
         self, test_app_client: TestClient

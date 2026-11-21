@@ -9,16 +9,13 @@ from api.dependencies.db_session import DBSessionDep
 from api.models.mobile_suit import MobileSuitResponse, MobileSuitsListResponse
 from api.models.pagination import PageLimit, PageMeta, PageOffset
 from constants.catalog import UnitType
-from constants.pagination import DEFAULT_PAGE_SIZE
+from constants.pagination import DEFAULT_PAGE_SIZE, MAX_SEARCH_LENGTH
 from models.mixins.checks import SLUG_PATTERN
 from models.mobile_suit.facade import MobileSuitFacade
 
 logger = logging.getLogger(__name__)
 
 mobile_suits_router = APIRouter(prefix="/api")
-
-MAX_SEARCH_LENGTH = 100
-"""The longest ``q`` accepted; a longer one is a 422 (D8)."""
 
 
 @mobile_suits_router.get("/mobile-suits")
