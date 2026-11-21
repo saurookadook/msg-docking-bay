@@ -26,6 +26,29 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/continuities': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Continuities List
+     * @description Return every continuity by name, each with its parent continuity.
+     *
+     *     Unpaginated: there are a few dozen at most. Reads only, and calls
+     *     no external API.
+     */
+    get: operations['read_continuities_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/health-check': {
     parameters: {
       query?: never;
@@ -49,10 +72,186 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/mobile-suits': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Mobile Suits List
+     * @description Return one page of mobile suits, by name.
+     *
+     *     A ``q`` with no letters or digits is no filter, so an empty search
+     *     box lists everything (D8). A page past the end is 200 with an empty
+     *     ``data`` and the real ``total``. Reads only, and calls no external
+     *     API.
+     */
+    get: operations['read_mobile_suits_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/mobile-suits/{mobile_suit_slug}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Mobile Suit
+     * @description Return a suit with its spec sheets, relations and appearances.
+     *
+     *     Each fact carries its source, for attribution (D6). Named spec
+     *     sheets are filled from the same source's base sheet, and list the
+     *     columns they took. An old slug returns 200 with the renamed suit,
+     *     whose ``slug`` is the current one (D2). Reads only.
+     */
+    get: operations['read_mobile_suit'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/works': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Works List
+     * @description Return one page of works, first released first.
+     *
+     *     Works with no known date come last. A page past the end is 200 with
+     *     an empty ``data`` and the real ``total`` (D3). Reads only, and calls
+     *     no external API.
+     */
+    get: operations['read_works_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/works/{work_slug}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Work
+     * @description Return a work with its continuity, parent work and related works.
+     *
+     *     An old slug returns 200 with the renamed work, whose ``slug`` is the
+     *     current one; the frontend replaces its URL (D2). Reads only.
+     */
+    get: operations['read_work'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/works/{work_slug}/mobile-suits': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Work Mobile Suits
+     * @description Return one page of a work's suits, debuts first, then by name.
+     *
+     *     Each carries its episode range and whether it debuts in the work.
+     *     An unknown work is a 404; a known one with no suits is 200 with an
+     *     empty ``data`` (FAPI-12). Reads only.
+     */
+    get: operations['read_work_mobile_suits'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /**
+     * ContentLicense
+     * @description The terms a source's content is published under (ADR 0002).
+     * @enum {string}
+     */
+    ContentLicense: 'cc_by_sa_3_0' | 'cc_by_sa_4_0' | 'cc0_1_0';
+    /**
+     * ContinuitiesListResponse
+     * @description Every continuity. Unpaginated, so it has no ``meta``.
+     */
+    ContinuitiesListResponse: {
+      /** Data */
+      data: components['schemas']['ContinuityCardEntity'][];
+    };
+    /**
+     * ContinuityCardEntity
+     * @description One continuity in the list of every continuity.
+     *
+     *     Leaves out ``id``: slugs are the public key (D2, D5).
+     */
+    ContinuityCardEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Name */
+      name: string;
+      parent_continuity: components['schemas']['ContinuityRefEntity'] | null;
+      /** Slug */
+      slug: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * ContinuityRefEntity
+     * @description Just enough of a continuity to name and link it from a card.
+     *
+     *     Deliberately not a card: nesting full cards inside other cards
+     *     would make every list load a chain of rows.
+     */
+    ContinuityRefEntity: {
+      /** Name */
+      name: string;
+      /** Slug */
+      slug: string;
+    };
+    /** HTTPValidationError */
+    HTTPValidationError: {
+      /** Detail */
+      detail?: components['schemas']['ValidationError'][];
+    };
     /**
      * HealthCheckResponse
      * @description The health check's envelope.
@@ -88,6 +287,470 @@ export interface components {
     HomeResponse: {
       data: components['schemas']['HomeInfo'];
     };
+    /**
+     * MobileSuitAppearanceCardEntity
+     * @description A suit in one work's list, with how it appears there.
+     */
+    MobileSuitAppearanceCardEntity: {
+      continuity: components['schemas']['ContinuityRefEntity'] | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** First Episode */
+      first_episode: number | null;
+      /** Is Debut */
+      is_debut: boolean;
+      /** Last Episode */
+      last_episode: number | null;
+      /** Model Number */
+      model_number: string | null;
+      /** Name */
+      name: string;
+      /** Name Ja */
+      name_ja: string | null;
+      /** Slug */
+      slug: string;
+      unit_type: components['schemas']['UnitType'];
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * MobileSuitCardEntity
+     * @description One suit in a list.
+     *
+     *     Deliberately not the detail: loading spec sheets for fifty cards
+     *     would cost an N+1 or a large join that nothing renders (D5). Leaves
+     *     out ``id`` and ``fandom_page_id``: slugs are the public key.
+     */
+    MobileSuitCardEntity: {
+      continuity: components['schemas']['ContinuityRefEntity'] | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Model Number */
+      model_number: string | null;
+      /** Name */
+      name: string;
+      /** Name Ja */
+      name_ja: string | null;
+      /** Slug */
+      slug: string;
+      unit_type: components['schemas']['UnitType'];
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * MobileSuitDetailEntity
+     * @description A suit, with its spec sheets, direct relations and appearances.
+     *
+     *     Each nested list is read in one query, so a detail read costs the
+     *     same few statements however many rows it holds (PYTEST-24). Parts
+     *     join the spec sheets in a later PR; pilots and organizations too.
+     */
+    MobileSuitDetailEntity: {
+      /** Appearances */
+      appearances: components['schemas']['WorkAppearanceEntity'][];
+      continuity: components['schemas']['ContinuityRefEntity'] | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Model Number */
+      model_number: string | null;
+      /** Name */
+      name: string;
+      /** Name Ja */
+      name_ja: string | null;
+      /** Relations */
+      relations: components['schemas']['RelatedMobileSuitEntity'][];
+      /** Slug */
+      slug: string;
+      /** Spec Sheets */
+      spec_sheets: components['schemas']['MobileSuitSpecSheetEntity'][];
+      unit_type: components['schemas']['UnitType'];
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * MobileSuitRelationType
+     * @description How one mobile suit descends from another, read from → to.
+     *
+     *     ``(Worker Zaku, Zaku II, variant_of)`` reads "the Worker Zaku is a
+     *     variant of the Zaku II".
+     * @enum {string}
+     */
+    MobileSuitRelationType:
+      | 'variant_of'
+      | 'developed_from'
+      | 'upgrade_of'
+      | 'alternate_version_of';
+    /**
+     * MobileSuitResponse
+     * @description One suit, with its spec sheets, relations and appearances.
+     */
+    MobileSuitResponse: {
+      data: components['schemas']['MobileSuitDetailEntity'];
+    };
+    /**
+     * MobileSuitSpecSheetEntity
+     * @description One configuration's specs, as one source gives them.
+     *
+     *     Deliberately not ``SpecSheetEntity``: ``raw_infobox`` is bulky
+     *     copied wiki text, kept out of anything served (D5), and ``id`` is
+     *     not a public key.
+     *
+     *     A named configuration's gaps are filled from the base sheet of the
+     *     same source; ``inherited_fields`` names the columns that were, so a
+     *     page can tell "same as base" from a value the source states.
+     */
+    MobileSuitSpecSheetEntity: {
+      /** Configuration */
+      configuration: string | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Empty Weight Kg */
+      empty_weight_kg: number | null;
+      /** Generator Output Kw */
+      generator_output_kw: number | null;
+      /** Gross Weight Kg */
+      gross_weight_kg: number | null;
+      /** Head Height M */
+      head_height_m: number | null;
+      /** Inherited Fields */
+      inherited_fields: (
+        | 'empty_weight_kg'
+        | 'generator_output_kw'
+        | 'gross_weight_kg'
+        | 'head_height_m'
+        | 'max_acceleration_g'
+        | 'max_speed_kmh'
+        | 'overall_height_m'
+        | 'sensor_range_m'
+        | 'total_thrust_kg'
+        | 'turn_time_s'
+      )[];
+      /** Max Acceleration G */
+      max_acceleration_g: number | null;
+      /** Max Speed Kmh */
+      max_speed_kmh: number | null;
+      /** Overall Height M */
+      overall_height_m: number | null;
+      /** Sensor Range M */
+      sensor_range_m: number | null;
+      source: components['schemas']['SourceCitationEntity'];
+      /** Total Thrust Kg */
+      total_thrust_kg: number | null;
+      /** Turn Time S */
+      turn_time_s: number | null;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * MobileSuitsListResponse
+     * @description One page of mobile suits.
+     */
+    MobileSuitsListResponse: {
+      /** Data */
+      data: components['schemas']['MobileSuitCardEntity'][];
+      meta: components['schemas']['PageMeta'];
+    };
+    /**
+     * PageMeta
+     * @description Where a page sits in its list (fastapi.md FAPI-12).
+     *
+     *     A plain model, not an envelope, so its fields stay ``snake_case``.
+     *     ``total`` counts every row the filters match, across every page.
+     */
+    PageMeta: {
+      /** Limit */
+      limit: number;
+      /** Offset */
+      offset: number;
+      /** Total */
+      total: number;
+    };
+    /**
+     * RelatedMobileSuitEntity
+     * @description A suit linked to the viewed one, read from the viewed one's side.
+     *
+     *     Direct edges only: the whole family tree is a route of its own when
+     *     a screen needs it (D5). ``created_at`` is when this database stored
+     *     the edge, not when the wiki recorded it.
+     */
+    RelatedMobileSuitEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      direction: components['schemas']['RelationDirection'];
+      mobile_suit: components['schemas']['MobileSuitCardEntity'];
+      relation_type: components['schemas']['MobileSuitRelationType'];
+      source: components['schemas']['SourceCitationEntity'];
+    };
+    /**
+     * RelatedWorkEntity
+     * @description A work linked to the viewed one, read from the viewed one's side.
+     *
+     *     ``created_at`` is when this database stored the edge; the source's
+     *     ``revision_id`` says which copy of the page it came from (D5, D6).
+     */
+    RelatedWorkEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      direction: components['schemas']['RelationDirection'];
+      relation_type: components['schemas']['WorkRelationType'];
+      source: components['schemas']['SourceCitationEntity'];
+      work: components['schemas']['WorkCardEntity'];
+    };
+    /** @enum {string} */
+    RelationDirection: 'incoming' | 'outgoing';
+    /**
+     * SourceCitationEntity
+     * @description The source a served fact cites, for its attribution (D6).
+     *
+     *     Deliberately not ``SourceEntity``: ``external_id`` means nothing to
+     *     a reader, since ``url`` already names the page, and ``id`` is not a
+     *     public key (D5).
+     *
+     *     ``retrieved_at`` and ``revision_id`` say which copy of the page the
+     *     catalog holds; they say nothing about this database's row times.
+     */
+    SourceCitationEntity: {
+      content_license: components['schemas']['ContentLicense'];
+      kind: components['schemas']['SourceKind'];
+      /**
+       * License Name
+       * @description The license's name, such as ``CC BY-SA 3.0`` (D6).
+       */
+      readonly license_name: string;
+      /**
+       * License Url
+       * @description The license's deed URL (D6).
+       */
+      readonly license_url: string;
+      /**
+       * Retrieved At
+       * Format: date-time
+       */
+      retrieved_at: string;
+      /** Revision Id */
+      revision_id: number | null;
+      /**
+       * Revision Url
+       * @description A permalink to the revision the catalog holds, or ``None``.
+       *
+       *     Share-alike attribution points at the version used, not the
+       *     live page (D6). ``None`` when no revision was recorded.
+       */
+      readonly revision_url: string | null;
+      /** Url */
+      url: string;
+    };
+    /**
+     * SourceKind
+     * @description The kind of upstream page a catalog fact came from.
+     *
+     *     One kind per wiki: page IDs are unique only within a wiki, and each
+     *     wiki needs its own sync watermark in ``ingest_runs``.
+     * @enum {string}
+     */
+    SourceKind:
+      | 'fandom_page'
+      | 'wikidata_item'
+      | 'wikipedia_en_page'
+      | 'wikipedia_ja_page';
+    /**
+     * UnitType
+     * @description The kind of mobile weapon, from the Gundam Wiki infobox ``type``.
+     *
+     *     Only the kinds the catalog holds: the wiki's Ship, Vehicle, Weapon
+     *     and Bit pages are out of scope.
+     * @enum {string}
+     */
+    UnitType: 'suit' | 'armor' | 'fighter' | 'man_machine' | 'worker' | 'pod' | 'doll';
+    /** ValidationError */
+    ValidationError: {
+      /** Context */
+      ctx?: Record<string, never>;
+      /** Input */
+      input?: unknown;
+      /** Location */
+      loc: (string | number)[];
+      /** Message */
+      msg: string;
+      /** Error Type */
+      type: string;
+    };
+    /**
+     * WorkAppearanceEntity
+     * @description A work the viewed suit appears in, with its episode range.
+     */
+    WorkAppearanceEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** First Episode */
+      first_episode: number | null;
+      /** Is Debut */
+      is_debut: boolean;
+      /** Last Episode */
+      last_episode: number | null;
+      source: components['schemas']['SourceCitationEntity'];
+      work: components['schemas']['WorkCardEntity'];
+    };
+    /**
+     * WorkCardEntity
+     * @description One work in a list.
+     *
+     *     Deliberately not ``WorkEntity``: a list renders no external IDs, and
+     *     ``id`` is not a public key (D5). Relations are on the detail only.
+     */
+    WorkCardEntity: {
+      continuity: components['schemas']['ContinuityRefEntity'] | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** End Date */
+      end_date: string | null;
+      /** Slug */
+      slug: string;
+      /** Start Date */
+      start_date: string | null;
+      /** Title */
+      title: string;
+      /** Title Ja */
+      title_ja: string | null;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      work_type: components['schemas']['WorkType'];
+    };
+    /**
+     * WorkDetailEntity
+     * @description A work, with its parent and every work it is directly linked to.
+     *
+     *     Leaves out external IDs and ``id`` (D5), and the work's suits, which
+     *     have their own paginated route.
+     */
+    WorkDetailEntity: {
+      continuity: components['schemas']['ContinuityRefEntity'] | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** End Date */
+      end_date: string | null;
+      parent_work: components['schemas']['WorkRefEntity'] | null;
+      /** Relations */
+      relations: components['schemas']['RelatedWorkEntity'][];
+      /** Slug */
+      slug: string;
+      /** Start Date */
+      start_date: string | null;
+      /** Title */
+      title: string;
+      /** Title Ja */
+      title_ja: string | null;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      work_type: components['schemas']['WorkType'];
+    };
+    /**
+     * WorkMobileSuitsListResponse
+     * @description One page of the suits that appear in a work.
+     */
+    WorkMobileSuitsListResponse: {
+      /** Data */
+      data: components['schemas']['MobileSuitAppearanceCardEntity'][];
+      meta: components['schemas']['PageMeta'];
+    };
+    /**
+     * WorkRefEntity
+     * @description Just enough of a work to name and link it from another work.
+     */
+    WorkRefEntity: {
+      /** Slug */
+      slug: string;
+      /** Title */
+      title: string;
+    };
+    /**
+     * WorkRelationType
+     * @description How one work relates to another, read ``from`` → ``to``.
+     *
+     *     ``(Zeta, MSG, sequel_of)`` reads "Zeta is a sequel of MSG".
+     * @enum {string}
+     */
+    WorkRelationType:
+      | 'sequel_of'
+      | 'compilation_of'
+      | 'adaptation_of'
+      | 'remake_of'
+      | 'side_story_of';
+    /**
+     * WorkResponse
+     * @description One work, with its parent and relations.
+     */
+    WorkResponse: {
+      data: components['schemas']['WorkDetailEntity'];
+    };
+    /**
+     * WorkType
+     * @description The medium of a Gundam work.
+     * @enum {string}
+     */
+    WorkType:
+      | 'tv_series'
+      | 'film'
+      | 'ova'
+      | 'ona'
+      | 'manga'
+      | 'novel'
+      | 'video_game'
+      | 'other';
+    /**
+     * WorksListResponse
+     * @description One page of works.
+     */
+    WorksListResponse: {
+      /** Data */
+      data: components['schemas']['WorkCardEntity'][];
+      meta: components['schemas']['PageMeta'];
+    };
   };
   responses: never;
   parameters: never;
@@ -117,6 +780,26 @@ export interface operations {
       };
     };
   };
+  read_continuities_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContinuitiesListResponse'];
+        };
+      };
+    };
+  };
   read_health_check: {
     parameters: {
       query?: never;
@@ -133,6 +816,187 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['HealthCheckResponse'];
+        };
+      };
+    };
+  };
+  read_mobile_suits_list: {
+    parameters: {
+      query?: {
+        /** @description Only suits in this continuity (its slug). */
+        continuity?: string | null;
+        /** @description Only suits that appear in this work (its slug). */
+        work?: string | null;
+        /** @description Only suits of this unit type. */
+        unit_type?: components['schemas']['UnitType'] | null;
+        /** @description Search slugs and model numbers, ignoring case, spaces and punctuation: `rx782` finds RX-78-2. Prefix matches come first. */
+        q?: string | null;
+        /** @description Rows per page, at most 100. */
+        limit?: number;
+        /** @description Rows to skip. */
+        offset?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MobileSuitsListResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  read_mobile_suit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The suit's current or an old slug. */
+        mobile_suit_slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MobileSuitResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  read_works_list: {
+    parameters: {
+      query?: {
+        /** @description Only works in this continuity (its slug). */
+        continuity?: string | null;
+        /** @description Only works of this type. */
+        work_type?: components['schemas']['WorkType'] | null;
+        /** @description Rows per page, at most 100. */
+        limit?: number;
+        /** @description Rows to skip. */
+        offset?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorksListResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  read_work: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The work's current or an old slug. */
+        work_slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  read_work_mobile_suits: {
+    parameters: {
+      query?: {
+        /** @description Rows per page, at most 100. */
+        limit?: number;
+        /** @description Rows to skip. */
+        offset?: number;
+      };
+      header?: never;
+      path: {
+        /** @description The work's current or an old slug. */
+        work_slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkMobileSuitsListResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
         };
       };
     };
