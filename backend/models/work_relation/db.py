@@ -3,12 +3,13 @@
 import uuid
 
 from sqlalchemy import CheckConstraint, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from constants.catalog import WorkRelationType
 from constants.db_types import WORK_RELATION_TYPE_DB_TYPE
 from db.base_db import JunctionBaseDB
 from models.mixins.db import CreatedAtDB
+from models.source.db import SourceDB
 
 
 class WorkRelationDB(JunctionBaseDB, CreatedAtDB):
@@ -33,6 +34,9 @@ class WorkRelationDB(JunctionBaseDB, CreatedAtDB):
         ForeignKey("works.id", ondelete="CASCADE"), primary_key=True, index=True
     )
     """Indexed: it does not lead the primary key (RDB-18)."""
+
+    source: Mapped[SourceDB] = relationship(lazy="raise")
+    """Loaded only by facades that ask for it (SQLA-10, SQLA-22)."""
 
     __table_args__ = (
         CheckConstraint("from_work_id <> to_work_id", name="not_self_relation"),

@@ -211,6 +211,13 @@ def test_db_session() -> Iterator[Session]:
   in the test's transaction.
 - Never truncate tables, call `create_all`, or mock the session.
 
+**PYTEST-24 — A facade method that returns nested collections gets a fixed query count
+test.** A fixture counts the statements the session sends, through SQLAlchemy's
+`before_cursor_execute` event on the test connection. The test reads one parent with one
+related row of each kind, then one with several, and asserts both counts are equal. A
+missing eager load (sqlalchemy.md SQLA-22) makes the second count grow, so an N+1 fails
+the test even where `lazy="raise"` (SQLA-10) does not reach.
+
 ---
 
 ## factory-boy

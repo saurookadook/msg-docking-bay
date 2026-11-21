@@ -1,5 +1,17 @@
 # Plan: Data ingestion from Gundam Wiki (Fandom) + Wikimedia
 
+## PRs
+
+- [x] PR 1: `docs(docs): add ingestion plan, spike findings and ADR`
+- [x] PR 2a: `feat(backend): add catalog foundations, works and provenance tables`
+- [x] PR 2b: `feat(backend): add mobile suit, spec sheet and part tables`
+- [x] PR 2c: `feat(backend): add character, organization and designer tables`
+- [x] PR 3: `feat(ingest): add the ingest service scaffold`
+- [ ] PR 4: `feat(ingest): seed mobile suits from a Gundam Wiki dump`
+- [ ] PR 5: `feat(ingest): sync Gundam Wiki changes through the MediaWiki API`
+- [ ] PR 6: `feat(ingest): ingest works from Wikimedia`
+- [ ] PR 7: `feat(ingest): schedule ingestion and surface attribution`
+
 ## Context
 
 `docs/research/notes/crawlable-sites.md` and its synthesis `docs/research/trusted-gundam-data-sources.md`
@@ -144,10 +156,17 @@ written permission for any automated access, `api.php` included (see
   dump's revision ID as the attribution anchor.
   - *From the catalog read API ([`catalog-read-api.md`](catalog-read-api.md), D2, D4, D5):*
     - **Write through the existing facades.** The read API's PR B and PR C create the entities and
-      read-only facades. This PR adds `create_or_update` (SQLA-25), and a batch upsert method if
-      loading needs one, to those facades, never as SQL in `ingest/`. It creates entities only for
+      facades. PR B also gives its tables `create_or_update`, for its dev seed script. Each is
+      guarded by D5's `IS DISTINCT FROM`, so an unchanged row keeps its `updated_at` (SQLA-25).
+      This PR extends those methods, adds them where none exist, and adds a batch upsert method if
+      loading needs one, never as SQL in `ingest/`. It creates entities only for
       tables no route reads yet, such as the review list. The dependency and parser checkpoints can
       run before PR B merges; the loader checkpoint starts from PR B's facades.
+    - **The fresh dump is local:** `ingest/data/dumps/gundam_pages_current-2026-11-15.xml.7z`,
+      gitignored and kept out of the ingest image. The ingest container sees it through its
+      `./ingest` mount, so `fandom seed /app/ingest/data/dumps/<file>` needs no Compose change.
+    - **The dev seed script refuses after a completed `ingest_runs` row**, so a load is never
+      overwritten by it. Record the run as completed only once the load has committed.
     - **Match rows on `fandom_page_id`.** `works`, `characters`, `organizations` and
       `mechanical_designers` gain the column in the read API's PRs, as `mobile_suits` already has it.
       A renamed page updates its row in place.

@@ -47,19 +47,24 @@ disagree they follow Pydantic's and Python's official documentation.
 ```python
 # models/base/entity.py
 class BaseEntityModel(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_serialization_defaults_required=True,
+    )
 
 
 # models/mixins/entity.py
+class IdEntityMixin(BaseModel):
+    id: UUID
+
+
 class TimestampsEntityMixin(BaseModel):
     created_at: AwareDatetime
     updated_at: AwareDatetime
 
 
 # models/project/entity.py
-class ProjectEntity(BaseEntityModel, TimestampsEntityMixin):
+class ProjectEntity(BaseEntityModel, IdEntityMixin, TimestampsEntityMixin):
     description: str | None = None
     name: str
     owner_id: UUID
@@ -68,6 +73,12 @@ class ProjectEntity(BaseEntityModel, TimestampsEntityMixin):
 
     tasks: list[TaskEntity] = Field(default_factory=list[TaskEntity])
 ```
+
+`id` comes from `IdEntityMixin`, not the base, so a read model that is served to clients
+can leave it out when another key, such as a slug, is the public one.
+`json_schema_serialization_defaults_required` lists a defaulted field such as
+`description: str | None = None` as required in the response schema: the API always
+sends the key, so a generated client types it `string | null`, not optional.
 
 ---
 

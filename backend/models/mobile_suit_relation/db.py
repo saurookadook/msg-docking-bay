@@ -3,12 +3,13 @@
 import uuid
 
 from sqlalchemy import CheckConstraint, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from constants.catalog import MobileSuitRelationType
 from constants.db_types import MOBILE_SUIT_RELATION_TYPE_DB_TYPE
 from db.base_db import JunctionBaseDB
 from models.mixins.db import CreatedAtDB
+from models.source.db import SourceDB
 
 
 class MobileSuitRelationDB(JunctionBaseDB, CreatedAtDB):
@@ -37,6 +38,9 @@ class MobileSuitRelationDB(JunctionBaseDB, CreatedAtDB):
         index=True,
     )
     """Indexed: it does not lead the primary key (RDB-18)."""
+
+    source: Mapped[SourceDB] = relationship(lazy="raise")
+    """Loaded only by facades that ask for it (SQLA-10, SQLA-22)."""
 
     __table_args__ = (
         CheckConstraint(

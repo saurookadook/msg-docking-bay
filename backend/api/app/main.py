@@ -9,7 +9,10 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
 from api.models.health_check import HealthCheckResponse, HealthCheckStatus
+from api.routes.continuities import continuities_router
 from api.routes.home import home_router
+from api.routes.mobile_suits import mobile_suits_router
+from api.routes.works import works_router
 from utils.logging.init import init_logging
 
 logger = init_logging(app_name="msg-docking-bay-api")
@@ -69,4 +72,8 @@ def read_health_check() -> HealthCheckResponse:
     return HealthCheckResponse(data=HealthCheckStatus(status="ok"))
 
 
+# Alphabetical (FAPI-4).
+app.include_router(continuities_router)
 app.include_router(home_router)
+app.include_router(mobile_suits_router)
+app.include_router(works_router)

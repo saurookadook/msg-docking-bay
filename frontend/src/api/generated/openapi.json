@@ -1,6 +1,98 @@
 {
     "components": {
         "schemas": {
+            "ContentLicense": {
+                "description": "The terms a source's content is published under (ADR 0002).",
+                "enum": ["cc_by_sa_3_0", "cc_by_sa_4_0", "cc0_1_0"],
+                "title": "ContentLicense",
+                "type": "string"
+            },
+            "ContinuitiesListResponse": {
+                "description": "Every continuity. Unpaginated, so it has no ``meta``.",
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/ContinuityCardEntity"
+                        },
+                        "title": "Data",
+                        "type": "array"
+                    }
+                },
+                "required": ["data"],
+                "title": "ContinuitiesListResponse",
+                "type": "object"
+            },
+            "ContinuityCardEntity": {
+                "description": "One continuity in the list of every continuity.\n\nLeaves out ``id``: slugs are the public key (D2, D5).",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "parent_continuity": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ContinuityRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "updated_at",
+                    "name",
+                    "slug",
+                    "parent_continuity"
+                ],
+                "title": "ContinuityCardEntity",
+                "type": "object"
+            },
+            "ContinuityRefEntity": {
+                "description": "Just enough of a continuity to name and link it from a card.\n\nDeliberately not a card: nesting full cards inside other cards\nwould make every list load a chain of rows.",
+                "properties": {
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    }
+                },
+                "required": ["name", "slug"],
+                "title": "ContinuityRefEntity",
+                "type": "object"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "title": "Detail",
+                        "type": "array"
+                    }
+                },
+                "title": "HTTPValidationError",
+                "type": "object"
+            },
             "HealthCheckResponse": {
                 "description": "The health check's envelope.",
                 "properties": {
@@ -51,6 +143,1030 @@
                 "required": ["data"],
                 "title": "HomeResponse",
                 "type": "object"
+            },
+            "MobileSuitAppearanceCardEntity": {
+                "description": "A suit in one work's list, with how it appears there.",
+                "properties": {
+                    "continuity": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ContinuityRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "first_episode": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "First Episode"
+                    },
+                    "is_debut": {
+                        "title": "Is Debut",
+                        "type": "boolean"
+                    },
+                    "last_episode": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Last Episode"
+                    },
+                    "model_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Model Number"
+                    },
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "name_ja": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name Ja"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "unit_type": {
+                        "$ref": "#/components/schemas/UnitType"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "updated_at",
+                    "model_number",
+                    "name",
+                    "name_ja",
+                    "slug",
+                    "unit_type",
+                    "continuity",
+                    "first_episode",
+                    "is_debut",
+                    "last_episode"
+                ],
+                "title": "MobileSuitAppearanceCardEntity",
+                "type": "object"
+            },
+            "MobileSuitCardEntity": {
+                "description": "One suit in a list.\n\nDeliberately not the detail: loading spec sheets for fifty cards\nwould cost an N+1 or a large join that nothing renders (D5). Leaves\nout ``id`` and ``fandom_page_id``: slugs are the public key.",
+                "properties": {
+                    "continuity": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ContinuityRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "model_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Model Number"
+                    },
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "name_ja": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name Ja"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "unit_type": {
+                        "$ref": "#/components/schemas/UnitType"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "updated_at",
+                    "model_number",
+                    "name",
+                    "name_ja",
+                    "slug",
+                    "unit_type",
+                    "continuity"
+                ],
+                "title": "MobileSuitCardEntity",
+                "type": "object"
+            },
+            "MobileSuitDetailEntity": {
+                "description": "A suit, with its spec sheets, direct relations and appearances.\n\nEach nested list is read in one query, so a detail read costs the\nsame few statements however many rows it holds (PYTEST-24). Parts\njoin the spec sheets in a later PR; pilots and organizations too.",
+                "properties": {
+                    "appearances": {
+                        "items": {
+                            "$ref": "#/components/schemas/WorkAppearanceEntity"
+                        },
+                        "title": "Appearances",
+                        "type": "array"
+                    },
+                    "continuity": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ContinuityRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "model_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Model Number"
+                    },
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "name_ja": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name Ja"
+                    },
+                    "relations": {
+                        "items": {
+                            "$ref": "#/components/schemas/RelatedMobileSuitEntity"
+                        },
+                        "title": "Relations",
+                        "type": "array"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "spec_sheets": {
+                        "items": {
+                            "$ref": "#/components/schemas/MobileSuitSpecSheetEntity"
+                        },
+                        "title": "Spec Sheets",
+                        "type": "array"
+                    },
+                    "unit_type": {
+                        "$ref": "#/components/schemas/UnitType"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "updated_at",
+                    "model_number",
+                    "name",
+                    "name_ja",
+                    "slug",
+                    "unit_type",
+                    "continuity",
+                    "appearances",
+                    "relations",
+                    "spec_sheets"
+                ],
+                "title": "MobileSuitDetailEntity",
+                "type": "object"
+            },
+            "MobileSuitRelationType": {
+                "description": "How one mobile suit descends from another, read from \u2192 to.\n\n``(Worker Zaku, Zaku II, variant_of)`` reads \"the Worker Zaku is a\nvariant of the Zaku II\".",
+                "enum": [
+                    "variant_of",
+                    "developed_from",
+                    "upgrade_of",
+                    "alternate_version_of"
+                ],
+                "title": "MobileSuitRelationType",
+                "type": "string"
+            },
+            "MobileSuitResponse": {
+                "description": "One suit, with its spec sheets, relations and appearances.",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/MobileSuitDetailEntity"
+                    }
+                },
+                "required": ["data"],
+                "title": "MobileSuitResponse",
+                "type": "object"
+            },
+            "MobileSuitSpecSheetEntity": {
+                "description": "One configuration's specs, as one source gives them.\n\nDeliberately not ``SpecSheetEntity``: ``raw_infobox`` is bulky\ncopied wiki text, kept out of anything served (D5), and ``id`` is\nnot a public key.\n\nA named configuration's gaps are filled from the base sheet of the\nsame source; ``inherited_fields`` names the columns that were, so a\npage can tell \"same as base\" from a value the source states.",
+                "properties": {
+                    "configuration": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Configuration"
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "empty_weight_kg": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Empty Weight Kg"
+                    },
+                    "generator_output_kw": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Generator Output Kw"
+                    },
+                    "gross_weight_kg": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Gross Weight Kg"
+                    },
+                    "head_height_m": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Head Height M"
+                    },
+                    "inherited_fields": {
+                        "items": {
+                            "enum": [
+                                "empty_weight_kg",
+                                "generator_output_kw",
+                                "gross_weight_kg",
+                                "head_height_m",
+                                "max_acceleration_g",
+                                "max_speed_kmh",
+                                "overall_height_m",
+                                "sensor_range_m",
+                                "total_thrust_kg",
+                                "turn_time_s"
+                            ],
+                            "type": "string"
+                        },
+                        "title": "Inherited Fields",
+                        "type": "array"
+                    },
+                    "max_acceleration_g": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Max Acceleration G"
+                    },
+                    "max_speed_kmh": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Max Speed Kmh"
+                    },
+                    "overall_height_m": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Overall Height M"
+                    },
+                    "sensor_range_m": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Sensor Range M"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceCitationEntity"
+                    },
+                    "total_thrust_kg": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Total Thrust Kg"
+                    },
+                    "turn_time_s": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Turn Time S"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "updated_at",
+                    "configuration",
+                    "empty_weight_kg",
+                    "generator_output_kw",
+                    "gross_weight_kg",
+                    "head_height_m",
+                    "inherited_fields",
+                    "max_acceleration_g",
+                    "max_speed_kmh",
+                    "overall_height_m",
+                    "sensor_range_m",
+                    "total_thrust_kg",
+                    "turn_time_s",
+                    "source"
+                ],
+                "title": "MobileSuitSpecSheetEntity",
+                "type": "object"
+            },
+            "MobileSuitsListResponse": {
+                "description": "One page of mobile suits.",
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/MobileSuitCardEntity"
+                        },
+                        "title": "Data",
+                        "type": "array"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/PageMeta"
+                    }
+                },
+                "required": ["data", "meta"],
+                "title": "MobileSuitsListResponse",
+                "type": "object"
+            },
+            "PageMeta": {
+                "description": "Where a page sits in its list (fastapi.md FAPI-12).\n\nA plain model, not an envelope, so its fields stay ``snake_case``.\n``total`` counts every row the filters match, across every page.",
+                "properties": {
+                    "limit": {
+                        "title": "Limit",
+                        "type": "integer"
+                    },
+                    "offset": {
+                        "title": "Offset",
+                        "type": "integer"
+                    },
+                    "total": {
+                        "title": "Total",
+                        "type": "integer"
+                    }
+                },
+                "required": ["limit", "offset", "total"],
+                "title": "PageMeta",
+                "type": "object"
+            },
+            "RelatedMobileSuitEntity": {
+                "description": "A suit linked to the viewed one, read from the viewed one's side.\n\nDirect edges only: the whole family tree is a route of its own when\na screen needs it (D5). ``created_at`` is when this database stored\nthe edge, not when the wiki recorded it.",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "direction": {
+                        "$ref": "#/components/schemas/RelationDirection"
+                    },
+                    "mobile_suit": {
+                        "$ref": "#/components/schemas/MobileSuitCardEntity"
+                    },
+                    "relation_type": {
+                        "$ref": "#/components/schemas/MobileSuitRelationType"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceCitationEntity"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "direction",
+                    "relation_type",
+                    "mobile_suit",
+                    "source"
+                ],
+                "title": "RelatedMobileSuitEntity",
+                "type": "object"
+            },
+            "RelatedWorkEntity": {
+                "description": "A work linked to the viewed one, read from the viewed one's side.\n\n``created_at`` is when this database stored the edge; the source's\n``revision_id`` says which copy of the page it came from (D5, D6).",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "direction": {
+                        "$ref": "#/components/schemas/RelationDirection"
+                    },
+                    "relation_type": {
+                        "$ref": "#/components/schemas/WorkRelationType"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceCitationEntity"
+                    },
+                    "work": {
+                        "$ref": "#/components/schemas/WorkCardEntity"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "direction",
+                    "relation_type",
+                    "source",
+                    "work"
+                ],
+                "title": "RelatedWorkEntity",
+                "type": "object"
+            },
+            "RelationDirection": {
+                "enum": ["incoming", "outgoing"],
+                "type": "string"
+            },
+            "SourceCitationEntity": {
+                "description": "The source a served fact cites, for its attribution (D6).\n\nDeliberately not ``SourceEntity``: ``external_id`` means nothing to\na reader, since ``url`` already names the page, and ``id`` is not a\npublic key (D5).\n\n``retrieved_at`` and ``revision_id`` say which copy of the page the\ncatalog holds; they say nothing about this database's row times.",
+                "properties": {
+                    "content_license": {
+                        "$ref": "#/components/schemas/ContentLicense"
+                    },
+                    "kind": {
+                        "$ref": "#/components/schemas/SourceKind"
+                    },
+                    "license_name": {
+                        "description": "The license's name, such as ``CC BY-SA 3.0`` (D6).",
+                        "readOnly": true,
+                        "title": "License Name",
+                        "type": "string"
+                    },
+                    "license_url": {
+                        "description": "The license's deed URL (D6).",
+                        "readOnly": true,
+                        "title": "License Url",
+                        "type": "string"
+                    },
+                    "retrieved_at": {
+                        "format": "date-time",
+                        "title": "Retrieved At",
+                        "type": "string"
+                    },
+                    "revision_id": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Revision Id"
+                    },
+                    "revision_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "description": "A permalink to the revision the catalog holds, or ``None``.\n\nShare-alike attribution points at the version used, not the\nlive page (D6). ``None`` when no revision was recorded.",
+                        "readOnly": true,
+                        "title": "Revision Url"
+                    },
+                    "url": {
+                        "title": "Url",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "content_license",
+                    "kind",
+                    "retrieved_at",
+                    "revision_id",
+                    "url",
+                    "license_name",
+                    "license_url",
+                    "revision_url"
+                ],
+                "title": "SourceCitationEntity",
+                "type": "object"
+            },
+            "SourceKind": {
+                "description": "The kind of upstream page a catalog fact came from.\n\nOne kind per wiki: page IDs are unique only within a wiki, and each\nwiki needs its own sync watermark in ``ingest_runs``.",
+                "enum": [
+                    "fandom_page",
+                    "wikidata_item",
+                    "wikipedia_en_page",
+                    "wikipedia_ja_page"
+                ],
+                "title": "SourceKind",
+                "type": "string"
+            },
+            "UnitType": {
+                "description": "The kind of mobile weapon, from the Gundam Wiki infobox ``type``.\n\nOnly the kinds the catalog holds: the wiki's Ship, Vehicle, Weapon\nand Bit pages are out of scope.",
+                "enum": [
+                    "suit",
+                    "armor",
+                    "fighter",
+                    "man_machine",
+                    "worker",
+                    "pod",
+                    "doll"
+                ],
+                "title": "UnitType",
+                "type": "string"
+            },
+            "ValidationError": {
+                "properties": {
+                    "ctx": {
+                        "title": "Context",
+                        "type": "object"
+                    },
+                    "input": {
+                        "title": "Input"
+                    },
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "title": "Location",
+                        "type": "array"
+                    },
+                    "msg": {
+                        "title": "Message",
+                        "type": "string"
+                    },
+                    "type": {
+                        "title": "Error Type",
+                        "type": "string"
+                    }
+                },
+                "required": ["loc", "msg", "type"],
+                "title": "ValidationError",
+                "type": "object"
+            },
+            "WorkAppearanceEntity": {
+                "description": "A work the viewed suit appears in, with its episode range.",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "first_episode": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "First Episode"
+                    },
+                    "is_debut": {
+                        "title": "Is Debut",
+                        "type": "boolean"
+                    },
+                    "last_episode": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Last Episode"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceCitationEntity"
+                    },
+                    "work": {
+                        "$ref": "#/components/schemas/WorkCardEntity"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "first_episode",
+                    "is_debut",
+                    "last_episode",
+                    "source",
+                    "work"
+                ],
+                "title": "WorkAppearanceEntity",
+                "type": "object"
+            },
+            "WorkCardEntity": {
+                "description": "One work in a list.\n\nDeliberately not ``WorkEntity``: a list renders no external IDs, and\n``id`` is not a public key (D5). Relations are on the detail only.",
+                "properties": {
+                    "continuity": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ContinuityRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "end_date": {
+                        "anyOf": [
+                            {
+                                "format": "date",
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "End Date"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "start_date": {
+                        "anyOf": [
+                            {
+                                "format": "date",
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Start Date"
+                    },
+                    "title": {
+                        "title": "Title",
+                        "type": "string"
+                    },
+                    "title_ja": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Title Ja"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    },
+                    "work_type": {
+                        "$ref": "#/components/schemas/WorkType"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "updated_at",
+                    "end_date",
+                    "slug",
+                    "start_date",
+                    "title",
+                    "title_ja",
+                    "work_type",
+                    "continuity"
+                ],
+                "title": "WorkCardEntity",
+                "type": "object"
+            },
+            "WorkDetailEntity": {
+                "description": "A work, with its parent and every work it is directly linked to.\n\nLeaves out external IDs and ``id`` (D5), and the work's suits, which\nhave their own paginated route.",
+                "properties": {
+                    "continuity": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ContinuityRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "end_date": {
+                        "anyOf": [
+                            {
+                                "format": "date",
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "End Date"
+                    },
+                    "parent_work": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/WorkRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "relations": {
+                        "items": {
+                            "$ref": "#/components/schemas/RelatedWorkEntity"
+                        },
+                        "title": "Relations",
+                        "type": "array"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "start_date": {
+                        "anyOf": [
+                            {
+                                "format": "date",
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Start Date"
+                    },
+                    "title": {
+                        "title": "Title",
+                        "type": "string"
+                    },
+                    "title_ja": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Title Ja"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    },
+                    "work_type": {
+                        "$ref": "#/components/schemas/WorkType"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "updated_at",
+                    "end_date",
+                    "slug",
+                    "start_date",
+                    "title",
+                    "title_ja",
+                    "work_type",
+                    "continuity",
+                    "parent_work",
+                    "relations"
+                ],
+                "title": "WorkDetailEntity",
+                "type": "object"
+            },
+            "WorkMobileSuitsListResponse": {
+                "description": "One page of the suits that appear in a work.",
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/MobileSuitAppearanceCardEntity"
+                        },
+                        "title": "Data",
+                        "type": "array"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/PageMeta"
+                    }
+                },
+                "required": ["data", "meta"],
+                "title": "WorkMobileSuitsListResponse",
+                "type": "object"
+            },
+            "WorkRefEntity": {
+                "description": "Just enough of a work to name and link it from another work.",
+                "properties": {
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "title": {
+                        "title": "Title",
+                        "type": "string"
+                    }
+                },
+                "required": ["slug", "title"],
+                "title": "WorkRefEntity",
+                "type": "object"
+            },
+            "WorkRelationType": {
+                "description": "How one work relates to another, read ``from`` \u2192 ``to``.\n\n``(Zeta, MSG, sequel_of)`` reads \"Zeta is a sequel of MSG\".",
+                "enum": [
+                    "sequel_of",
+                    "compilation_of",
+                    "adaptation_of",
+                    "remake_of",
+                    "side_story_of"
+                ],
+                "title": "WorkRelationType",
+                "type": "string"
+            },
+            "WorkResponse": {
+                "description": "One work, with its parent and relations.",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/WorkDetailEntity"
+                    }
+                },
+                "required": ["data"],
+                "title": "WorkResponse",
+                "type": "object"
+            },
+            "WorkType": {
+                "description": "The medium of a Gundam work.",
+                "enum": [
+                    "tv_series",
+                    "film",
+                    "ova",
+                    "ona",
+                    "manga",
+                    "novel",
+                    "video_game",
+                    "other"
+                ],
+                "title": "WorkType",
+                "type": "string"
+            },
+            "WorksListResponse": {
+                "description": "One page of works.",
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/WorkCardEntity"
+                        },
+                        "title": "Data",
+                        "type": "array"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/PageMeta"
+                    }
+                },
+                "required": ["data", "meta"],
+                "title": "WorksListResponse",
+                "type": "object"
             }
         }
     },
@@ -79,6 +1195,25 @@
                 "summary": "Read Home"
             }
         },
+        "/api/continuities": {
+            "get": {
+                "description": "Return every continuity by name, each with its parent continuity.\n\nUnpaginated: there are a few dozen at most. Reads only, and calls\nno external API.",
+                "operationId": "read_continuities_list",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContinuitiesListResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    }
+                },
+                "summary": "Read Continuities List"
+            }
+        },
         "/api/health-check": {
             "get": {
                 "description": "Report that the process is up.\n\nTouches nothing else (no database, no upstream call), so platform\nhealth checks stay cheap (FAPI-3).",
@@ -96,6 +1231,387 @@
                     }
                 },
                 "summary": "Read Health Check"
+            }
+        },
+        "/api/mobile-suits": {
+            "get": {
+                "description": "Return one page of mobile suits, by name.\n\nA ``q`` with no letters or digits is no filter, so an empty search\nbox lists everything (D8). A page past the end is 200 with an empty\n``data`` and the real ``total``. Reads only, and calls no external\nAPI.",
+                "operationId": "read_mobile_suits_list",
+                "parameters": [
+                    {
+                        "description": "Only suits in this continuity (its slug).",
+                        "in": "query",
+                        "name": "continuity",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Only suits in this continuity (its slug).",
+                            "title": "Continuity"
+                        }
+                    },
+                    {
+                        "description": "Only suits that appear in this work (its slug).",
+                        "in": "query",
+                        "name": "work",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Only suits that appear in this work (its slug).",
+                            "title": "Work"
+                        }
+                    },
+                    {
+                        "description": "Only suits of this unit type.",
+                        "in": "query",
+                        "name": "unit_type",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/UnitType"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Only suits of this unit type.",
+                            "title": "Unit Type"
+                        }
+                    },
+                    {
+                        "description": "Search slugs and model numbers, ignoring case, spaces and punctuation: `rx782` finds RX-78-2. Prefix matches come first.",
+                        "in": "query",
+                        "name": "q",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "maxLength": 100,
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Search slugs and model numbers, ignoring case, spaces and punctuation: `rx782` finds RX-78-2. Prefix matches come first.",
+                            "title": "Q"
+                        }
+                    },
+                    {
+                        "description": "Rows per page, at most 100.",
+                        "in": "query",
+                        "name": "limit",
+                        "required": false,
+                        "schema": {
+                            "default": 50,
+                            "description": "Rows per page, at most 100.",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "title": "Limit",
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Rows to skip.",
+                        "in": "query",
+                        "name": "offset",
+                        "required": false,
+                        "schema": {
+                            "default": 0,
+                            "description": "Rows to skip.",
+                            "minimum": 0,
+                            "title": "Offset",
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MobileSuitsListResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Mobile Suits List"
+            }
+        },
+        "/api/mobile-suits/{mobile_suit_slug}": {
+            "get": {
+                "description": "Return a suit with its spec sheets, relations and appearances.\n\nEach fact carries its source, for attribution (D6). Named spec\nsheets are filled from the same source's base sheet, and list the\ncolumns they took. An old slug returns 200 with the renamed suit,\nwhose ``slug`` is the current one (D2). Reads only.",
+                "operationId": "read_mobile_suit",
+                "parameters": [
+                    {
+                        "description": "The suit's current or an old slug.",
+                        "in": "path",
+                        "name": "mobile_suit_slug",
+                        "required": true,
+                        "schema": {
+                            "description": "The suit's current or an old slug.",
+                            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                            "title": "Mobile Suit Slug",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MobileSuitResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Mobile Suit"
+            }
+        },
+        "/api/works": {
+            "get": {
+                "description": "Return one page of works, first released first.\n\nWorks with no known date come last. A page past the end is 200 with\nan empty ``data`` and the real ``total`` (D3). Reads only, and calls\nno external API.",
+                "operationId": "read_works_list",
+                "parameters": [
+                    {
+                        "description": "Only works in this continuity (its slug).",
+                        "in": "query",
+                        "name": "continuity",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Only works in this continuity (its slug).",
+                            "title": "Continuity"
+                        }
+                    },
+                    {
+                        "description": "Only works of this type.",
+                        "in": "query",
+                        "name": "work_type",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/WorkType"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Only works of this type.",
+                            "title": "Work Type"
+                        }
+                    },
+                    {
+                        "description": "Rows per page, at most 100.",
+                        "in": "query",
+                        "name": "limit",
+                        "required": false,
+                        "schema": {
+                            "default": 50,
+                            "description": "Rows per page, at most 100.",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "title": "Limit",
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Rows to skip.",
+                        "in": "query",
+                        "name": "offset",
+                        "required": false,
+                        "schema": {
+                            "default": 0,
+                            "description": "Rows to skip.",
+                            "minimum": 0,
+                            "title": "Offset",
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WorksListResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Works List"
+            }
+        },
+        "/api/works/{work_slug}": {
+            "get": {
+                "description": "Return a work with its continuity, parent work and related works.\n\nAn old slug returns 200 with the renamed work, whose ``slug`` is the\ncurrent one; the frontend replaces its URL (D2). Reads only.",
+                "operationId": "read_work",
+                "parameters": [
+                    {
+                        "description": "The work's current or an old slug.",
+                        "in": "path",
+                        "name": "work_slug",
+                        "required": true,
+                        "schema": {
+                            "description": "The work's current or an old slug.",
+                            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                            "title": "Work Slug",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WorkResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Work"
+            }
+        },
+        "/api/works/{work_slug}/mobile-suits": {
+            "get": {
+                "description": "Return one page of a work's suits, debuts first, then by name.\n\nEach carries its episode range and whether it debuts in the work.\nAn unknown work is a 404; a known one with no suits is 200 with an\nempty ``data`` (FAPI-12). Reads only.",
+                "operationId": "read_work_mobile_suits",
+                "parameters": [
+                    {
+                        "description": "The work's current or an old slug.",
+                        "in": "path",
+                        "name": "work_slug",
+                        "required": true,
+                        "schema": {
+                            "description": "The work's current or an old slug.",
+                            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                            "title": "Work Slug",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Rows per page, at most 100.",
+                        "in": "query",
+                        "name": "limit",
+                        "required": false,
+                        "schema": {
+                            "default": 50,
+                            "description": "Rows per page, at most 100.",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "title": "Limit",
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Rows to skip.",
+                        "in": "query",
+                        "name": "offset",
+                        "required": false,
+                        "schema": {
+                            "default": 0,
+                            "description": "Rows to skip.",
+                            "minimum": 0,
+                            "title": "Offset",
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WorkMobileSuitsListResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Work Mobile Suits"
             }
         }
     }

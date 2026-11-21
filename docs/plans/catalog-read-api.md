@@ -3,6 +3,14 @@
 > **Agreed** (2026-11-13 to 2026-11-15): D1 to D8 were reviewed one at a time. D7 follows
 > `aoam-property-plan`'s Mirage pattern and adds a mock mode. No code until asked.
 
+## PRs
+
+- [x] PR A: `build(frontend): generate API types from the backend's OpenAPI schema`
+- [x] Mock mode PR: `feat(frontend): add a mock API mode to the dev server`
+- [ ] PR B: `feat(backend): serve mobile suits, works and continuities`
+- [ ] PR C: `feat(backend): serve characters, organizations and designers`
+- [ ] PR D: `feat(backend): serve suit parts on spec sheets`
+
 ## Context
 
 The frontend has nothing to read. The backend serves only `GET /api/health-check` and `GET /api`, and
@@ -136,8 +144,10 @@ caller". This track is likely to need them first, so the first caller is a route
    - PR B covers continuity, work, work relation, mobile suit, mobile suit relation, mobile suit
      appearance, spec sheet and source. PR C covers character, organization, mechanical designer
      and their junctions.
-2. **No write methods are stubbed ahead of time.** 3a adds `create_or_update` (SQLA-25) when the
-   loader first needs it.
+2. **No write methods are stubbed ahead of time.** A write method arrives with its first caller.
+   *Amended 2026-11-21:* PR B's dev seed script (D7) is that caller for the tables PR B reads, so
+   PR B adds their `create_or_update`, with D5's no-change guard. 3a extends those methods for the
+   loader, and adds them for tables PR B doesn't touch.
 3. **Whoever needs a table first creates its entity.** Tables no route reads, such as 3a's review
    list, are 3a's to create.
 4. **Upserts stay in facades, even in bulk.** If 3a loads in batches, it adds a batch upsert method to
@@ -288,9 +298,22 @@ repo's standards.
   The fixed list keeps the fixtures small: RX-78-2, RX-78-02, RX-78F00, a Zaku II, a couple of works
   and continuities, and two list pages.
 
-**Until 3a loads data,** the fixtures are written by hand for those same suits, from the 2022 dump's
-values, and the capture script replaces them later. There's no dev seed script, and the API and
-frontend don't change when a fresh dump replaces the 2022 one.
+**Until 3a loads data,** the fixtures are written by hand for those same suits, and the capture
+script replaces them later. The API and frontend don't change when a fresh dump replaces an old one.
+
+*Amended 2026-11-21 (PR B grilling):*
+- **The values come from Fandom's fresh dump.** `gundam_pages_current.xml.7z` was regenerated on
+  2026-11-15. It's kept in the gitignored `ingest/data/dumps/` and recorded in
+  [`ingestion-spike.md`](../research/notes/ingestion-spike.md).
+- **There is a dev seed script after all, and it's permanent.**
+  - `backend/scripts/seed_dev.py`, run by `moon run backend:seed-dev`, writes the same suits,
+    works and continuities as the fixtures into the dev database, so `dev` and `dev-mock` show the
+    same rows.
+  - It upserts by slug through the facades, so it can be rerun.
+  - It refuses outside `dev` and `test`, and refuses after a completed ingest run unless `--force`,
+    so it never overwrites a real load.
+- **The seed data and the fixtures are two copies of the same values**, each naming the other.
+  Details are in [`catalog-read-routes.md`](catalog-read-routes.md).
 
 **Mock mode for the running app** (agreed 2026-11-13). Unlike aoam, the dev app itself can run on
 the fixtures, started with `moon run root:dev-mock`.
@@ -461,7 +484,7 @@ Branch `feat/add-mock-api-mode`, after PR A merges. **Detailed plan: the "Follow
    `LOG_LEVEL`.
 
 ### PR B — `feat(backend): serve mobile suits, works and continuities`
-Branch `feat/add-catalog-read-routes`.
+Branch `feat/add-catalog-read-routes`. **Detailed plan: [`catalog-read-routes.md`](catalog-read-routes.md).**
 
 0. **Standard** (Checkpoint → `docs(standards): describe paginated list envelopes`).
    A pagination paragraph under FAPI-12 in `fastapi.md`: `meta` with `limit`, `offset` and `total`;

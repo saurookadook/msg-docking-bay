@@ -29,6 +29,7 @@ class TestWorkDB:
             ann_id=24735,
             continuity_id=UC_ID,
             end_date=date(2023, 7, 2),
+            fandom_page_id=170143,
             fandom_page_title="Mobile Suit Gundam: The Witch from Mercury",
             slug="the-witch-from-mercury",
             start_date=date(2022, 10, 2),
@@ -48,6 +49,7 @@ class TestWorkDB:
         assert work.ann_id == 24735
         assert work.continuity_id == UC_ID
         assert work.end_date == date(2023, 7, 2)
+        assert work.fandom_page_id == 170143
         assert work.fandom_page_title == "Mobile Suit Gundam: The Witch from Mercury"
         assert work.slug == "the-witch-from-mercury"
         assert work.start_date == date(2022, 10, 2)
@@ -112,6 +114,7 @@ class TestWorkDBConstraints:
         [
             ("anilist_id", 80, "works_anilist_id_key"),
             ("ann_id", 1270, "works_ann_id_key"),
+            ("fandom_page_id", 2001, "works_fandom_page_id_key"),
             ("fandom_page_title", "Mobile Suit Gundam", "works_fandom_page_title_key"),
             ("slug", "mobile-suit-gundam", "works_slug_key"),
             ("wikidata_qid", "Q1134906", "works_wikidata_qid_key"),
@@ -133,6 +136,7 @@ class TestWorkDBConstraints:
         [
             ({"anilist_id": 0}, "ck_works_anilist_id_positive"),
             ({"ann_id": -1}, "ck_works_ann_id_positive"),
+            ({"fandom_page_id": 0}, "ck_works_fandom_page_id_positive"),
             (
                 {"start_date": date(2022, 10, 2), "end_date": date(2022, 10, 1)},
                 "ck_works_end_after_start",

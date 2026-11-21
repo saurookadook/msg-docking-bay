@@ -3,7 +3,7 @@
 import uuid
 
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base_db import BaseDB
 from models.mixins.checks import not_empty, not_own_parent, slug_format
@@ -23,6 +23,11 @@ class ContinuityDB(BaseDB, TimestampsDB):
     )
     """The timeline this one branches from: GQ's alternate UC → UC."""
     slug: Mapped[str] = mapped_column(unique=True)
+
+    parent_continuity: Mapped[ContinuityDB | None] = relationship(
+        lazy="raise", remote_side="ContinuityDB.id"
+    )
+    """Loaded only by facades that ask for it (SQLA-10, SQLA-22)."""
 
     __table_args__ = (
         not_empty("name"),

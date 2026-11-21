@@ -4,11 +4,12 @@ import uuid
 from typing import Any
 
 from sqlalchemy import CheckConstraint, ForeignKey, UniqueConstraint, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base_db import BaseDB
 from models.mixins.checks import not_empty, positive
 from models.mixins.db import TimestampsDB
+from models.source.db import SourceDB
 
 
 class SpecSheetDB(BaseDB, TimestampsDB):
@@ -52,6 +53,9 @@ class SpecSheetDB(BaseDB, TimestampsDB):
     total_thrust_kg: Mapped[float | None]
     """Thrust in kilograms-force, as the wiki gives it."""
     turn_time_s: Mapped[float | None]
+
+    source: Mapped[SourceDB] = relationship(lazy="raise")
+    """Loaded only by facades that ask for it (SQLA-10, SQLA-22)."""
 
     __table_args__ = (
         not_empty("configuration"),
