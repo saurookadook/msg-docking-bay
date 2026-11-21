@@ -30,6 +30,7 @@ class WorkDBFactory(
     ann_id = None
     continuity_id = None  # a real foreign key: pass an existing continuity's id
     end_date = None
+    fandom_page_id = None
     fandom_page_title = None
     parent_work_id = None
     slug = numbered("work-{n}")

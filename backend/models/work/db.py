@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from constants.catalog import WorkType
 from constants.db_types import WORK_TYPE_DB_TYPE
 from db.base_db import BaseDB
-from models.mixins.checks import not_empty, not_own_parent, slug_format
+from models.mixins.checks import not_empty, not_own_parent, positive, slug_format
 from models.mixins.db import TimestampsDB
 
 
@@ -28,6 +28,11 @@ class WorkDB(BaseDB, TimestampsDB):
     )
     """Null for crossovers that span timelines, such as G Generation."""
     end_date: Mapped[date | None]
+    fandom_page_id: Mapped[int | None] = mapped_column(unique=True)
+    """The Gundam Wiki page ID, which survives a page rename (D2).
+
+    Null for a work with no Gundam Wiki page, known only from Wikidata.
+    """
     fandom_page_title: Mapped[str | None] = mapped_column(unique=True)
     parent_work_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("works.id", ondelete="SET NULL"), index=True
@@ -46,6 +51,7 @@ class WorkDB(BaseDB, TimestampsDB):
         CheckConstraint("anilist_id > 0", name="anilist_id_positive"),
         CheckConstraint("ann_id > 0", name="ann_id_positive"),
         CheckConstraint("end_date >= start_date", name="end_after_start"),
+        positive("fandom_page_id"),
         not_empty("fandom_page_title"),
         not_own_parent("parent_work_id"),
         slug_format(),

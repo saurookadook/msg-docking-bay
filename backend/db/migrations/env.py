@@ -22,6 +22,7 @@ from models.mobile_suit_designer.db import MobileSuitDesignerDB
 from models.mobile_suit_organization.db import MobileSuitOrganizationDB
 from models.mobile_suit_pilot.db import MobileSuitPilotDB
 from models.mobile_suit_relation.db import MobileSuitRelationDB
+from models.mobile_suit_slug_redirect.db import MobileSuitSlugRedirectDB
 from models.organization.db import OrganizationDB
 from models.organization_appearance.db import OrganizationAppearanceDB
 from models.powerplant.db import PowerplantDB
@@ -34,6 +35,7 @@ from models.spec_sheet_powerplant.db import SpecSheetPowerplantDB
 from models.work.db import WorkDB
 from models.work_relation.db import WorkRelationDB
 from models.work_short_name.db import WorkShortNameDB
+from models.work_slug_redirect.db import WorkSlugRedirectDB
 
 MODELS: Final = (
     ArmamentDB,
@@ -50,6 +52,7 @@ MODELS: Final = (
     MobileSuitOrganizationDB,
     MobileSuitPilotDB,
     MobileSuitRelationDB,
+    MobileSuitSlugRedirectDB,
     OrganizationAppearanceDB,
     OrganizationDB,
     PowerplantDB,
@@ -62,6 +65,7 @@ MODELS: Final = (
     WorkDB,
     WorkRelationDB,
     WorkShortNameDB,
+    WorkSlugRedirectDB,
 )
 """Every model, imported so autogenerate sees its table (SQLA-13).
 
