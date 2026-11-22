@@ -3,11 +3,12 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Path, Query, status
+from fastapi import APIRouter, Path, Query
 
 from api.dependencies.db_session import DBSessionDep
 from api.models.mobile_suit import MobileSuitResponse, MobileSuitsListResponse
 from api.models.pagination import PageLimit, PageMeta, PageOffset
+from api.routes.handlers.reads import run_read
 from constants.catalog import UnitType
 from constants.pagination import DEFAULT_PAGE_SIZE, MAX_SEARCH_LENGTH
 from models.mixins.checks import SLUG_PATTERN
@@ -21,6 +22,7 @@ mobile_suits_router = APIRouter(prefix="/api")
 @mobile_suits_router.get("/mobile-suits")
 def read_mobile_suits_list(
     api_db_session: DBSessionDep,
+    *,
     continuity: Annotated[
         str | None, Query(description="Only suits in this continuity (its slug).")
     ] = None,
@@ -50,21 +52,18 @@ def read_mobile_suits_list(
     ``data`` and the real ``total``. Reads only, and calls no external
     API.
     """
-    try:
-        page = MobileSuitFacade(db_session=api_db_session).get_page(
+    page = run_read(
+        lambda: MobileSuitFacade(db_session=api_db_session).get_page(
             continuity_slug=continuity,
             work_slug=work,
             unit_type=unit_type,
             q=q,
             limit=limit,
             offset=offset,
-        )
-    except Exception as e:
-        error_detail = "Error fetching mobile suits"
-        logger.exception(error_detail)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_detail
-        ) from e
+        ),
+        error_detail="Error fetching mobile suits",
+        logger=logger,
+    )
     return MobileSuitsListResponse(
         data=page.items, meta=PageMeta(limit=limit, offset=offset, total=page.total)
     )
@@ -83,20 +82,16 @@ def read_mobile_suit(
     Each fact carries its source, for attribution (D6). Named spec
     sheets are filled from the same source's base sheet, and list the
     columns they took. An old slug returns 200 with the renamed suit,
-    whose ``slug`` is the current one (D2). Reads only.
+    whose ``slug`` is the current one (D2). Reads only, and calls no
+    external API.
     """
-    try:
-        suit = MobileSuitFacade(db_session=api_db_session).get_one_by_slug(
+    suit = run_read(
+        lambda: MobileSuitFacade(db_session=api_db_session).get_one_by_slug(
             mobile_suit_slug
-        )
-    except MobileSuitFacade.NotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Mobile suit not found"
-        ) from e
-    except Exception as e:
-        error_detail = "Error fetching mobile suit"
-        logger.exception(error_detail)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_detail
-        ) from e
+        ),
+        error_detail="Error fetching mobile suit",
+        logger=logger,
+        not_found=MobileSuitFacade.NotFoundError,
+        not_found_detail="Mobile suit not found",
+    )
     return MobileSuitResponse(data=suit)

@@ -3,7 +3,7 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Path, Query, status
+from fastapi import APIRouter, Path, Query
 
 from api.dependencies.db_session import DBSessionDep
 from api.models.organization import (
@@ -12,6 +12,7 @@ from api.models.organization import (
     OrganizationsListResponse,
 )
 from api.models.pagination import PageLimit, PageMeta, PageOffset
+from api.routes.handlers.reads import run_read
 from constants.catalog import MobileSuitOrganizationRole
 from constants.pagination import DEFAULT_PAGE_SIZE, MAX_SEARCH_LENGTH
 from models.mixins.checks import SLUG_PATTERN
@@ -32,6 +33,7 @@ type OrganizationSlug = Annotated[
 @organizations_router.get("/organizations")
 def read_organizations_list(
     api_db_session: DBSessionDep,
+    *,
     work: Annotated[
         str | None, Query(description="Only organizations in this work (its slug).")
     ] = None,
@@ -53,16 +55,13 @@ def read_organizations_list(
     A page past the end is 200 with an empty ``data`` and the real
     ``total`` (D3). Reads only, and calls no external API.
     """
-    try:
-        page = OrganizationFacade(db_session=api_db_session).get_page(
+    page = run_read(
+        lambda: OrganizationFacade(db_session=api_db_session).get_page(
             work_slug=work, q=q, limit=limit, offset=offset
-        )
-    except Exception as e:
-        error_detail = "Error fetching organizations"
-        logger.exception(error_detail)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_detail
-        ) from e
+        ),
+        error_detail="Error fetching organizations",
+        logger=logger,
+    )
     return OrganizationsListResponse(
         data=page.items, meta=PageMeta(limit=limit, offset=offset, total=page.total)
     )
@@ -76,22 +75,18 @@ def read_organization(
 
     Its suits are a separate, paginated route, since one organization
     can have hundreds (Q1). An old slug returns 200 with the renamed
-    organization, whose ``slug`` is the current one (D2). Reads only.
+    organization, whose ``slug`` is the current one (D2). Reads only,
+    and calls no external API.
     """
-    try:
-        organization = OrganizationFacade(db_session=api_db_session).get_one_by_slug(
+    organization = run_read(
+        lambda: OrganizationFacade(db_session=api_db_session).get_one_by_slug(
             organization_slug
-        )
-    except OrganizationFacade.NotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found"
-        ) from e
-    except Exception as e:
-        error_detail = "Error fetching organization"
-        logger.exception(error_detail)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_detail
-        ) from e
+        ),
+        error_detail="Error fetching organization",
+        logger=logger,
+        not_found=OrganizationFacade.NotFoundError,
+        not_found_detail="Organization not found",
+    )
     return OrganizationResponse(data=organization)
 
 
@@ -99,6 +94,7 @@ def read_organization(
 def read_organization_mobile_suits(
     organization_slug: OrganizationSlug,
     api_db_session: DBSessionDep,
+    *,
     role: Annotated[
         MobileSuitOrganizationRole | None,
         Query(description="Only suits with this role, and only those links."),
@@ -111,22 +107,17 @@ def read_organization_mobile_suits(
     One item per suit, with its links (role, work and source) grouped;
     ``total`` counts suits (Q7). An unknown organization is a 404; a
     known one with no suits is 200 with an empty ``data`` (FAPI-12).
-    Reads only.
+    Reads only, and calls no external API.
     """
-    try:
-        page = OrganizationFacade(db_session=api_db_session).get_mobile_suit_page(
+    page = run_read(
+        lambda: OrganizationFacade(db_session=api_db_session).get_mobile_suit_page(
             organization_slug, role=role, limit=limit, offset=offset
-        )
-    except OrganizationFacade.NotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found"
-        ) from e
-    except Exception as e:
-        error_detail = "Error fetching the organization's mobile suits"
-        logger.exception(error_detail)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_detail
-        ) from e
+        ),
+        error_detail="Error fetching the organization's mobile suits",
+        logger=logger,
+        not_found=OrganizationFacade.NotFoundError,
+        not_found_detail="Organization not found",
+    )
     return OrganizationMobileSuitsListResponse(
         data=page.items, meta=PageMeta(limit=limit, offset=offset, total=page.total)
     )
