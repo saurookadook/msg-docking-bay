@@ -403,7 +403,11 @@ class TestMobileSuitFacadeGetOneBySlug:
     def test_get_one_by_slug_sends_a_fixed_number_of_statements(
         self, test_db_session: Session, count_statements: CountStatements
     ) -> None:
-        """A row of each kind costs what five do (PYTEST-24)."""
+        """A row of each kind costs what five do (PYTEST-24).
+
+        Eleven: seven for the suit, its lists and its sheets, then one
+        for each of the four part kinds, whatever the sheet count.
+        """
         for suit_id, count in ((ZAKU_ID, 5), (ACT_ZAKU_ID, 1)):
             for _ in range(count):
                 character = CharacterDBFactory()
@@ -423,7 +427,15 @@ class TestMobileSuitFacadeGetOneBySlug:
                     mobile_suit_id=suit_id,
                     source_id=WIKI_ID,
                 )
-        for index in range(5):
+        zaku_sheet = SpecSheetDBFactory(mobile_suit_id=ZAKU_ID, source_id=WIKI_ID)
+        list_parts(test_db_session, zaku_sheet.id, count=5)
+        for index in range(1, 5):
+            SpecSheetDBFactory(
+                configuration=f"Config {index}",
+                mobile_suit_id=ZAKU_ID,
+                source_id=WIKI_ID,
+            )
+        for _ in range(5):
             other = MobileSuitDBFactory(continuity_id=UC_ID)
             work = WorkDBFactory(continuity_id=UC_ID)
             source = SourceDBFactory()
@@ -436,13 +448,6 @@ class TestMobileSuitFacadeGetOneBySlug:
             MobileSuitAppearanceDBFactory(
                 mobile_suit_id=ZAKU_ID, source_id=source.id, work_id=work.id
             )
-            sheet = SpecSheetDBFactory(
-                configuration=None if index == 0 else f"Config {index}",
-                mobile_suit_id=ZAKU_ID,
-                source_id=WIKI_ID,
-            )
-            if index == 0:
-                list_parts(test_db_session, sheet.id, count=5)
         MobileSuitRelationDBFactory(
             from_mobile_suit_id=ACT_ZAKU_ID,
             relation_type=MobileSuitRelationType.UPGRADE_OF,
