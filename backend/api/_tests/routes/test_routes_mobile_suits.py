@@ -44,8 +44,8 @@ def suits(test_db_session: Session) -> None:
     )
     MobileSuitDBFactory(name="Ball", slug="ball", unit_type=UnitType.POD)
     SourceDBFactory(id=SOURCE_ID, url="https://gundam.fandom.com/?curid=2034")
-    # The rows below have no ORM relationship to order them after their
-    # suits, so the suits are flushed first.
+    # NOTE: the rows below have no ORM relationship to order them after
+    # their suits, so the suits are flushed first.
     test_db_session.flush()
     MobileSuitAppearanceDBFactory(
         is_debut=True, mobile_suit_id=GUNDAM_ID, source_id=SOURCE_ID, work_id=MSG_ID
@@ -120,7 +120,33 @@ class TestReadMobileSuitsList:
 
     @pytest.mark.parametrize(
         "query",
-        ["?limit=0", "?limit=101", "?offset=-1", "?unit_type=robot", f"?q={'a' * 101}"],
+        [
+            # the largest accepted values
+            "?limit=100",
+            f"?q={'a' * 100}",
+            # the smallest accepted values
+            "?limit=1&offset=0",
+        ],
+    )
+    def test_accepts_boundary_parameters(
+        self, test_app_client: TestClient, query: str
+    ) -> None:
+        response = test_app_client.get(f"/api/mobile-suits{query}")
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            # one past the largest accepted values
+            "?limit=101",
+            f"?q={'a' * 101}",
+            # one below the smallest accepted values
+            "?limit=0",
+            "?offset=-1",
+            # not a unit type
+            "?unit_type=robot",
+        ],
     )
     def test_rejects_bad_parameters(
         self, test_app_client: TestClient, query: str
@@ -140,22 +166,11 @@ class TestReadMobileSuitsListEmpty:
             "meta": {"limit": 50, "offset": 0, "total": 0},
         }
 
-    def test_unexpected_error(
-        self, test_app_client: TestClient, mocker: MockerFixture
-    ) -> None:
-        mocker.patch.object(
-            MobileSuitFacade, "get_page", autospec=True, side_effect=RuntimeError
-        )
-
-        response = test_app_client.get("/api/mobile-suits")
-
-        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert response.json() == {"detail": "Error fetching mobile suits"}
-
 
 @pytest.mark.usefixtures("suits")
 class TestReadMobileSuit:
     def test_returns_the_suit_with_its_lists(self, test_app_client: TestClient) -> None:
+        """Its credit lists are empty; the facade tests cover them."""
         response = test_app_client.get("/api/mobile-suits/rx-78-2-gundam")
 
         assert response.status_code == status.HTTP_200_OK
@@ -178,7 +193,6 @@ class TestReadMobileSuit:
             ("mobile-suit-gundam", True)
         ]
         assert suit["appearances"][0]["source"]["revision_url"] is None
-        # Empty here; the facade tests cover their contents.
         assert (suit["pilots"], suit["organizations"], suit["designers"]) == (
             [],
             [],
@@ -205,14 +219,29 @@ class TestReadMobileSuit:
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
-    def test_unexpected_error(
-        self, test_app_client: TestClient, mocker: MockerFixture
+
+class TestUnexpectedErrors:
+    @pytest.mark.parametrize(
+        ("method", "path", "detail"),
+        [
+            ("get_page", "", "Error fetching mobile suits"),
+            ("get_one_by_slug", "/rx-78-2-gundam", "Error fetching mobile suit"),
+        ],
+    )
+    def test_returns_a_fixed_500(
+        self,
+        test_app_client: TestClient,
+        mocker: MockerFixture,
+        method: str,
+        path: str,
+        detail: str,
     ) -> None:
+        """FAPI-13: a fixed detail; the error text goes to the log."""
         mocker.patch.object(
-            MobileSuitFacade, "get_one_by_slug", autospec=True, side_effect=RuntimeError
+            MobileSuitFacade, method, autospec=True, side_effect=RuntimeError("reset")
         )
 
-        response = test_app_client.get("/api/mobile-suits/rx-78-2-gundam")
+        response = test_app_client.get(f"/api/mobile-suits{path}")
 
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert response.json() == {"detail": "Error fetching mobile suit"}
+        assert response.json() == {"detail": detail}

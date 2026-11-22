@@ -51,8 +51,8 @@ def organizations(test_db_session: Session) -> None:
     )
     MobileSuitDBFactory(id=GUNDAM_ID, continuity_id=UC_ID, name="Gundam", slug="gundam")
     MobileSuitDBFactory(id=GM_ID, continuity_id=UC_ID, name="GM", slug="gm")
-    # The links below have no ORM relationship to order them after their
-    # rows, so the rows are flushed first.
+    # NOTE: the links below have no ORM relationship to order them after
+    # their rows, so the rows are flushed first.
     test_db_session.flush()
     OrganizationAppearanceDBFactory(
         organization_id=EF_ID, source_id=SOURCE_ID, work_id=MSG_ID
@@ -113,25 +113,40 @@ class TestReadOrganizationsList:
         assert [o["slug"] for o in response.json()["data"]] == slugs
         assert response.json()["meta"]["total"] == total
 
-    @pytest.mark.parametrize("query", ["?limit=0", "?offset=-1", f"?q={'a' * 101}"])
+    @pytest.mark.parametrize(
+        "query",
+        [
+            # the largest accepted values
+            "?limit=100",
+            f"?q={'a' * 100}",
+            # the smallest accepted values
+            "?limit=1&offset=0",
+        ],
+    )
+    def test_accepts_boundary_parameters(
+        self, test_app_client: TestClient, query: str
+    ) -> None:
+        response = test_app_client.get(f"/api/organizations{query}")
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            # one past the largest accepted values
+            "?limit=101",
+            f"?q={'a' * 101}",
+            # one below the smallest accepted values
+            "?limit=0",
+            "?offset=-1",
+        ],
+    )
     def test_rejects_bad_parameters(
         self, test_app_client: TestClient, query: str
     ) -> None:
         response = test_app_client.get(f"/api/organizations{query}")
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
-    def test_unexpected_error(
-        self, test_app_client: TestClient, mocker: MockerFixture
-    ) -> None:
-        mocker.patch.object(
-            OrganizationFacade, "get_page", autospec=True, side_effect=RuntimeError
-        )
-
-        response = test_app_client.get("/api/organizations")
-
-        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert response.json() == {"detail": "Error fetching organizations"}
 
 
 @pytest.mark.usefixtures("organizations")
@@ -167,21 +182,6 @@ class TestReadOrganization:
         response = test_app_client.get("/api/organizations/Earth_Federation")
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
-    def test_unexpected_error(
-        self, test_app_client: TestClient, mocker: MockerFixture
-    ) -> None:
-        mocker.patch.object(
-            OrganizationFacade,
-            "get_one_by_slug",
-            autospec=True,
-            side_effect=RuntimeError,
-        )
-
-        response = test_app_client.get("/api/organizations/earth-federation")
-
-        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert response.json() == {"detail": "Error fetching organization"}
 
 
 @pytest.mark.usefixtures("organizations")
@@ -239,7 +239,39 @@ class TestReadOrganizationMobileSuits:
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.json() == {"detail": "Organization not found"}
 
-    @pytest.mark.parametrize("query", ["?role=pilot", "?limit=101", "?offset=-1"])
+    @pytest.mark.parametrize(
+        "query",
+        [
+            # the largest and smallest accepted values
+            "?limit=100",
+            "?limit=1&offset=0",
+            # every role
+            "?role=manufacturer",
+            "?role=operator",
+            "?role=developer",
+        ],
+    )
+    def test_accepts_boundary_parameters(
+        self, test_app_client: TestClient, query: str
+    ) -> None:
+        response = test_app_client.get(
+            f"/api/organizations/earth-federation/mobile-suits{query}"
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            # one past the largest accepted value
+            "?limit=101",
+            # one below the smallest accepted values
+            "?limit=0",
+            "?offset=-1",
+            # not a role
+            "?role=pilot",
+        ],
+    )
     def test_rejects_bad_parameters(
         self, test_app_client: TestClient, query: str
     ) -> None:
@@ -249,21 +281,34 @@ class TestReadOrganizationMobileSuits:
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
-    def test_unexpected_error(
-        self, test_app_client: TestClient, mocker: MockerFixture
+
+class TestUnexpectedErrors:
+    @pytest.mark.parametrize(
+        ("method", "path", "detail"),
+        [
+            ("get_page", "", "Error fetching organizations"),
+            ("get_one_by_slug", "/earth-federation", "Error fetching organization"),
+            (
+                "get_mobile_suit_page",
+                "/earth-federation/mobile-suits",
+                "Error fetching the organization's mobile suits",
+            ),
+        ],
+    )
+    def test_returns_a_fixed_500(
+        self,
+        test_app_client: TestClient,
+        mocker: MockerFixture,
+        method: str,
+        path: str,
+        detail: str,
     ) -> None:
+        """FAPI-13: a fixed detail; the error text goes to the log."""
         mocker.patch.object(
-            OrganizationFacade,
-            "get_mobile_suit_page",
-            autospec=True,
-            side_effect=RuntimeError,
+            OrganizationFacade, method, autospec=True, side_effect=RuntimeError("reset")
         )
 
-        response = test_app_client.get(
-            "/api/organizations/earth-federation/mobile-suits"
-        )
+        response = test_app_client.get(f"/api/organizations{path}")
 
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert response.json() == {
-            "detail": "Error fetching the organization's mobile suits"
-        }
+        assert response.json() == {"detail": detail}

@@ -46,8 +46,8 @@ def characters(test_db_session: Session) -> None:
     MobileSuitDBFactory(
         id=NU_ID, continuity_id=UC_ID, name="Nu Gundam", slug="nu-gundam"
     )
-    # The links below have no ORM relationship to order them after their
-    # rows, so the rows are flushed first.
+    # NOTE: the links below have no ORM relationship to order them after
+    # their rows, so the rows are flushed first.
     test_db_session.flush()
     CharacterAppearanceDBFactory(
         character_id=AMURO_ID, source_id=SOURCE_ID, work_id=MSG_ID
@@ -104,7 +104,32 @@ class TestReadCharactersList:
         assert response.json()["meta"]["total"] == total
 
     @pytest.mark.parametrize(
-        "query", ["?limit=0", "?limit=101", "?offset=-1", f"?q={'a' * 101}"]
+        "query",
+        [
+            # the largest accepted values
+            "?limit=100",
+            f"?q={'a' * 100}",
+            # the smallest accepted values
+            "?limit=1&offset=0",
+        ],
+    )
+    def test_accepts_boundary_parameters(
+        self, test_app_client: TestClient, query: str
+    ) -> None:
+        response = test_app_client.get(f"/api/characters{query}")
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            # one past the largest accepted values
+            "?limit=101",
+            f"?q={'a' * 101}",
+            # one below the smallest accepted values
+            "?limit=0",
+            "?offset=-1",
+        ],
     )
     def test_rejects_bad_parameters(
         self, test_app_client: TestClient, query: str
@@ -112,18 +137,6 @@ class TestReadCharactersList:
         response = test_app_client.get(f"/api/characters{query}")
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
-    def test_unexpected_error(
-        self, test_app_client: TestClient, mocker: MockerFixture
-    ) -> None:
-        mocker.patch.object(
-            CharacterFacade, "get_page", autospec=True, side_effect=RuntimeError
-        )
-
-        response = test_app_client.get("/api/characters")
-
-        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert response.json() == {"detail": "Error fetching characters"}
 
 
 @pytest.mark.usefixtures("characters")
@@ -167,14 +180,29 @@ class TestReadCharacter:
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
-    def test_unexpected_error(
-        self, test_app_client: TestClient, mocker: MockerFixture
+
+class TestUnexpectedErrors:
+    @pytest.mark.parametrize(
+        ("method", "path", "detail"),
+        [
+            ("get_page", "", "Error fetching characters"),
+            ("get_one_by_slug", "/amuro-ray", "Error fetching character"),
+        ],
+    )
+    def test_returns_a_fixed_500(
+        self,
+        test_app_client: TestClient,
+        mocker: MockerFixture,
+        method: str,
+        path: str,
+        detail: str,
     ) -> None:
+        """FAPI-13: a fixed detail; the error text goes to the log."""
         mocker.patch.object(
-            CharacterFacade, "get_one_by_slug", autospec=True, side_effect=RuntimeError
+            CharacterFacade, method, autospec=True, side_effect=RuntimeError("reset")
         )
 
-        response = test_app_client.get("/api/characters/amuro-ray")
+        response = test_app_client.get(f"/api/characters{path}")
 
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert response.json() == {"detail": "Error fetching character"}
+        assert response.json() == {"detail": detail}
