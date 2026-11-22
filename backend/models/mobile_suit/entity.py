@@ -68,8 +68,10 @@ class MobileSuitAppearanceCardEntity(MobileSuitCardEntity):
 class PilotedMobileSuitEntity(BaseEntityModel, CreatedAtEntityMixin):
     """A suit a character pilots, in one work or in a work not recorded.
 
-    ``work`` is null when the page names no work for the pairing; such
-    rows sort after the ones with a work.
+    Deliberately not ``MobileSuitPilotEntity``: the character's page
+    needs the suit's card and the work's name, not the link's foreign
+    keys and ``id``, which are not public (D5). ``work`` is null when
+    the page names no work for the pairing; such rows sort last.
     """
 
     # ----- from `mobile_suits`, through `mobile_suit_pilots`
@@ -81,7 +83,13 @@ class PilotedMobileSuitEntity(BaseEntityModel, CreatedAtEntityMixin):
 
 
 class OrganizationLinkEntity(BaseEntityModel, CreatedAtEntityMixin):
-    """One role an organization has for a suit, in one work or none."""
+    """One role an organization has for a suit, in one work or none.
+
+    Deliberately not ``MobileSuitOrganizationEntity``: the suit and the
+    organization are already on the page around it, so only the role,
+    work and source are left to show, and the link's keys are not
+    public (D5).
+    """
 
     role: MobileSuitOrganizationRole
     # ----- from `sources`, through the link's `source_id`
@@ -106,7 +114,11 @@ class OrganizationMobileSuitEntity(BaseEntityModel):
 
 
 class DesignedMobileSuitEntity(BaseEntityModel, CreatedAtEntityMixin):
-    """A suit in a designer's list, with the page crediting them."""
+    """A suit in a designer's list, with the page crediting them.
+
+    Deliberately not ``MobileSuitDesignerEntity``: the designer's page
+    needs the suit's card, not the credit's foreign keys (D5).
+    """
 
     # ----- from `mobile_suits`
     mobile_suit: MobileSuitCardEntity
@@ -143,7 +155,12 @@ class WorkAppearanceEntity(BaseEntityModel, CreatedAtEntityMixin):
 
 
 class PilotCreditEntity(BaseEntityModel, CreatedAtEntityMixin):
-    """A character who pilots the suit, in one work or in none."""
+    """A character who pilots the suit, in one work or in none.
+
+    Deliberately not ``MobileSuitPilotEntity``: the suit's page names
+    each pilot with a ref, and their own page holds the rest (Q5); the
+    link's keys are not public (D5).
+    """
 
     # ----- from `characters`, through `mobile_suit_pilots.character_id`
     character: CharacterRefEntity
@@ -154,7 +171,12 @@ class PilotCreditEntity(BaseEntityModel, CreatedAtEntityMixin):
 
 
 class OrganizationCreditEntity(BaseEntityModel, CreatedAtEntityMixin):
-    """An organization's role for the suit, in one work or in none."""
+    """An organization's role for the suit, in one work or in none.
+
+    Deliberately not ``MobileSuitOrganizationEntity``: the suit's page
+    names each organization with a ref (Q5), and the link's keys are
+    not public (D5).
+    """
 
     # ----- from `organizations`, through the link's `organization_id`
     organization: OrganizationRefEntity
@@ -166,7 +188,12 @@ class OrganizationCreditEntity(BaseEntityModel, CreatedAtEntityMixin):
 
 
 class DesignerCreditEntity(BaseEntityModel, CreatedAtEntityMixin):
-    """A mechanical designer credited with the suit."""
+    """A mechanical designer credited with the suit.
+
+    Deliberately not ``MobileSuitDesignerEntity``: the suit's page names
+    each designer with a ref (Q5), and the credit's keys are not public
+    (D5).
+    """
 
     # ----- from `mechanical_designers`, through the credit
     mechanical_designer: MechanicalDesignerRefEntity
