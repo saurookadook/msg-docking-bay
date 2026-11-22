@@ -2,7 +2,10 @@
 
 from api.models.base import BaseResponseModel
 from api.models.pagination import PageMeta
-from models.mechanical_designer.entity import MechanicalDesignerCardEntity
+from models.mechanical_designer.entity import (
+    MechanicalDesignerCardEntity,
+    MechanicalDesignerDetailEntity,
+)
 from models.mobile_suit.entity import DesignedMobileSuitEntity
 
 
@@ -16,7 +19,7 @@ class MechanicalDesignersListResponse(BaseResponseModel):
 class MechanicalDesignerResponse(BaseResponseModel):
     """One mechanical designer."""
 
-    data: MechanicalDesignerCardEntity
+    data: MechanicalDesignerDetailEntity
 
 
 class MechanicalDesignerMobileSuitsListResponse(BaseResponseModel):

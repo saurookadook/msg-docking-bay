@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import Sequence
 from datetime import datetime
 
 import pytest
@@ -13,7 +14,10 @@ from _factories.mobile_suit.db import MobileSuitDBFactory
 from _factories.mobile_suit_designer.db import MobileSuitDesignerDBFactory
 from _factories.source.db import SourceDBFactory
 from models._tests.query_count import CountStatements
-from models.mechanical_designer.entity import MechanicalDesignerCardEntity
+from models.mechanical_designer.entity import (
+    MechanicalDesignerCardEntity,
+    MechanicalDesignerDetailEntity,
+)
 from models.mechanical_designer.facade import MechanicalDesignerFacade
 
 UC_ID = uuid.UUID("019a1984-0750-7142-aedd-75291c5be101")
@@ -60,7 +64,7 @@ def designers(test_db_session: Session) -> None:
     test_db_session.commit()
 
 
-def slugs(page_items: list[MechanicalDesignerCardEntity]) -> list[str]:
+def slugs(page_items: Sequence[MechanicalDesignerCardEntity]) -> list[str]:
     return [designer.slug for designer in page_items]
 
 
@@ -104,11 +108,14 @@ class TestMechanicalDesignerFacadeGetPage:
 @pytest.mark.usefixtures("designers")
 class TestMechanicalDesignerFacadeGetOneBySlug:
     def test_get_one_by_slug(self, test_db_session: Session) -> None:
+        """The detail entity; the suits are on a page of their own."""
         designer = MechanicalDesignerFacade(db_session=test_db_session).get_one_by_slug(
             "kunio-okawara"
         )
 
+        assert isinstance(designer, MechanicalDesignerDetailEntity)
         assert designer.name == "Kunio Okawara"
+        assert "mobile_suits" not in designer.model_dump()
 
     def test_get_one_by_slug_old_slug(self, test_db_session: Session) -> None:
         MechanicalDesignerSlugRedirectDBFactory(
@@ -142,6 +149,14 @@ class TestMechanicalDesignerFacadeGetOneBySlug:
                 "yutaka-izubuchi"
             )
 
+    def test_get_id_by_slug_no_result(self, test_db_session: Session) -> None:
+        with pytest.raises(
+            MechanicalDesignerFacade.NotFoundError, match="slug='yutaka-izubuchi'"
+        ):
+            MechanicalDesignerFacade(db_session=test_db_session).get_id_by_slug(
+                "yutaka-izubuchi"
+            )
+
 
 @pytest.mark.usefixtures("designers")
 class TestMechanicalDesignerFacadeGetMobileSuitPage:
@@ -167,7 +182,9 @@ class TestMechanicalDesignerFacadeGetMobileSuitPage:
         assert page.total == 0
 
     def test_get_mobile_suit_page_no_result(self, test_db_session: Session) -> None:
-        with pytest.raises(MechanicalDesignerFacade.NotFoundError):
+        with pytest.raises(
+            MechanicalDesignerFacade.NotFoundError, match="slug='yutaka-izubuchi'"
+        ):
             MechanicalDesignerFacade(db_session=test_db_session).get_mobile_suit_page(
                 "yutaka-izubuchi", limit=50, offset=0
             )
@@ -175,14 +192,28 @@ class TestMechanicalDesignerFacadeGetMobileSuitPage:
     def test_get_mobile_suit_page_sends_three_statements(
         self, test_db_session: Session, count_statements: CountStatements
     ) -> None:
-        """The slug, the page and the count, at any size (PYTEST-24)."""
-        facade = MechanicalDesignerFacade(db_session=test_db_session)
-        with count_statements() as one_suit:
-            facade.get_mobile_suit_page("hajime-katoki", limit=50, offset=0)
-        with count_statements() as three_suits:
-            facade.get_mobile_suit_page("kunio-okawara", limit=50, offset=0)
+        """The slug, the page and the count, at 1 suit or 5 (PYTEST-24).
 
-        assert one_suit.value == three_suits.value == 3
+        Okawara has three suits in the fixture; two more make five.
+        """
+        for _ in range(2):
+            suit = MobileSuitDBFactory(continuity_id=UC_ID)
+            test_db_session.flush()
+            MobileSuitDesignerDBFactory(
+                mechanical_designer_id=OKAWARA_ID,
+                mobile_suit_id=suit.id,
+                source_id=SOURCE_ID,
+            )
+        test_db_session.commit()
+        facade = MechanicalDesignerFacade(db_session=test_db_session)
+
+        with count_statements() as one_suit:
+            katoki = facade.get_mobile_suit_page("hajime-katoki", limit=50, offset=0)
+        with count_statements() as five_suits:
+            okawara = facade.get_mobile_suit_page("kunio-okawara", limit=50, offset=0)
+
+        assert (len(katoki.items), len(okawara.items)) == (1, 5)
+        assert one_suit.value == five_suits.value == 3
 
 
 @pytest.mark.usefixtures("designers")

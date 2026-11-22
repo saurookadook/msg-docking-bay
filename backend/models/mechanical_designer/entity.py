@@ -22,13 +22,22 @@ class MechanicalDesignerRefEntity(BaseEntityModel):
 
 
 class MechanicalDesignerCardEntity(BaseEntityModel, TimestampsEntityMixin):
-    """One mechanical designer, in a list or on their own page.
+    """One mechanical designer in a list.
 
     Deliberately not ``MechanicalDesignerEntity``: ``id`` and the wiki
-    page keys are not public (D5). Their suits are a paginated route of
-    their own, since one designer can have hundreds (RDB-23).
+    page keys are not public (D5).
     """
 
     name: str
     name_ja: str | None = None
     slug: str
+
+
+class MechanicalDesignerDetailEntity(MechanicalDesignerCardEntity):
+    """A mechanical designer, on their own page.
+
+    It holds only the card's fields today. Their suits are a paginated
+    route of their own, since one designer can have hundreds (Q1,
+    RDB-23). A separate type keeps the page's contract apart from the
+    list's, so a field added to the page leaves the cards unchanged.
+    """

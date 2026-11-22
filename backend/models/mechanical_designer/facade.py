@@ -2,16 +2,17 @@
 
 import uuid
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Final
 
 from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.orm import joinedload
 
-from models.base.facade import BaseFacade, normalize_search
+from models.base.facade import BaseFacade, SlugColumns, normalize_search
 from models.base.page import Page
 from models.mechanical_designer.db import MechanicalDesignerDB
 from models.mechanical_designer.entity import (
     MechanicalDesignerCardEntity,
+    MechanicalDesignerDetailEntity,
     MechanicalDesignerEntity,
 )
 from models.mechanical_designer_slug_redirect.db import (
@@ -24,6 +25,13 @@ from models.mobile_suit.db import MobileSuitDB
 from models.mobile_suit.entity import DesignedMobileSuitEntity, MobileSuitCardEntity
 from models.mobile_suit_designer.db import MobileSuitDesignerDB
 from models.source.entity import SourceCitationEntity
+
+_SLUG_COLUMNS: Final = SlugColumns(
+    MechanicalDesignerDB.slug,
+    MechanicalDesignerDB.id,
+    MechanicalDesignerSlugRedirectDB.old_slug,
+    MechanicalDesignerSlugRedirectDB.mechanical_designer_id,
+)
 
 
 class MechanicalDesignerFacade(BaseFacade):
@@ -69,16 +77,28 @@ class MechanicalDesignerFacade(BaseFacade):
         Raises:
             MechanicalDesignerFacade.NotFoundError: on no match.
         """
-        designer = self._find_by_slug(slug)
-        return designer.id
+        return self._first_by_slug(
+            select(MechanicalDesignerDB.id),
+            slug,
+            columns=_SLUG_COLUMNS,
+            not_found=MechanicalDesignerFacade.NotFoundError,
+            record="Mechanical designer",
+        )
 
-    def get_one_by_slug(self, slug: str) -> MechanicalDesignerCardEntity:
+    def get_one_by_slug(self, slug: str) -> MechanicalDesignerDetailEntity:
         """Return a designer by any of their slugs (D2).
 
         Raises:
             MechanicalDesignerFacade.NotFoundError: on no match.
         """
-        return MechanicalDesignerCardEntity.model_validate(self._find_by_slug(slug))
+        designer = self._first_by_slug(
+            select(MechanicalDesignerDB),
+            slug,
+            columns=_SLUG_COLUMNS,
+            not_found=MechanicalDesignerFacade.NotFoundError,
+            record="Mechanical designer",
+        )
+        return MechanicalDesignerDetailEntity.model_validate(designer)
 
     def get_mobile_suit_page(
         self, slug: str, *, limit: int, offset: int
@@ -135,35 +155,8 @@ class MechanicalDesignerFacade(BaseFacade):
         self, *, payload: Mapping[str, Any]
     ) -> MechanicalDesignerSlugRedirectEntity:
         """Upsert an old slug, pointing it at a designer (D2)."""
-        redirect = self._upsert(
+        return self._upsert_slug_redirect(
             MechanicalDesignerSlugRedirectDB,
+            MechanicalDesignerSlugRedirectEntity,
             payload=payload,
-            conflict_columns=["old_slug"],
         )
-        return MechanicalDesignerSlugRedirectEntity.model_validate(redirect)
-
-    def _find_by_slug(self, slug: str) -> MechanicalDesignerDB:
-        """Return the designer row with this current or old slug.
-
-        Raises:
-            MechanicalDesignerFacade.NotFoundError: on no match.
-        """
-        designer = self.db_session.scalars(
-            select(MechanicalDesignerDB)
-            .where(
-                self._has_slug(
-                    MechanicalDesignerDB.slug,
-                    MechanicalDesignerDB.id,
-                    MechanicalDesignerSlugRedirectDB.old_slug,
-                    MechanicalDesignerSlugRedirectDB.mechanical_designer_id,
-                    slug,
-                )
-            )
-            .order_by(self._current_slug_first(MechanicalDesignerDB.slug, slug))
-            .limit(1)
-        ).first()
-        if designer is None:
-            raise MechanicalDesignerFacade.NotFoundError(
-                f"Mechanical designer record with ``slug='{slug}'`` not found"
-            )
-        return designer
