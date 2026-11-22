@@ -1,6 +1,7 @@
 import uuid
 from collections.abc import Sequence
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 import pytest
 from sqlalchemy.orm import Session
@@ -16,8 +17,10 @@ from models._tests.spec_sheet_parts import (
     SUIT_ID,
     seed_sheet,
 )
-from models.spec_sheet_equipment.entity import EquipmentListingEntity
 from models.spec_sheet_equipment.facade import SpecSheetEquipmentFacade
+
+if TYPE_CHECKING:
+    from models.spec_sheet_equipment.entity import EquipmentListingEntity
 
 FIRST_ID = uuid.UUID("019a1984-0750-7142-aedd-7529c4220001")
 SECOND_ID = uuid.UUID("019a1984-0750-7142-aedd-7529c4220002")

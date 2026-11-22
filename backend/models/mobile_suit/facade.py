@@ -2,13 +2,12 @@
 
 import uuid
 from collections.abc import Mapping, Sequence
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from sqlalchemy import ColumnElement, case, func, or_, select
 from sqlalchemy.orm import aliased, contains_eager, joinedload
 
 from constants.catalog import UnitType
-from models.base.entity import BaseEntityModel
 from models.base.facade import BaseFacade, SlugColumns, normalize_search
 from models.base.page import Page
 from models.continuity.db import ContinuityDB
@@ -38,8 +37,6 @@ from models.spec_sheet.entity import (
     SPEC_SHEET_PART_KINDS,
     MobileSuitSpecSheetEntity,
     SpecSheetEntity,
-    SpecSheetField,
-    SpecSheetPartKind,
 )
 from models.spec_sheet_armament.facade import SpecSheetArmamentFacade
 from models.spec_sheet_equipment.facade import SpecSheetEquipmentFacade
@@ -48,6 +45,10 @@ from models.spec_sheet_powerplant.facade import SpecSheetPowerplantFacade
 from models.work.db import WorkDB
 from models.work.entity import WorkCardEntity
 from models.work.facade import WorkFacade
+
+if TYPE_CHECKING:
+    from models.base.entity import BaseEntityModel
+    from models.spec_sheet.entity import SpecSheetField, SpecSheetPartKind
 
 type SheetParts = Mapping[
     SpecSheetPartKind, Mapping[uuid.UUID, Sequence[BaseEntityModel]]
