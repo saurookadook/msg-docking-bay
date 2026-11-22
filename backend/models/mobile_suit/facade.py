@@ -314,7 +314,7 @@ class MobileSuitFacade(BaseFacade):
             sheet.source_id: sheet for sheet in sheets if sheet.configuration is None
         }
         return [
-            _filled_sheet(sheet, base_by_source.get(sheet.source_id), parts)
+            _filled_sheet(sheet, base=base_by_source.get(sheet.source_id), parts=parts)
             for sheet in sheets
         ]
 
@@ -391,7 +391,7 @@ class MobileSuitFacade(BaseFacade):
 
 
 def _filled_sheet(
-    sheet: SpecSheetDB, base: SpecSheetDB | None, parts: SheetParts
+    sheet: SpecSheetDB, *, base: SpecSheetDB | None, parts: SheetParts
 ) -> MobileSuitSpecSheetEntity:
     """Serve a sheet, filling a named one's gaps from its base sheet.
 
