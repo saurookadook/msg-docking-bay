@@ -18,11 +18,33 @@ import { mockNow } from './catalogMocks';
 const timestamps = { created_at: mockNow, updated_at: mockNow };
 
 /** @description Just a card's `name` and `slug`, as the API's refs carry them. */
-export function toRef({ name, slug }: { name: string; slug: string }): {
-  name: string;
-  slug: string;
-} {
+export function toRef<T extends { name: string; slug: string }>({
+  name,
+  slug,
+}: T): Pick<T, 'name' | 'slug'> {
   return { name, slug };
+}
+
+/**
+ * @description Finds a row by its current or an old slug, as every detail route does
+ * (D2). A current slug wins: it is looked up before the redirects, so an old slug that
+ * another row now holds finds that row.
+ * @returns `undefined` for an unknown slug, which the route answers with a 404.
+ */
+export function findBySlugOrRedirect<T>({
+  byCurrentSlug,
+  redirects,
+  slug,
+}: {
+  byCurrentSlug: Readonly<Record<string, T>>;
+  redirects: Readonly<Record<string, string>>;
+  slug: string;
+}): T | undefined {
+  const redirectedTo = redirects[slug];
+  return (
+    byCurrentSlug[slug] ??
+    (redirectedTo === undefined ? undefined : byCurrentSlug[redirectedTo])
+  );
 }
 
 export const mockAmuroRay: CharacterCardEntity = {
@@ -34,7 +56,7 @@ export const mockAmuroRay: CharacterCardEntity = {
 
 export const mockAmuroRayOrigin: CharacterCardEntity = {
   ...timestamps,
-  // The Origin's Amuro has a page of his own, under the same name.
+  // NOTE: the Origin's Amuro has a page of his own, under the same name.
   name: 'Amuro Ray',
   name_ja: 'アムロ・レイ',
   slug: 'amuro-ray-origin',
@@ -104,14 +126,14 @@ export const mockHajimeKatoki: MechanicalDesignerCardEntity = {
 export const mockKunioOkawara: MechanicalDesignerCardEntity = {
   ...timestamps,
   name: 'Kunio Okawara',
-  // The page's spacing, kept as written.
+  // NOTE: the page's spacing, kept as written.
   name_ja: '大河原 邦男',
   slug: 'kunio-okawara',
 };
 
 export const mockMasakiKawahara: MechanicalDesignerCardEntity = {
   ...timestamps,
-  // Credited on the RX-78F00 page, but with no page of his own.
+  // NOTE: credited on the RX-78F00 page, but with no page of his own.
   name: 'Masaki Kawahara',
   name_ja: null,
   slug: 'masaki-kawahara',

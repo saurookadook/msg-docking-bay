@@ -140,6 +140,49 @@ export function notFound(detail: string): MirageResponse {
 }
 
 /**
+ * @description A detail route's handler: it finds the row by the path's slug, or
+ * answers with the route's 404.
+ */
+function detailHandler<T>({
+  find,
+  notFoundDetail,
+  param,
+}: {
+  find: (slug: string) => T | undefined;
+  notFoundDetail: string;
+  param: string;
+}): (request: Request) => { data: T } | MirageResponse {
+  return ({ params }) => {
+    const found = find(params[param] ?? '');
+    return found === undefined ? notFound(notFoundDetail) : { data: found };
+  };
+}
+
+/**
+ * @description A sub-list route's handler (`/{slug}/mobile-suits`): it finds the parent,
+ * then pages its list. An unknown parent is the route's 404.
+ * @note The parent is resolved first, so an old slug lists the renamed row's items (D2).
+ */
+function subListHandler<Parent, Item>({
+  find,
+  list,
+  notFoundDetail,
+  param,
+}: {
+  find: (slug: string) => Parent | undefined;
+  list: (parent: Parent) => readonly Item[];
+  notFoundDetail: string;
+  param: string;
+}): (request: Request) => { data: Item[]; meta: PageMeta } | MirageResponse {
+  return (request) => {
+    const parent = find(request.params[param] ?? '');
+    return parent === undefined
+      ? notFound(notFoundDetail)
+      : paginate(list(parent), request);
+  };
+}
+
+/**
  * @description Every route `makeMirageServer` answers, with its happy-path fixture.
  * Error responses belong in each test's `overrides`.
  */
@@ -147,12 +190,11 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
   { path: '/api/characters', handler: (request) => paginate(mockCharacters, request) },
   {
     path: '/api/characters/{character_slug}',
-    handler: ({ params }) => {
-      const character = findCharacterMock(params['character_slug'] ?? '');
-      return character === undefined
-        ? notFound('Character not found')
-        : { data: character };
-    },
+    handler: detailHandler({
+      find: findCharacterMock,
+      notFoundDetail: 'Character not found',
+      param: 'character_slug',
+    }),
   },
   { path: '/api/continuities', handler: () => mockContinuitiesListResponse },
   { path: '/api/health-check', handler: () => mockHealthCheckResponse },
@@ -162,26 +204,20 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
   },
   {
     path: '/api/mechanical-designers/{mechanical_designer_slug}',
-    handler: ({ params }) => {
-      const designer = findMechanicalDesignerMock(
-        params['mechanical_designer_slug'] ?? '',
-      );
-      return designer === undefined
-        ? notFound('Mechanical designer not found')
-        : { data: designer };
-    },
+    handler: detailHandler({
+      find: findMechanicalDesignerMock,
+      notFoundDetail: 'Mechanical designer not found',
+      param: 'mechanical_designer_slug',
+    }),
   },
   {
     path: '/api/mechanical-designers/{mechanical_designer_slug}/mobile-suits',
-    handler: (request) => {
-      // Resolved first, so an old slug lists the renamed designer's suits (D2).
-      const designer = findMechanicalDesignerMock(
-        request.params['mechanical_designer_slug'] ?? '',
-      );
-      return designer === undefined
-        ? notFound('Mechanical designer not found')
-        : paginate(findMechanicalDesignerMobileSuitsMock(designer.slug), request);
-    },
+    handler: subListHandler({
+      find: findMechanicalDesignerMock,
+      list: ({ slug }) => findMechanicalDesignerMobileSuitsMock(slug),
+      notFoundDetail: 'Mechanical designer not found',
+      param: 'mechanical_designer_slug',
+    }),
   },
   {
     path: '/api/mobile-suits',
@@ -189,12 +225,11 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
   },
   {
     path: '/api/mobile-suits/{mobile_suit_slug}',
-    handler: ({ params }) => {
-      const mobileSuit = findMobileSuitMock(params['mobile_suit_slug'] ?? '');
-      return mobileSuit === undefined
-        ? notFound('Mobile suit not found')
-        : { data: mobileSuit };
-    },
+    handler: detailHandler({
+      find: findMobileSuitMock,
+      notFoundDetail: 'Mobile suit not found',
+      param: 'mobile_suit_slug',
+    }),
   },
   {
     path: '/api/organizations',
@@ -202,41 +237,37 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
   },
   {
     path: '/api/organizations/{organization_slug}',
-    handler: ({ params }) => {
-      const organization = findOrganizationMock(params['organization_slug'] ?? '');
-      return organization === undefined
-        ? notFound('Organization not found')
-        : { data: organization };
-    },
+    handler: detailHandler({
+      find: findOrganizationMock,
+      notFoundDetail: 'Organization not found',
+      param: 'organization_slug',
+    }),
   },
   {
     path: '/api/organizations/{organization_slug}/mobile-suits',
-    handler: (request) => {
-      // Resolved first, so an old slug lists the renamed organization's suits (D2).
-      const organization = findOrganizationMock(
-        request.params['organization_slug'] ?? '',
-      );
-      return organization === undefined
-        ? notFound('Organization not found')
-        : paginate(findOrganizationMobileSuitsMock(organization.slug), request);
-    },
+    handler: subListHandler({
+      find: findOrganizationMock,
+      list: ({ slug }) => findOrganizationMobileSuitsMock(slug),
+      notFoundDetail: 'Organization not found',
+      param: 'organization_slug',
+    }),
   },
   { path: '/api/works', handler: (request) => paginate(mockWorks, request) },
   {
     path: '/api/works/{work_slug}',
-    handler: ({ params }) => {
-      const work = findWorkMock(params['work_slug'] ?? '');
-      return work === undefined ? notFound('Work not found') : { data: work };
-    },
+    handler: detailHandler({
+      find: findWorkMock,
+      notFoundDetail: 'Work not found',
+      param: 'work_slug',
+    }),
   },
   {
     path: '/api/works/{work_slug}/mobile-suits',
-    handler: (request) => {
-      // Resolved first, so an old slug lists the renamed work's suits (D2).
-      const work = findWorkMock(request.params['work_slug'] ?? '');
-      return work === undefined
-        ? notFound('Work not found')
-        : paginate(findWorkMobileSuitsMock(work.slug), request);
-    },
+    handler: subListHandler({
+      find: findWorkMock,
+      list: ({ slug }) => findWorkMobileSuitsMock(slug),
+      notFoundDetail: 'Work not found',
+      param: 'work_slug',
+    }),
   },
 ];

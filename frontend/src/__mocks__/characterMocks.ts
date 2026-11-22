@@ -10,8 +10,9 @@ import type {
 } from '@/api';
 
 import { mockNow, mockSources } from './catalogMocks';
-import { mockMobileSuitDetails, mockMobileSuits } from './mobileSuitMocks';
+import { creditsBySuit } from './mobileSuitMocks';
 import {
+  findBySlugOrRedirect,
   mockAmuroRay,
   mockAmuroRayOrigin,
   mockCharacterSlugRedirects,
@@ -24,10 +25,13 @@ import {
 } from './workMocks';
 
 /** @description A work the page's `series` list names, cited to that page. */
-export function citedWork(
-  work: WorkCardEntity,
-  source: SourceCitationEntity,
-): CitedWorkEntity {
+export function createCitedWorkMock({
+  source,
+  work,
+}: {
+  source: SourceCitationEntity;
+  work: WorkCardEntity;
+}): CitedWorkEntity {
   return { created_at: mockNow, source, work };
 }
 
@@ -42,37 +46,50 @@ function releaseRank(workSlug: string | undefined): number {
  * the API's order: by work's release (none last), then in `mockMobileSuits` order.
  */
 function pilotedMobileSuits(characterSlug: string): PilotedMobileSuitEntity[] {
-  const piloted = mockMobileSuits.flatMap((card) =>
-    (mockMobileSuitDetails[card.slug]?.pilots ?? [])
-      .filter(({ character }) => character.slug === characterSlug)
-      .map(({ created_at, source, work }) => ({
-        created_at,
-        mobile_suit: card,
-        source,
-        work,
-      })),
+  const piloted = creditsBySuit({
+    credits: ({ pilots }) => pilots,
+    matches: ({ character }) => character.slug === characterSlug,
+  }).flatMap(({ card, credits }) =>
+    credits.map(({ created_at, source, work }) => ({
+      created_at,
+      mobile_suit: card,
+      source,
+      work,
+    })),
   );
   return piloted.toSorted(
     (a, b) => releaseRank(a.work?.slug) - releaseRank(b.work?.slug),
   );
 }
 
-function detail(
-  card: CharacterCardEntity,
-  appearances: CitedWorkEntity[],
-): CharacterDetailEntity {
+function createCharacterDetailMock({
+  appearances,
+  card,
+}: {
+  appearances: CitedWorkEntity[];
+  card: CharacterCardEntity;
+}): CharacterDetailEntity {
   return { ...card, appearances, piloted_mobile_suits: pilotedMobileSuits(card.slug) };
 }
 
 /** @description Each character's detail, keyed by their current slug. */
 export const mockCharacterDetails: Readonly<Record<string, CharacterDetailEntity>> = {
-  [mockAmuroRay.slug]: detail(mockAmuroRay, [
-    citedWork(mockMobileSuitGundam, mockSources.amuroRay),
-    citedWork(mockMobileSuitGundamI, mockSources.amuroRay),
-  ]),
-  [mockAmuroRayOrigin.slug]: detail(mockAmuroRayOrigin, [
-    citedWork(mockTheOrigin, mockSources.amuroRayOrigin),
-  ]),
+  [mockAmuroRay.slug]: createCharacterDetailMock({
+    appearances: [
+      createCitedWorkMock({ source: mockSources.amuroRay, work: mockMobileSuitGundam }),
+      createCitedWorkMock({
+        source: mockSources.amuroRay,
+        work: mockMobileSuitGundamI,
+      }),
+    ],
+    card: mockAmuroRay,
+  }),
+  [mockAmuroRayOrigin.slug]: createCharacterDetailMock({
+    appearances: [
+      createCitedWorkMock({ source: mockSources.amuroRayOrigin, work: mockTheOrigin }),
+    ],
+    card: mockAmuroRayOrigin,
+  }),
 };
 
 /**
@@ -81,8 +98,9 @@ export const mockCharacterDetails: Readonly<Record<string, CharacterDetailEntity
  * @returns `undefined` for an unknown slug, which the route answers with a 404.
  */
 export function findCharacterMock(slug: string): CharacterDetailEntity | undefined {
-  return (
-    mockCharacterDetails[slug] ??
-    mockCharacterDetails[mockCharacterSlugRedirects[slug] ?? '']
-  );
+  return findBySlugOrRedirect({
+    byCurrentSlug: mockCharacterDetails,
+    redirects: mockCharacterSlugRedirects,
+    slug,
+  });
 }
