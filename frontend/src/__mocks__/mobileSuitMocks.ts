@@ -158,13 +158,12 @@ const minovskyReactor: PowerplantRefEntity = {
 };
 
 function armament(
-  name: string,
-  slug: string,
+  ref: ArmamentRefEntity,
   mount: ArmamentMount,
   values: Partial<ArmamentListingEntity> = {},
 ): ArmamentListingEntity {
   return {
-    armament: { name, slug },
+    armament: ref,
     created_at: mockNow,
     mount,
     note: null,
@@ -208,19 +207,20 @@ const onceOrTwice = { quantity_max: 2, quantity_min: 1 };
 // NOTE: in the API's order: by mount, then by name in the database's collation.
 const rx782Parts = {
   armaments: [
-    armament('60mm Vulcan Gun', '60mm-vulcan-gun', 'fixed', twice),
-    armament(beamSaber.name, beamSaber.slug, 'handheld', {
+    armament({ name: '60mm Vulcan Gun', slug: '60mm-vulcan-gun' }, 'fixed', twice),
+    armament(beamSaber, 'handheld', {
       ...twice,
       note: '2 x Beam Javelin',
     }),
     armament(
-      'BOWA-XBR-M-79-07G Beam Rifle',
-      'bowa-xbr-m-79-07g-beam-rifle',
+      { name: 'BOWA-XBR-M-79-07G Beam Rifle', slug: 'bowa-xbr-m-79-07g-beam-rifle' },
       'handheld',
     ),
     armament(
-      'BLASH-XHB-L-03/N-STD 380mm Hyper Bazooka',
-      'blash-xhb-l-03-n-std-380mm-hyper-bazooka',
+      {
+        name: 'BLASH-XHB-L-03/N-STD 380mm Hyper Bazooka',
+        slug: 'blash-xhb-l-03-n-std-380mm-hyper-bazooka',
+      },
       'optional_handheld',
       onceOrTwice,
     ),
@@ -422,10 +422,13 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
     spec_sheets: [
       specSheet(mockSources.rx7802Gundam, {
         armaments: [
-          armament(beamSaber.name, beamSaber.slug, 'fixed', onceOrTwice),
-          armament('Vulcan Gun', 'vulcan-gun', 'fixed', twice),
-          armament('Beam Rifle', 'beam-rifle', 'handheld'),
-          armament('Shoulder Cannon', 'shoulder-cannon', 'optional_fixed'),
+          armament(beamSaber, 'fixed', onceOrTwice),
+          armament({ name: 'Vulcan Gun', slug: 'vulcan-gun' }, 'fixed', twice),
+          armament({ name: 'Beam Rifle', slug: 'beam-rifle' }, 'handheld'),
+          armament(
+            { name: 'Shoulder Cannon', slug: 'shoulder-cannon' },
+            'optional_fixed',
+          ),
         ],
         equipment: [equipment(coreBlockSystem, { note: 'refit' })],
         head_height_m: 18,
@@ -487,13 +490,19 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
       // NOTE: the infobox names no powerplant.
       specSheet(mockSources.ms06fZakuII, {
         armaments: [
-          armament('Shoulder Shield', 'shoulder-shield', 'fixed'),
-          armament('120mm Machine Gun', '120mm-machine-gun', 'handheld'),
-          armament('Heat Hawk', 'heat-hawk', 'handheld'),
-          armament('3-tube Missile Pod', '3-tube-missile-pod', 'optional_fixed', twice),
+          armament({ name: 'Shoulder Shield', slug: 'shoulder-shield' }, 'fixed'),
           armament(
-            'MMP-80 90mm Machine Gun',
-            'mmp-80-90mm-machine-gun',
+            { name: '120mm Machine Gun', slug: '120mm-machine-gun' },
+            'handheld',
+          ),
+          armament({ name: 'Heat Hawk', slug: 'heat-hawk' }, 'handheld'),
+          armament(
+            { name: '3-tube Missile Pod', slug: '3-tube-missile-pod' },
+            'optional_fixed',
+            twice,
+          ),
+          armament(
+            { name: 'MMP-80 90mm Machine Gun', slug: 'mmp-80-90mm-machine-gun' },
             'optional_handheld',
           ),
         ],
