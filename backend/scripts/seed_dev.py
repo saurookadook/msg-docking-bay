@@ -552,7 +552,7 @@ ARMAMENTS: Final[list[PartRow]] = [
         "blash-xhb-l-03-n-std-380mm-hyper-bazooka",
     ),
     PartRow("BOWA-XBR-M-79-07G Beam Rifle", "bowa-xbr-m-79-07g-beam-rifle"),
-    # Its wiki title redirects to a list of weapons.
+    # NOTE: its wiki title redirects to a list of weapons.
     PartRow("Beam Rifle", "beam-rifle"),
     PartRow("Beam Saber", "beam-saber", page_id=2405),
     PartRow("Heat Hawk", "heat-hawk"),
@@ -573,7 +573,8 @@ MATERIALS: Final[list[PartRow]] = [
 ]
 
 POWERPLANTS: Final[list[PartRow]] = [
-    # Its wiki title redirects to a section of the technology page.
+    # NOTE: its wiki title redirects to a section of the technology
+    # page.
     PartRow(
         "Minovsky Ultracompact Fusion Reactor", "minovsky-ultracompact-fusion-reactor"
     ),

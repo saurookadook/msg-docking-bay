@@ -27,7 +27,7 @@ def upgrade() -> None:
     op.create_unique_constraint(
         op.f("armaments_fandom_page_id_key"), "armaments", ["fandom_page_id"]
     )
-    # Autogenerate does not see check constraints, so each table's
+    # NOTE: autogenerate does not see check constraints, so each
     # ``positive`` check is added by hand (ALEM-6).
     op.create_check_constraint(
         op.f("ck_armaments_fandom_page_id_positive"), "armaments", "fandom_page_id > 0"

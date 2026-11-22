@@ -209,7 +209,8 @@ class TestRun:
             for a in base["armaments"]
         ] == [
             ("60mm-vulcan-gun", "fixed", 2, 2, None),
-            # By name in the database's collation, case ignored first.
+            # NOTE: by name in the database's collation, which ignores
+            # case first.
             ("beam-saber", "handheld", 2, 2, "2 x Beam Javelin"),
             ("bowa-xbr-m-79-07g-beam-rifle", "handheld", None, None, None),
             (
