@@ -84,9 +84,15 @@ class TestArmamentDBConstraints:
 
         assert violated_constraint(exc_info.value) == ("23505", constraint)
 
+    def test_accepts_the_smallest_page_id(self, test_db_session: Session) -> None:
+        ArmamentDBFactory(fandom_page_id=1)
+
+        test_db_session.flush()
+
     @pytest.mark.parametrize(
         "overrides, constraint",
         [
+            # one below the smallest accepted page ID
             ({"fandom_page_id": 0}, "ck_armaments_fandom_page_id_positive"),
             ({"fandom_page_title": ""}, "ck_armaments_fandom_page_title_not_empty"),
             ({"name": ""}, "ck_armaments_name_not_empty"),
