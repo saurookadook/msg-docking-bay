@@ -1,4 +1,7 @@
-"""Add fandom_page_id to characters, designers and organizations.
+"""Add fandom_page_id to people tables.
+
+The people tables are ``characters``, ``mechanical_designers`` and
+``organizations``.
 
 Revision ID: 6da74e12d9d0
 Revises: e65246e18079
