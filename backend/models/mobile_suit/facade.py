@@ -8,6 +8,7 @@ from sqlalchemy import ColumnElement, case, func, or_, select
 from sqlalchemy.orm import aliased, contains_eager, joinedload
 
 from constants.catalog import UnitType
+from models.base.entity import BaseEntityModel
 from models.base.facade import BaseFacade, SlugColumns, normalize_search
 from models.base.page import Page
 from models.continuity.db import ContinuityDB
@@ -34,13 +35,24 @@ from models.source.entity import SourceCitationEntity
 from models.spec_sheet.db import SpecSheetDB
 from models.spec_sheet.entity import (
     SPEC_SHEET_FIELDS,
+    SPEC_SHEET_PART_KINDS,
     MobileSuitSpecSheetEntity,
     SpecSheetEntity,
     SpecSheetField,
+    SpecSheetPartKind,
 )
+from models.spec_sheet_armament.facade import SpecSheetArmamentFacade
+from models.spec_sheet_equipment.facade import SpecSheetEquipmentFacade
+from models.spec_sheet_material.facade import SpecSheetMaterialFacade
+from models.spec_sheet_powerplant.facade import SpecSheetPowerplantFacade
 from models.work.db import WorkDB
 from models.work.entity import WorkCardEntity
 from models.work.facade import WorkFacade
+
+type SheetParts = Mapping[
+    SpecSheetPartKind, Mapping[uuid.UUID, Sequence[BaseEntityModel]]
+]
+"""Each kind's listings by sheet id, from ``get_for_sheets``."""
 
 
 class MobileSuitFacade(BaseFacade):
@@ -157,8 +169,10 @@ class MobileSuitFacade(BaseFacade):
         """Return a suit with its sheets, relations, works and credits.
 
         An old slug finds the renamed suit, whose ``slug`` then holds
-        the current one (D2). Seven statements, however many rows each
-        list holds: the suit, then one per list (PYTEST-24).
+        the current one (D2). Eleven statements, however many rows each
+        list holds: the suit, one per list, and one per part kind for
+        every sheet at once. A suit with no sheets skips the part kinds
+        and costs seven (PYTEST-24).
 
         Raises:
             MobileSuitFacade.NotFoundError: when no suit has the slug.
@@ -254,7 +268,9 @@ class MobileSuitFacade(BaseFacade):
 
         Then by configuration, then by source. A named sheet takes each
         missing value from the same source's base sheet, and lists the
-        columns it took in ``inherited_fields``.
+        columns it took in ``inherited_fields``; likewise each empty
+        part list, in ``inherited_parts``. One statement for the sheets,
+        then one per part kind for all of them.
         """
         sheets = self.db_session.scalars(
             select(SpecSheetDB)
@@ -268,11 +284,26 @@ class MobileSuitFacade(BaseFacade):
                 SpecSheetDB.id,
             )
         ).all()
+        sheet_ids = [sheet.id for sheet in sheets]
+        parts: SheetParts = {
+            "armaments": SpecSheetArmamentFacade(
+                db_session=self.db_session
+            ).get_for_sheets(sheet_ids),
+            "equipment": SpecSheetEquipmentFacade(
+                db_session=self.db_session
+            ).get_for_sheets(sheet_ids),
+            "materials": SpecSheetMaterialFacade(
+                db_session=self.db_session
+            ).get_for_sheets(sheet_ids),
+            "powerplants": SpecSheetPowerplantFacade(
+                db_session=self.db_session
+            ).get_for_sheets(sheet_ids),
+        }
         base_by_source = {
             sheet.source_id: sheet for sheet in sheets if sheet.configuration is None
         }
         return [
-            _filled_sheet(sheet, base_by_source.get(sheet.source_id))
+            _filled_sheet(sheet, base_by_source.get(sheet.source_id), parts)
             for sheet in sheets
         ]
 
@@ -349,9 +380,13 @@ class MobileSuitFacade(BaseFacade):
 
 
 def _filled_sheet(
-    sheet: SpecSheetDB, base: SpecSheetDB | None
+    sheet: SpecSheetDB, base: SpecSheetDB | None, parts: SheetParts
 ) -> MobileSuitSpecSheetEntity:
-    """Serve a sheet, filling a named one's gaps from its base sheet."""
+    """Serve a sheet, filling a named one's gaps from its base sheet.
+
+    A gap is a null measurement or an empty part list; the base sheet
+    fills it only where the base has a value or a listing.
+    """
     values: dict[str, float | None] = {
         field: getattr(sheet, field) for field in SPEC_SHEET_FIELDS
     }
@@ -363,12 +398,25 @@ def _filled_sheet(
             if values[field] is None and getattr(base, field) is not None
         ]
         values |= {field: getattr(base, field) for field in inherited}
+    lists: dict[SpecSheetPartKind, Sequence[BaseEntityModel]] = {
+        kind: parts[kind][sheet.id] for kind in SPEC_SHEET_PART_KINDS
+    }
+    inherited_parts: list[SpecSheetPartKind] = []
+    if sheet.configuration is not None and base is not None:
+        inherited_parts = [
+            kind
+            for kind in SPEC_SHEET_PART_KINDS
+            if not lists[kind] and parts[kind][base.id]
+        ]
+        lists |= {kind: parts[kind][base.id] for kind in inherited_parts}
     return MobileSuitSpecSheetEntity.model_validate(
         {
             **values,
+            **lists,
             "configuration": sheet.configuration,
             "created_at": sheet.created_at,
             "inherited_fields": list(inherited),
+            "inherited_parts": inherited_parts,
             "source": SourceCitationEntity.model_validate(sheet.source),
             "updated_at": sheet.updated_at,
         }

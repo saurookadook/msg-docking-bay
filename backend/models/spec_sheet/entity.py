@@ -8,6 +8,10 @@ from pydantic import Field
 from models.base.entity import BaseEntityModel
 from models.mixins.entity import IdEntityMixin, TimestampsEntityMixin
 from models.source.entity import SourceCitationEntity
+from models.spec_sheet_armament.entity import ArmamentListingEntity
+from models.spec_sheet_equipment.entity import EquipmentListingEntity
+from models.spec_sheet_material.entity import MaterialListingEntity
+from models.spec_sheet_powerplant.entity import PowerplantListingEntity
 
 SpecSheetField = Literal[
     "empty_weight_kg",
@@ -24,6 +28,13 @@ SpecSheetField = Literal[
 """A spec sheet's measurements, each in the unit its name says."""
 
 SPEC_SHEET_FIELDS: Final[tuple[SpecSheetField, ...]] = get_args(SpecSheetField)
+
+SpecSheetPartKind = Literal["armaments", "equipment", "materials", "powerplants"]
+"""A spec sheet's part lists, each named as its field is."""
+
+SPEC_SHEET_PART_KINDS: Final[tuple[SpecSheetPartKind, ...]] = get_args(
+    SpecSheetPartKind
+)
 
 
 class SpecSheetEntity(BaseEntityModel, IdEntityMixin, TimestampsEntityMixin):
@@ -54,19 +65,37 @@ class MobileSuitSpecSheetEntity(BaseEntityModel, TimestampsEntityMixin):
 
     A named configuration's gaps are filled from the base sheet of the
     same source; ``inherited_fields`` names the columns that were, so a
-    page can tell "same as base" from a value the source states.
+    page can tell "same as base" from a value the source states. Its
+    empty part lists are filled the same way, and ``inherited_parts``
+    names them, so ``inherited_fields`` stays measurements only. A
+    configuration cannot say it drops every part of a kind.
     """
 
+    armaments: list[ArmamentListingEntity] = Field(
+        default_factory=list[ArmamentListingEntity]
+    )
     configuration: str | None = None
     """Null for the base sheet; otherwise the configuration's name."""
     empty_weight_kg: float | None = None
+    equipment: list[EquipmentListingEntity] = Field(
+        default_factory=list[EquipmentListingEntity]
+    )
     generator_output_kw: float | None = None
     gross_weight_kg: float | None = None
     head_height_m: float | None = None
     inherited_fields: list[SpecSheetField] = Field(default_factory=list[SpecSheetField])
+    inherited_parts: list[SpecSheetPartKind] = Field(
+        default_factory=list[SpecSheetPartKind]
+    )
+    materials: list[MaterialListingEntity] = Field(
+        default_factory=list[MaterialListingEntity]
+    )
     max_acceleration_g: float | None = None
     max_speed_kmh: float | None = None
     overall_height_m: float | None = None
+    powerplants: list[PowerplantListingEntity] = Field(
+        default_factory=list[PowerplantListingEntity]
+    )
     sensor_range_m: float | None = None
     total_thrust_kg: float | None = None
     turn_time_s: float | None = None

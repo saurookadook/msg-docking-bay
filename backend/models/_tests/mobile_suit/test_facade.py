@@ -7,9 +7,12 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from _factories.armament.db import ArmamentDBFactory
 from _factories.character.db import CharacterDBFactory
 from _factories.character_appearance.db import CharacterAppearanceDBFactory
 from _factories.continuity.db import ContinuityDBFactory
+from _factories.equipment.db import EquipmentDBFactory
+from _factories.material.db import MaterialDBFactory
 from _factories.mechanical_designer.db import MechanicalDesignerDBFactory
 from _factories.mobile_suit.db import MobileSuitDBFactory
 from _factories.mobile_suit_appearance.db import MobileSuitAppearanceDBFactory
@@ -20,8 +23,13 @@ from _factories.mobile_suit_relation.db import MobileSuitRelationDBFactory
 from _factories.mobile_suit_slug_redirect.db import MobileSuitSlugRedirectDBFactory
 from _factories.organization.db import OrganizationDBFactory
 from _factories.organization_appearance.db import OrganizationAppearanceDBFactory
+from _factories.powerplant.db import PowerplantDBFactory
 from _factories.source.db import SourceDBFactory
 from _factories.spec_sheet.db import SpecSheetDBFactory
+from _factories.spec_sheet_armament.db import SpecSheetArmamentDBFactory
+from _factories.spec_sheet_equipment.db import SpecSheetEquipmentDBFactory
+from _factories.spec_sheet_material.db import SpecSheetMaterialDBFactory
+from _factories.spec_sheet_powerplant.db import SpecSheetPowerplantDBFactory
 from _factories.work.db import WorkDBFactory
 from _factories.work_slug_redirect.db import WorkSlugRedirectDBFactory
 from constants.catalog import (
@@ -34,6 +42,7 @@ from models._tests.query_count import CountStatements
 from models.mobile_suit.db import MobileSuitDB
 from models.mobile_suit.entity import MobileSuitCardEntity
 from models.mobile_suit.facade import MobileSuitFacade
+from models.spec_sheet.entity import SPEC_SHEET_PART_KINDS
 from models.work.facade import WorkFacade
 
 UC_ID = uuid.UUID("019a1984-0750-7142-aedd-75291c5bf001")
@@ -120,6 +129,27 @@ def suits(test_db_session: Session) -> None:
         work_id=ORIGIN_ID,
     )
     test_db_session.commit()
+
+
+def list_parts(test_db_session: Session, sheet_id: uuid.UUID, *, count: int) -> None:
+    """List ``count`` new parts of every kind on one sheet."""
+    parts = [
+        (
+            ArmamentDBFactory(),
+            EquipmentDBFactory(),
+            MaterialDBFactory(),
+            PowerplantDBFactory(),
+        )
+        for _ in range(count)
+    ]
+    test_db_session.flush()
+    for armament, equipment, material, powerplant in parts:
+        SpecSheetArmamentDBFactory(armament_id=armament.id, spec_sheet_id=sheet_id)
+        SpecSheetEquipmentDBFactory(equipment_id=equipment.id, spec_sheet_id=sheet_id)
+        SpecSheetMaterialDBFactory(material_id=material.id, spec_sheet_id=sheet_id)
+        SpecSheetPowerplantDBFactory(
+            powerplant_id=powerplant.id, spec_sheet_id=sheet_id
+        )
 
 
 def slugs(items: list[MobileSuitCardEntity]) -> list[str]:
@@ -406,18 +436,23 @@ class TestMobileSuitFacadeGetOneBySlug:
             MobileSuitAppearanceDBFactory(
                 mobile_suit_id=ZAKU_ID, source_id=source.id, work_id=work.id
             )
-            SpecSheetDBFactory(
+            sheet = SpecSheetDBFactory(
                 configuration=None if index == 0 else f"Config {index}",
                 mobile_suit_id=ZAKU_ID,
                 source_id=WIKI_ID,
             )
+            if index == 0:
+                list_parts(test_db_session, sheet.id, count=5)
         MobileSuitRelationDBFactory(
             from_mobile_suit_id=ACT_ZAKU_ID,
             relation_type=MobileSuitRelationType.UPGRADE_OF,
             source_id=WIKI_ID,
             to_mobile_suit_id=ZAKU_ID,
         )
-        SpecSheetDBFactory(mobile_suit_id=ACT_ZAKU_ID, source_id=WIKI_ID)
+        act_zaku_sheet = SpecSheetDBFactory(
+            mobile_suit_id=ACT_ZAKU_ID, source_id=WIKI_ID
+        )
+        list_parts(test_db_session, act_zaku_sheet.id, count=1)
         test_db_session.commit()
         facade = MobileSuitFacade(db_session=test_db_session)
 
@@ -430,7 +465,82 @@ class TestMobileSuitFacadeGetOneBySlug:
         assert (len(act_zaku.pilots), len(zaku.pilots)) == (1, 5)
         assert (len(act_zaku.organizations), len(zaku.organizations)) == (1, 5)
         assert (len(act_zaku.designers), len(zaku.designers)) == (1, 5)
-        assert few.value == many.value == 7
+        for kind in SPEC_SHEET_PART_KINDS:
+            assert len(getattr(act_zaku.spec_sheets[0], kind)) == 1
+            assert {len(getattr(sheet, kind)) for sheet in zaku.spec_sheets} == {5}
+        assert few.value == many.value == 11
+
+    def test_get_one_by_slug_without_sheets_skips_the_part_queries(
+        self, test_db_session: Session, count_statements: CountStatements
+    ) -> None:
+        """No sheets, no part queries: the suit and its six lists."""
+        facade = MobileSuitFacade(db_session=test_db_session)
+
+        with count_statements() as count:
+            turn_a = facade.get_one_by_slug("turn-a-gundam")
+
+        assert (turn_a.spec_sheets, count.value) == ([], 7)
+
+    def test_get_one_by_slug_inherits_empty_part_lists(
+        self, test_db_session: Session
+    ) -> None:
+        """A named sheet takes each empty kind from its base sheet.
+
+        Its own list wins where it has one, a sheet from another source
+        inherits nothing, and a base sheet never does.
+        """
+        SourceDBFactory(id=MAHQ_ID, kind=SourceKind.WIKIDATA_ITEM)
+        sheet_ids: dict[str | None, uuid.UUID] = {}
+        for configuration, source_id in (
+            (None, WIKI_ID),
+            ("G-Armor", WIKI_ID),
+            ("Magnet Coating", WIKI_ID),
+            ("Full Armor", MAHQ_ID),
+        ):
+            sheet_ids[configuration] = SpecSheetDBFactory(
+                configuration=configuration,
+                mobile_suit_id=GUNDAM_ID,
+                source_id=source_id,
+            ).id
+        rifle = ArmamentDBFactory(name="Beam Rifle")
+        cannon = ArmamentDBFactory(name="Beam Cannon")
+        core_block = EquipmentDBFactory(name="Core Block System")
+        test_db_session.flush()
+        SpecSheetArmamentDBFactory(armament_id=rifle.id, spec_sheet_id=sheet_ids[None])
+        SpecSheetArmamentDBFactory(
+            armament_id=cannon.id, spec_sheet_id=sheet_ids["G-Armor"]
+        )
+        SpecSheetEquipmentDBFactory(
+            equipment_id=core_block.id, spec_sheet_id=sheet_ids[None]
+        )
+        test_db_session.commit()
+
+        sheets = (
+            MobileSuitFacade(db_session=test_db_session)
+            .get_one_by_slug("rx-78-2-gundam")
+            .spec_sheets
+        )
+
+        assert [
+            (
+                sheet.configuration,
+                [listing.armament.name for listing in sheet.armaments],
+                [listing.equipment.name for listing in sheet.equipment],
+                sheet.inherited_parts,
+            )
+            for sheet in sheets
+        ] == [
+            (None, ["Beam Rifle"], ["Core Block System"], []),
+            ("Full Armor", [], [], []),
+            ("G-Armor", ["Beam Cannon"], ["Core Block System"], ["equipment"]),
+            (
+                "Magnet Coating",
+                ["Beam Rifle"],
+                ["Core Block System"],
+                ["armaments", "equipment"],
+            ),
+        ]
+        assert all(sheet.inherited_fields == [] for sheet in sheets)
 
 
 @pytest.mark.usefixtures("suits")
