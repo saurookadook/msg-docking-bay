@@ -495,14 +495,14 @@ class TestMobileSuitFacadeGetOneBySlug:
         inherits nothing, and a base sheet never does.
         """
         SourceDBFactory(id=MAHQ_ID, kind=SourceKind.WIKIDATA_ITEM)
-        sheet_ids: dict[str | None, uuid.UUID] = {}
+        sheet_ids_by_configuration: dict[str | None, uuid.UUID] = {}
         for configuration, source_id in (
             (None, WIKI_ID),
             ("G-Armor", WIKI_ID),
             ("Magnet Coating", WIKI_ID),
             ("Full Armor", MAHQ_ID),
         ):
-            sheet_ids[configuration] = SpecSheetDBFactory(
+            sheet_ids_by_configuration[configuration] = SpecSheetDBFactory(
                 configuration=configuration,
                 mobile_suit_id=GUNDAM_ID,
                 source_id=source_id,
@@ -511,12 +511,14 @@ class TestMobileSuitFacadeGetOneBySlug:
         cannon = ArmamentDBFactory(name="Beam Cannon")
         core_block = EquipmentDBFactory(name="Core Block System")
         test_db_session.flush()
-        SpecSheetArmamentDBFactory(armament_id=rifle.id, spec_sheet_id=sheet_ids[None])
         SpecSheetArmamentDBFactory(
-            armament_id=cannon.id, spec_sheet_id=sheet_ids["G-Armor"]
+            armament_id=rifle.id, spec_sheet_id=sheet_ids_by_configuration[None]
+        )
+        SpecSheetArmamentDBFactory(
+            armament_id=cannon.id, spec_sheet_id=sheet_ids_by_configuration["G-Armor"]
         )
         SpecSheetEquipmentDBFactory(
-            equipment_id=core_block.id, spec_sheet_id=sheet_ids[None]
+            equipment_id=core_block.id, spec_sheet_id=sheet_ids_by_configuration[None]
         )
         test_db_session.commit()
 

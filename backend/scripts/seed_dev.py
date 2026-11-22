@@ -752,15 +752,15 @@ def seed(db_session: Session) -> None:
     base_sheet_ids: dict[str, uuid.UUID] = {}
     for row in SPEC_SHEETS:
         sheet = {key: value for key, value in row.items() if key != "suit"}
-        written = suits.create_or_update_spec_sheet(
+        spec_sheet = suits.create_or_update_spec_sheet(
             payload={
                 **sheet,
                 "mobile_suit_id": suit_ids[row["suit"]],
                 "source_id": suit_sources[row["suit"]],
             }
         )
-        if written.configuration is None:
-            base_sheet_ids[row["suit"]] = written.id
+        if spec_sheet.configuration is None:
+            base_sheet_ids[row["suit"]] = spec_sheet.id
     _seed_parts(db_session, base_sheet_ids=base_sheet_ids)
     for from_slug, relation_type, to_slug in SUIT_RELATIONS:
         suits.create_or_update_relation(
