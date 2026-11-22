@@ -415,13 +415,14 @@ Route names follow FAPI-6. They become the operation IDs, and so the generated c
 | `GET /api/mechanical-designers/{mechanical_designer_slug}` | `read_mechanical_designer` | A designer |
 | `GET /api/mechanical-designers/{mechanical_designer_slug}/mobile-suits` | `read_mechanical_designer_mobile_suits` | Paginated suit cards the designer is credited with, each with its source |
 
-PR C also adds `pilots`, `organizations` and `designers` to `read_mobile_suit`, as refs with their
-work and source. That changes an existing response, so PR C regenerates the contract (MONO-14).
+PR C also adds `pilots`, `organizations` and `designers` to `read_mobile_suit`, as refs
+with their work and source. That changes an existing response, so PR C regenerates the
+contract (MONO-14).
 
-An organization's and a designer's suits are paged sub-resources, not lists in the detail: in the
-2026-11-15 dump, Kunio Okawara is the designer on 438 infoboxes and the Earth Federation the
-operator on 603 (RDB-23). The grilling that settled these routes is in
-[`people-read-routes.md`](people-read-routes.md).
+An organization's and a designer's suits are paged sub-resources, not lists in the
+detail: in the 2026-11-15 dump, Kunio Okawara is the designer on 438 infoboxes and the
+Earth Federation the operator on 603 (RDB-23). The grilling that settled these routes is
+in [`people-read-routes.md`](people-read-routes.md).
 
 Each resource gets its own router in `api/routes/<resources>.py` (FAPI-4) and its own envelopes in
 `api/models/<resource>.py` (FAPI-12). Routes stay thin (FAPI-14): one facade call, or a handler in
@@ -544,7 +545,8 @@ Branch `feat/add-people-read-routes`. The same steps as PR B:
   those three tables.
 - Then entities and facades, routes and the contract.
 - It also makes the `read_mobile_suit` additions.
-- Its decisions (Q1 to Q10) and steps are in [`people-read-routes.md`](people-read-routes.md):
+- Its decisions (Q1 to Q10) and steps are in
+  [`people-read-routes.md`](people-read-routes.md):
   - Q1: an organization's and a designer's suits are paged sub-resources.
   - Q3: a designers list, with `q`.
   - Q6: a character's detail nests the suits they pilot.
