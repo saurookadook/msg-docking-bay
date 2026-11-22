@@ -19,13 +19,13 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Keyed on the old slug, with no surrogate ``id`` (D2). The
+    # Keyed on the old slug, with no surrogate ``id`` (D2, RDB-13). The
     # character's foreign key does not lead the key, so it
     # is indexed (RDB-18).
     op.create_table(
         "character_slug_redirects",
-        sa.Column("old_slug", sa.TEXT(), nullable=False),
         sa.Column("character_id", sa.Uuid(), nullable=False),
+        sa.Column("old_slug", sa.TEXT(), nullable=False),
         sa.Column(
             "created_at",
             postgresql.TIMESTAMP(timezone=True),

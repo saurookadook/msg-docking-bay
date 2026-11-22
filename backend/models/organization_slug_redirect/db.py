@@ -15,8 +15,8 @@ class OrganizationSlugRedirectDB(JunctionBaseDB, CreatedAtDB):
 
     A detail read that misses on ``organizations.slug`` looks here, so
     old links keep working. Keyed on the old slug, so it has no
-    surrogate ``id``. A current slug always wins: the loader deletes a
-    redirect whose ``old_slug`` a row takes as its own.
+    surrogate ``id`` (RDB-13). A current slug always wins: the loader
+    deletes a redirect whose ``old_slug`` a row takes as its own.
     """
 
     old_slug: Mapped[str] = mapped_column(primary_key=True)
