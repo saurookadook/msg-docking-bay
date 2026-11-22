@@ -53,7 +53,7 @@ def names(listings: Sequence[PowerplantListingEntity]) -> list[str]:
 
 @pytest.mark.usefixtures("parts")
 class TestSpecSheetPowerplantFacadeGetForSheets:
-    def test_sends_no_statement_for_no_sheets(
+    def test_get_for_sheets_sends_no_statement_for_no_sheets(
         self, test_db_session: Session, count_statements: CountStatements
     ) -> None:
         """A suit without sheets costs nothing here (PYTEST-24)."""
@@ -64,7 +64,7 @@ class TestSpecSheetPowerplantFacadeGetForSheets:
 
         assert (result, count.value) == ({}, 0)
 
-    def test_groups_every_sheet_in_one_statement(
+    def test_get_for_sheets_groups_every_sheet_in_one_statement(
         self, test_db_session: Session, count_statements: CountStatements
     ) -> None:
         """Each sheet given has a key, empty when it lists nothing."""
@@ -91,7 +91,7 @@ class TestSpecSheetPowerplantFacadeGetForSheets:
             EMPTY_SHEET_ID: [],
         }
 
-    def test_orders_by_name(self, test_db_session: Session) -> None:
+    def test_get_for_sheets_orders_by_name(self, test_db_session: Session) -> None:
         """By name first, though the slugs sort the other way (Q6)."""
         for part_id, name, slug in (
             (ZETA_ID, "Zeta", "a-zeta"),
@@ -109,7 +109,9 @@ class TestSpecSheetPowerplantFacadeGetForSheets:
 
         assert names(listings) == ["Alpha", "Zeta"]
 
-    def test_orders_a_name_tie_by_slug(self, test_db_session: Session) -> None:
+    def test_get_for_sheets_orders_a_name_tie_by_slug(
+        self, test_db_session: Session
+    ) -> None:
         """Names repeat, so the slug is the last key (RDB-22)."""
         for part_id, slug in ((SAME_B_ID, "same-b"), (SAME_A_ID, "same-a")):
             PowerplantDBFactory(id=part_id, name="Same", slug=slug)
@@ -124,7 +126,7 @@ class TestSpecSheetPowerplantFacadeGetForSheets:
 
         assert [listing.powerplant.slug for listing in listings] == ["same-a", "same-b"]
 
-    def test_serves_the_listing_with_a_ref(
+    def test_get_for_sheets_serves_the_listing_with_a_ref(
         self, test_db_session: Session, mock_utcnow: datetime
     ) -> None:
         """The part is a ref, and the listing keeps its own columns."""
@@ -155,7 +157,7 @@ class TestSpecSheetPowerplantFacadeGetForSheets:
 
 @pytest.mark.usefixtures("parts")
 class TestSpecSheetPowerplantFacadeCreateOrUpdate:
-    def test_updates_the_note_on_its_key(
+    def test_create_or_update_on_its_key(
         self, test_db_session: Session, mock_utcnow: datetime
     ) -> None:
         """A rerun with a new note updates the listing in place."""
