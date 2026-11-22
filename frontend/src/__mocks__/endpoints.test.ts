@@ -14,6 +14,7 @@ import {
 import { findMechanicalDesignerMobileSuitsMock } from './mechanicalDesignerMocks';
 import { findMobileSuitMock, findWorkMobileSuitsMock } from './mobileSuitMocks';
 import { findOrganizationMobileSuitsMock } from './organizationMocks';
+import { findBySlugOrRedirect } from './peopleMocks';
 import { findWorkMock } from './workMocks';
 
 describe('buildRoutePath', () => {
@@ -94,10 +95,14 @@ describe('paginate validation', () => {
   });
 });
 
-function handle(path: ApiGetPath, params: Record<string, string>): unknown {
+function handle(
+  path: ApiGetPath,
+  params: Record<string, string>,
+  queryParams: Record<string, string> = {},
+): unknown {
   const config = endpointConfigs.find((candidate) => candidate.path === path);
   if (config === undefined) throw new Error(`No endpoint config for ${path}`);
-  return config.handler({ params, queryParams: {} } as unknown as Request);
+  return config.handler({ params, queryParams } as unknown as Request);
 }
 
 describe('endpointConfigs', () => {
@@ -153,6 +158,16 @@ describe('endpointConfigs', () => {
       '/api/characters/{character_slug}',
       { character_slug: 'char-aznable' },
       'Character not found',
+    ],
+    [
+      '/api/organizations/{organization_slug}',
+      { organization_slug: 'aeug' },
+      'Organization not found',
+    ],
+    [
+      '/api/mechanical-designers/{mechanical_designer_slug}',
+      { mechanical_designer_slug: 'yutaka-izubuchi' },
+      'Mechanical designer not found',
     ],
     [
       '/api/organizations/{organization_slug}/mobile-suits',
@@ -237,5 +252,77 @@ describe('endpointConfigs', () => {
         ({ mobile_suit }) => mobile_suit.slug,
       ),
     ).toEqual(['rx-78-2-gundam', 'rx-78-02-gundam', 'ms-06f-zaku-ii']);
+  });
+
+  it.each([
+    [
+      '/api/organizations/{organization_slug}',
+      { organization_slug: 'earth-federation' },
+      'earth-federation',
+    ],
+    [
+      '/api/organizations/{organization_slug}',
+      { organization_slug: 'earth-federation-universal-century' },
+      'earth-federation',
+    ],
+    [
+      '/api/mechanical-designers/{mechanical_designer_slug}',
+      { mechanical_designer_slug: 'hajime-katoki' },
+      'hajime-katoki',
+    ],
+    [
+      '/api/mechanical-designers/{mechanical_designer_slug}',
+      { mechanical_designer_slug: 'katoki-hajime' },
+      'hajime-katoki',
+    ],
+  ] as const)('answers %s for %o with the current slug', (path, params, slug) => {
+    expect(handle(path, params)).toMatchObject({ data: { slug } });
+  });
+
+  it.each([
+    ['/api/characters', ['amuro-ray-origin'], 2],
+    ['/api/organizations', ['principality-of-zeon'], 3],
+    ['/api/mechanical-designers', ['kunio-okawara'], 3],
+  ] as const)('pages %s', (path, slugs, total) => {
+    expect(handle(path, {}, { limit: '1', offset: '1' })).toEqual({
+      data: slugs.map((slug) => expect.objectContaining({ slug })),
+      meta: { limit: 1, offset: 1, total },
+    });
+  });
+
+  it("pages a person's suit list, and rejects a bad page with a 422", () => {
+    expect(
+      handle(
+        '/api/mechanical-designers/{mechanical_designer_slug}/mobile-suits',
+        { mechanical_designer_slug: 'kunio-okawara' },
+        { limit: '1', offset: '2' },
+      ),
+    ).toMatchObject({
+      data: [{ mobile_suit: { slug: 'ms-06f-zaku-ii' } }],
+      meta: { limit: 1, offset: 2, total: 3 },
+    });
+    const response = handle(
+      '/api/organizations/{organization_slug}/mobile-suits',
+      { organization_slug: 'earth-federation' },
+      { limit: '0' },
+    );
+    expect(response).toBeInstanceOf(MirageResponse);
+    expect((response as MirageResponse).toRackResponse()[0]).toBe(422);
+  });
+});
+
+describe('findBySlugOrRedirect', () => {
+  it('prefers a current slug to a redirect that names the same slug (D2)', () => {
+    const byCurrentSlug = { a: 'row a', b: 'row b' };
+
+    expect(
+      findBySlugOrRedirect({ byCurrentSlug, redirects: { a: 'b' }, slug: 'a' }),
+    ).toBe('row a');
+    expect(
+      findBySlugOrRedirect({ byCurrentSlug, redirects: { old: 'b' }, slug: 'old' }),
+    ).toBe('row b');
+    expect(
+      findBySlugOrRedirect({ byCurrentSlug, redirects: {}, slug: 'missing' }),
+    ).toBeUndefined();
   });
 });
