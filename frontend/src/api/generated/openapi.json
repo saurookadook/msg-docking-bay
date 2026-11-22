@@ -1,6 +1,87 @@
 {
     "components": {
         "schemas": {
+            "ArmamentListingEntity": {
+                "description": "An armament as one spec sheet lists it.\n\nDeliberately not the ``spec_sheet_armaments`` row: the sheet's page\nneeds the weapon's name and slug, not the listing's foreign keys\n(D5). There is no source: the sheet's covers the parts it lists\n(D6). ``created_at`` is the listing's, not the weapon's.",
+                "properties": {
+                    "armament": {
+                        "$ref": "#/components/schemas/ArmamentRefEntity"
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "mount": {
+                        "$ref": "#/components/schemas/ArmamentMount"
+                    },
+                    "note": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Note"
+                    },
+                    "quantity_max": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Quantity Max"
+                    },
+                    "quantity_min": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Quantity Min"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "mount",
+                    "note",
+                    "quantity_max",
+                    "quantity_min",
+                    "armament"
+                ],
+                "title": "ArmamentListingEntity",
+                "type": "object"
+            },
+            "ArmamentMount": {
+                "description": "How a spec sheet carries an armament, from the infobox field.",
+                "enum": ["fixed", "handheld", "optional_fixed", "optional_handheld"],
+                "title": "ArmamentMount",
+                "type": "string"
+            },
+            "ArmamentRefEntity": {
+                "description": "Just enough of an armament to name and link it.\n\nLeaves out ``id``, the wiki page keys and the row's timestamps: none\nis public or rendered on a sheet (D5). A card waits for a part list\nroute.",
+                "properties": {
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    }
+                },
+                "required": ["name", "slug"],
+                "title": "ArmamentRefEntity",
+                "type": "object"
+            },
             "CharacterCardEntity": {
                 "description": "One character in a list.\n\nDeliberately not ``CharacterEntity``: ``id`` and the wiki page keys\nare not public (D5). Appearances and piloted suits are on the\ndetail only (``models.character.detail``).",
                 "properties": {
@@ -278,6 +359,58 @@
                 "title": "DesignerCreditEntity",
                 "type": "object"
             },
+            "EquipmentFit": {
+                "description": "Whether a spec sheet's equipment is standard or optional.",
+                "enum": ["standard", "optional"],
+                "title": "EquipmentFit",
+                "type": "string"
+            },
+            "EquipmentListingEntity": {
+                "description": "An item of equipment as one spec sheet lists it.\n\nDeliberately not the ``spec_sheet_equipment`` row: the sheet's page\nneeds the item's name and slug, not the listing's foreign keys (D5).\nThere is no source: the sheet's covers the parts it lists (D6).\n``created_at`` is the listing's, not the item's.",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "equipment": {
+                        "$ref": "#/components/schemas/EquipmentRefEntity"
+                    },
+                    "fit": {
+                        "$ref": "#/components/schemas/EquipmentFit"
+                    },
+                    "note": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Note"
+                    }
+                },
+                "required": ["created_at", "fit", "note", "equipment"],
+                "title": "EquipmentListingEntity",
+                "type": "object"
+            },
+            "EquipmentRefEntity": {
+                "description": "Just enough of an item of equipment to name and link it.\n\nLeaves out ``id``, the wiki page keys and the row's timestamps: none\nis public or rendered on a sheet (D5). A card waits for a part list\nroute.",
+                "properties": {
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    }
+                },
+                "required": ["name", "slug"],
+                "title": "EquipmentRefEntity",
+                "type": "object"
+            },
             "HTTPValidationError": {
                 "properties": {
                     "detail": {
@@ -341,6 +474,58 @@
                 "required": ["data"],
                 "title": "HomeResponse",
                 "type": "object"
+            },
+            "MaterialListingEntity": {
+                "description": "A material as one spec sheet lists it.\n\nDeliberately not the ``spec_sheet_materials`` row: the sheet's page\nneeds the material's name and slug, not the listing's foreign keys\n(D5). There is no source: the sheet's covers the parts it lists\n(D6). ``created_at`` is the listing's, not the material's.",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "material": {
+                        "$ref": "#/components/schemas/MaterialRefEntity"
+                    },
+                    "material_use": {
+                        "$ref": "#/components/schemas/MaterialUse"
+                    },
+                    "note": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Note"
+                    }
+                },
+                "required": ["created_at", "material_use", "note", "material"],
+                "title": "MaterialListingEntity",
+                "type": "object"
+            },
+            "MaterialRefEntity": {
+                "description": "Just enough of a material to name and link it.\n\nLeaves out ``id``, the wiki page keys and the row's timestamps: none\nis public or rendered on a sheet (D5). A card waits for a part list\nroute.",
+                "properties": {
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    }
+                },
+                "required": ["name", "slug"],
+                "title": "MaterialRefEntity",
+                "type": "object"
+            },
+            "MaterialUse": {
+                "description": "What a spec sheet's material is used for.",
+                "enum": ["armor", "frame"],
+                "title": "MaterialUse",
+                "type": "string"
             },
             "MechanicalDesignerCardEntity": {
                 "description": "One mechanical designer in a list.\n\nDeliberately not ``MechanicalDesignerEntity``: ``id`` and the wiki\npage keys are not public (D5).",
@@ -795,8 +980,15 @@
                 "type": "object"
             },
             "MobileSuitSpecSheetEntity": {
-                "description": "One configuration's specs, as one source gives them.\n\nDeliberately not ``SpecSheetEntity``: ``raw_infobox`` is bulky\ncopied wiki text, kept out of anything served (D5), and ``id`` is\nnot a public key.\n\nA named configuration's gaps are filled from the base sheet of the\nsame source; ``inherited_fields`` names the columns that were, so a\npage can tell \"same as base\" from a value the source states.",
+                "description": "One configuration's specs, as one source gives them.\n\nDeliberately not ``SpecSheetEntity``: ``raw_infobox`` is bulky\ncopied wiki text, kept out of anything served (D5), and ``id`` is\nnot a public key.\n\nA named configuration's gaps are filled from the base sheet of the\nsame source; ``inherited_fields`` names the columns that were, so a\npage can tell \"same as base\" from a value the source states. Its\nempty part lists are filled the same way, and ``inherited_parts``\nnames them, so ``inherited_fields`` stays measurements only. A\nconfiguration cannot say it drops every part of a kind.",
                 "properties": {
+                    "armaments": {
+                        "items": {
+                            "$ref": "#/components/schemas/ArmamentListingEntity"
+                        },
+                        "title": "Armaments",
+                        "type": "array"
+                    },
                     "configuration": {
                         "anyOf": [
                             {
@@ -823,6 +1015,13 @@
                             }
                         ],
                         "title": "Empty Weight Kg"
+                    },
+                    "equipment": {
+                        "items": {
+                            "$ref": "#/components/schemas/EquipmentListingEntity"
+                        },
+                        "title": "Equipment",
+                        "type": "array"
                     },
                     "generator_output_kw": {
                         "anyOf": [
@@ -876,6 +1075,26 @@
                         "title": "Inherited Fields",
                         "type": "array"
                     },
+                    "inherited_parts": {
+                        "items": {
+                            "enum": [
+                                "armaments",
+                                "equipment",
+                                "materials",
+                                "powerplants"
+                            ],
+                            "type": "string"
+                        },
+                        "title": "Inherited Parts",
+                        "type": "array"
+                    },
+                    "materials": {
+                        "items": {
+                            "$ref": "#/components/schemas/MaterialListingEntity"
+                        },
+                        "title": "Materials",
+                        "type": "array"
+                    },
                     "max_acceleration_g": {
                         "anyOf": [
                             {
@@ -908,6 +1127,13 @@
                             }
                         ],
                         "title": "Overall Height M"
+                    },
+                    "powerplants": {
+                        "items": {
+                            "$ref": "#/components/schemas/PowerplantListingEntity"
+                        },
+                        "title": "Powerplants",
+                        "type": "array"
                     },
                     "sensor_range_m": {
                         "anyOf": [
@@ -954,15 +1180,20 @@
                 "required": [
                     "created_at",
                     "updated_at",
+                    "armaments",
                     "configuration",
                     "empty_weight_kg",
+                    "equipment",
                     "generator_output_kw",
                     "gross_weight_kg",
                     "head_height_m",
                     "inherited_fields",
+                    "inherited_parts",
+                    "materials",
                     "max_acceleration_g",
                     "max_speed_kmh",
                     "overall_height_m",
+                    "powerplants",
                     "sensor_range_m",
                     "total_thrust_kg",
                     "turn_time_s",
@@ -1307,6 +1538,77 @@
                 },
                 "required": ["created_at", "mobile_suit", "source", "work"],
                 "title": "PilotedMobileSuitEntity",
+                "type": "object"
+            },
+            "PowerplantListingEntity": {
+                "description": "A powerplant as one spec sheet lists it.\n\nDeliberately not the ``spec_sheet_powerplants`` row: the sheet's\npage needs the powerplant's name and slug, not the listing's foreign\nkeys (D5). There is no source: the sheet's covers the parts it lists\n(D6). ``created_at`` is the listing's, not the powerplant's.",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "note": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Note"
+                    },
+                    "powerplant": {
+                        "$ref": "#/components/schemas/PowerplantRefEntity"
+                    },
+                    "quantity_max": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Quantity Max"
+                    },
+                    "quantity_min": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Quantity Min"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "note",
+                    "quantity_max",
+                    "quantity_min",
+                    "powerplant"
+                ],
+                "title": "PowerplantListingEntity",
+                "type": "object"
+            },
+            "PowerplantRefEntity": {
+                "description": "Just enough of a powerplant to name and link it.\n\nLeaves out ``id``, the wiki page keys and the row's timestamps: none\nis public or rendered on a sheet (D5). A card waits for a part list\nroute.",
+                "properties": {
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    }
+                },
+                "required": ["name", "slug"],
+                "title": "PowerplantRefEntity",
                 "type": "object"
             },
             "RelatedMobileSuitEntity": {

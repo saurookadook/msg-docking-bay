@@ -84,3 +84,18 @@ export type RelatedMobileSuitEntity = Schemas['RelatedMobileSuitEntity'];
 export type UnitType = Schemas['UnitType'];
 // The backend's `SpecSheetField` Literal is inlined in the schema rather than named.
 export type SpecSheetField = MobileSuitSpecSheetEntity['inherited_fields'][number];
+
+// Spec sheet parts.
+export type ArmamentListingEntity = Schemas['ArmamentListingEntity'];
+export type ArmamentMount = Schemas['ArmamentMount'];
+export type ArmamentRefEntity = Schemas['ArmamentRefEntity'];
+export type EquipmentFit = Schemas['EquipmentFit'];
+export type EquipmentListingEntity = Schemas['EquipmentListingEntity'];
+export type EquipmentRefEntity = Schemas['EquipmentRefEntity'];
+export type MaterialListingEntity = Schemas['MaterialListingEntity'];
+export type MaterialRefEntity = Schemas['MaterialRefEntity'];
+export type MaterialUse = Schemas['MaterialUse'];
+export type PowerplantListingEntity = Schemas['PowerplantListingEntity'];
+export type PowerplantRefEntity = Schemas['PowerplantRefEntity'];
+// The backend's `SpecSheetPartKind` Literal is inlined too.
+export type SpecSheetPartKind = MobileSuitSpecSheetEntity['inherited_parts'][number];

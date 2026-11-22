@@ -1,7 +1,14 @@
 // Read from the 2026-11-15 Gundam Wiki dump; `backend/scripts/seed_dev.py` holds the
 // other copy (see `catalogMocks.ts`).
 import type {
+  ArmamentListingEntity,
+  ArmamentMount,
+  ArmamentRefEntity,
   DesignerCreditEntity,
+  EquipmentListingEntity,
+  EquipmentRefEntity,
+  MaterialListingEntity,
+  MaterialRefEntity,
   MechanicalDesignerRefEntity,
   MobileSuitAppearanceCardEntity,
   MobileSuitCardEntity,
@@ -11,6 +18,8 @@ import type {
   OrganizationCreditEntity,
   OrganizationRefEntity,
   PilotCreditEntity,
+  PowerplantListingEntity,
+  PowerplantRefEntity,
   RelatedMobileSuitEntity,
   SourceCitationEntity,
   WorkAppearanceEntity,
@@ -110,6 +119,13 @@ const noSpecs = {
   turn_time_s: null,
 } satisfies Partial<MobileSuitSpecSheetEntity>;
 
+const noParts = {
+  armaments: [],
+  equipment: [],
+  materials: [],
+  powerplants: [],
+} satisfies Partial<MobileSuitSpecSheetEntity>;
+
 function specSheet(
   source: SourceCitationEntity,
   values: Partial<MobileSuitSpecSheetEntity>,
@@ -117,12 +133,113 @@ function specSheet(
   return {
     ...timestamps,
     ...noSpecs,
+    ...noParts,
     configuration: null,
     inherited_fields: [],
+    inherited_parts: [],
     source,
     ...values,
   };
 }
+
+// Parts with their own wiki article; the seed also stores their page IDs.
+const beamSaber: ArmamentRefEntity = { name: 'Beam Saber', slug: 'beam-saber' };
+const coreBlockSystem: EquipmentRefEntity = {
+  name: 'Core Block System',
+  slug: 'core-block-system',
+};
+const lunaTitaniumAlloy: MaterialRefEntity = {
+  name: 'Luna Titanium Alloy',
+  slug: 'luna-titanium-alloy',
+};
+const minovskyReactor: PowerplantRefEntity = {
+  name: 'Minovsky Ultracompact Fusion Reactor',
+  slug: 'minovsky-ultracompact-fusion-reactor',
+};
+
+function armament(
+  name: string,
+  slug: string,
+  mount: ArmamentMount,
+  values: Partial<ArmamentListingEntity> = {},
+): ArmamentListingEntity {
+  return {
+    armament: { name, slug },
+    created_at: mockNow,
+    mount,
+    note: null,
+    quantity_max: null,
+    quantity_min: null,
+    ...values,
+  };
+}
+
+function armamentRef(
+  ref: ArmamentRefEntity,
+  mount: ArmamentMount,
+  values: Partial<ArmamentListingEntity> = {},
+): ArmamentListingEntity {
+  return armament(ref.name, ref.slug, mount, values);
+}
+
+function equipment(
+  ref: EquipmentRefEntity,
+  values: Partial<EquipmentListingEntity> = {},
+): EquipmentListingEntity {
+  return {
+    created_at: mockNow,
+    equipment: ref,
+    fit: 'standard',
+    note: null,
+    ...values,
+  };
+}
+
+function armor(ref: MaterialRefEntity): MaterialListingEntity {
+  return { created_at: mockNow, material: ref, material_use: 'armor', note: null };
+}
+
+function powerplant(ref: PowerplantRefEntity): PowerplantListingEntity {
+  return {
+    created_at: mockNow,
+    note: null,
+    powerplant: ref,
+    quantity_max: null,
+    quantity_min: null,
+  };
+}
+
+/** @description Counts as the infobox gives them: `2 ×` sets both, `1-2 ×` a range. */
+const twice = { quantity_max: 2, quantity_min: 2 };
+const onceOrTwice = { quantity_max: 2, quantity_min: 1 };
+
+// In the API's order: by mount, then by name in the database's collation.
+const rx782Parts = {
+  armaments: [
+    armament('60mm Vulcan Gun', '60mm-vulcan-gun', 'fixed', twice),
+    armamentRef(beamSaber, 'handheld', { ...twice, note: '2 x Beam Javelin' }),
+    armament(
+      'BOWA-XBR-M-79-07G Beam Rifle',
+      'bowa-xbr-m-79-07g-beam-rifle',
+      'handheld',
+    ),
+    armament(
+      'BLASH-XHB-L-03/N-STD 380mm Hyper Bazooka',
+      'blash-xhb-l-03-n-std-380mm-hyper-bazooka',
+      'optional_handheld',
+      onceOrTwice,
+    ),
+  ],
+  equipment: [
+    equipment(coreBlockSystem),
+    equipment(
+      { name: 'Magnet Coating', slug: 'magnet-coating' },
+      { note: 'field upgrade' },
+    ),
+  ],
+  materials: [armor(lunaTitaniumAlloy)],
+  powerplants: [powerplant(minovskyReactor)],
+} satisfies Partial<MobileSuitSpecSheetEntity>;
 
 const rx782BaseSpecs = {
   empty_weight_kg: 43400,
@@ -251,11 +368,16 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
       alternateVersion('incoming', mockRx78f00Gundam, mockSources.rx78f00Gundam),
     ],
     spec_sheets: [
-      specSheet(mockSources.rx782Gundam, { ...rx782BaseSpecs, turn_time_s: 1.5 }),
-      // The infobox gives "1.1~after magnet coating upgrade"; the rest comes from the
-      // base sheet of the same source.
       specSheet(mockSources.rx782Gundam, {
         ...rx782BaseSpecs,
+        ...rx782Parts,
+        turn_time_s: 1.5,
+      }),
+      // The infobox gives "1.1~after magnet coating upgrade"; the rest comes from the
+      // base sheet of the same source, parts included, since the infobox lists them once.
+      specSheet(mockSources.rx782Gundam, {
+        ...rx782BaseSpecs,
+        ...rx782Parts,
         configuration: 'Magnet Coating',
         inherited_fields: [
           'empty_weight_kg',
@@ -267,6 +389,7 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
           'sensor_range_m',
           'total_thrust_kg',
         ],
+        inherited_parts: ['armaments', 'equipment', 'materials', 'powerplants'],
         turn_time_s: 1.1,
       }),
     ],
@@ -301,7 +424,20 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
     relations: [
       alternateVersion('outgoing', mockRx782Gundam, mockSources.rx7802Gundam),
     ],
-    spec_sheets: [specSheet(mockSources.rx7802Gundam, { head_height_m: 18 })],
+    spec_sheets: [
+      specSheet(mockSources.rx7802Gundam, {
+        armaments: [
+          armamentRef(beamSaber, 'fixed', onceOrTwice),
+          armament('Vulcan Gun', 'vulcan-gun', 'fixed', twice),
+          armament('Beam Rifle', 'beam-rifle', 'handheld'),
+          armament('Shoulder Cannon', 'shoulder-cannon', 'optional_fixed'),
+        ],
+        equipment: [equipment(coreBlockSystem, { note: 'refit' })],
+        head_height_m: 18,
+        materials: [armor(lunaTitaniumAlloy)],
+        powerplants: [powerplant(minovskyReactor)],
+      }),
+    ],
   },
   [mockRx78f00Gundam.slug]: {
     ...mockRx78f00Gundam,
@@ -353,11 +489,26 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
     pilots: [],
     relations: [],
     spec_sheets: [
+      // The infobox names no powerplant.
       specSheet(mockSources.ms06fZakuII, {
+        armaments: [
+          armament('Shoulder Shield', 'shoulder-shield', 'fixed'),
+          armament('120mm Machine Gun', '120mm-machine-gun', 'handheld'),
+          armament('Heat Hawk', 'heat-hawk', 'handheld'),
+          armament('3-tube Missile Pod', '3-tube-missile-pod', 'optional_fixed', twice),
+          armament(
+            'MMP-80 90mm Machine Gun',
+            'mmp-80-90mm-machine-gun',
+            'optional_handheld',
+          ),
+        ],
         empty_weight_kg: 58100,
         generator_output_kw: 951,
         gross_weight_kg: 73300,
         head_height_m: 17.5,
+        materials: [
+          armor({ name: 'Super Hard Steel Alloy', slug: 'super-hard-steel-alloy' }),
+        ],
         max_acceleration_g: 0.59,
         max_speed_kmh: 88,
         sensor_range_m: 3200,
