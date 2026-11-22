@@ -24,6 +24,8 @@ OTHER_SHEET_ID = uuid.UUID("019a1984-0750-7142-aedd-7529c4240003")
 EMPTY_SHEET_ID = uuid.UUID("019a1984-0750-7142-aedd-7529c4240004")
 SAME_A_ID = uuid.UUID("019a1984-0750-7142-aedd-7529c4240005")
 SAME_B_ID = uuid.UUID("019a1984-0750-7142-aedd-7529c4240006")
+ALPHA_ID = uuid.UUID("019a1984-0750-7142-aedd-7529c4240007")
+ZETA_ID = uuid.UUID("019a1984-0750-7142-aedd-7529c4240008")
 
 
 @pytest.fixture
@@ -88,6 +90,24 @@ class TestSpecSheetPowerplantFacadeGetForSheets:
             ],
             EMPTY_SHEET_ID: [],
         }
+
+    def test_orders_by_name(self, test_db_session: Session) -> None:
+        """By name first, though the slugs sort the other way (Q6)."""
+        for part_id, name, slug in (
+            (ZETA_ID, "Zeta", "a-zeta"),
+            (ALPHA_ID, "Alpha", "z-alpha"),
+        ):
+            PowerplantDBFactory(id=part_id, name=name, slug=slug)
+        test_db_session.flush()
+        for part_id in (ZETA_ID, ALPHA_ID):
+            SpecSheetPowerplantDBFactory(powerplant_id=part_id, spec_sheet_id=SHEET_ID)
+        test_db_session.flush()
+
+        listings = SpecSheetPowerplantFacade(db_session=test_db_session).get_for_sheets(
+            [SHEET_ID]
+        )[SHEET_ID]
+
+        assert names(listings) == ["Alpha", "Zeta"]
 
     def test_orders_a_name_tie_by_slug(self, test_db_session: Session) -> None:
         """Names repeat, so the slug is the last key (RDB-22)."""
