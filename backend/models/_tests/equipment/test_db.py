@@ -27,6 +27,7 @@ class TestEquipmentDB:
     ) -> None:
         EquipmentDBFactory(
             id=PART_ID,
+            fandom_page_id=8697,
             fandom_page_title="Core Block System",
             name="Core Block System",
             slug="core-block-system",
@@ -38,6 +39,7 @@ class TestEquipmentDB:
             select(EquipmentDB).where(EquipmentDB.id == PART_ID)
         ).scalar_one()
 
+        assert part.fandom_page_id == 8697
         assert part.fandom_page_title == "Core Block System"
         assert part.name == "Core Block System"
         assert part.slug == "core-block-system"
@@ -55,6 +57,7 @@ class TestEquipmentDBConstraints:
     @pytest.mark.parametrize(
         "column, value, constraint",
         [
+            ("fandom_page_id", 8697, "equipment_fandom_page_id_key"),
             (
                 "fandom_page_title",
                 "Core Block System",
@@ -64,7 +67,7 @@ class TestEquipmentDBConstraints:
         ],
     )
     def test_rejects_a_duplicate(
-        self, test_db_session: Session, column: str, value: str, constraint: str
+        self, test_db_session: Session, column: str, value: str | int, constraint: str
     ) -> None:
         EquipmentDBFactory(**{column: value})
         EquipmentDBFactory(**{column: value})
@@ -77,6 +80,7 @@ class TestEquipmentDBConstraints:
     @pytest.mark.parametrize(
         "overrides, constraint",
         [
+            ({"fandom_page_id": 0}, "ck_equipment_fandom_page_id_positive"),
             ({"fandom_page_title": ""}, "ck_equipment_fandom_page_title_not_empty"),
             ({"name": ""}, "ck_equipment_name_not_empty"),
             ({"slug": "Core_Block_System"}, "ck_equipment_slug_format"),

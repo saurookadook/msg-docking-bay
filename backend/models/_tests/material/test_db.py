@@ -27,6 +27,7 @@ class TestMaterialDB:
     ) -> None:
         MaterialDBFactory(
             id=PART_ID,
+            fandom_page_id=3877,
             fandom_page_title="Luna Titanium Alloy",
             name="Luna Titanium Alloy",
             slug="luna-titanium-alloy",
@@ -38,6 +39,7 @@ class TestMaterialDB:
             select(MaterialDB).where(MaterialDB.id == PART_ID)
         ).scalar_one()
 
+        assert part.fandom_page_id == 3877
         assert part.fandom_page_title == "Luna Titanium Alloy"
         assert part.name == "Luna Titanium Alloy"
         assert part.slug == "luna-titanium-alloy"
@@ -55,6 +57,7 @@ class TestMaterialDBConstraints:
     @pytest.mark.parametrize(
         "column, value, constraint",
         [
+            ("fandom_page_id", 3877, "materials_fandom_page_id_key"),
             (
                 "fandom_page_title",
                 "Luna Titanium Alloy",
@@ -64,7 +67,7 @@ class TestMaterialDBConstraints:
         ],
     )
     def test_rejects_a_duplicate(
-        self, test_db_session: Session, column: str, value: str, constraint: str
+        self, test_db_session: Session, column: str, value: str | int, constraint: str
     ) -> None:
         MaterialDBFactory(**{column: value})
         MaterialDBFactory(**{column: value})
@@ -77,6 +80,7 @@ class TestMaterialDBConstraints:
     @pytest.mark.parametrize(
         "overrides, constraint",
         [
+            ({"fandom_page_id": 0}, "ck_materials_fandom_page_id_positive"),
             ({"fandom_page_title": ""}, "ck_materials_fandom_page_title_not_empty"),
             ({"name": ""}, "ck_materials_name_not_empty"),
             ({"slug": "Luna_Titanium_Alloy"}, "ck_materials_slug_format"),
