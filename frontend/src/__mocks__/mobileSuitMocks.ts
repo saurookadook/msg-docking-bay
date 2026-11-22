@@ -174,14 +174,6 @@ function armament(
   };
 }
 
-function armamentRef(
-  ref: ArmamentRefEntity,
-  mount: ArmamentMount,
-  values: Partial<ArmamentListingEntity> = {},
-): ArmamentListingEntity {
-  return armament(ref.name, ref.slug, mount, values);
-}
-
 function equipment(
   ref: EquipmentRefEntity,
   values: Partial<EquipmentListingEntity> = {},
@@ -217,7 +209,10 @@ const onceOrTwice = { quantity_max: 2, quantity_min: 1 };
 const rx782Parts = {
   armaments: [
     armament('60mm Vulcan Gun', '60mm-vulcan-gun', 'fixed', twice),
-    armamentRef(beamSaber, 'handheld', { ...twice, note: '2 x Beam Javelin' }),
+    armament(beamSaber.name, beamSaber.slug, 'handheld', {
+      ...twice,
+      note: '2 x Beam Javelin',
+    }),
     armament(
       'BOWA-XBR-M-79-07G Beam Rifle',
       'bowa-xbr-m-79-07g-beam-rifle',
@@ -427,7 +422,7 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
     spec_sheets: [
       specSheet(mockSources.rx7802Gundam, {
         armaments: [
-          armamentRef(beamSaber, 'fixed', onceOrTwice),
+          armament(beamSaber.name, beamSaber.slug, 'fixed', onceOrTwice),
           armament('Vulcan Gun', 'vulcan-gun', 'fixed', twice),
           armament('Beam Rifle', 'beam-rifle', 'handheld'),
           armament('Shoulder Cannon', 'shoulder-cannon', 'optional_fixed'),
