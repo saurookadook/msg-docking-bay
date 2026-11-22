@@ -3,10 +3,10 @@
 import uuid
 
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base_db import BaseDB
-from models.mixins.checks import not_empty, not_own_parent, slug_format
+from models.mixins.checks import not_empty, not_own_parent, positive, slug_format
 from models.mixins.db import TimestampsDB
 
 
@@ -20,6 +20,8 @@ class OrganizationDB(BaseDB, TimestampsDB):
     table, as mobile suits have.
     """
 
+    fandom_page_id: Mapped[int | None] = mapped_column(unique=True)
+    """The Gundam Wiki page ID, which survives a page rename (D2)."""
     fandom_page_title: Mapped[str | None] = mapped_column(unique=True)
     """The Gundam Wiki page title; null when it has no page."""
     name: Mapped[str]
@@ -30,7 +32,18 @@ class OrganizationDB(BaseDB, TimestampsDB):
     """The organization this one is a unit of: Titans → EFF."""
     slug: Mapped[str] = mapped_column(unique=True)
 
+    parent_organization: Mapped[OrganizationDB | None] = relationship(
+        lazy="raise", remote_side="OrganizationDB.id"
+    )
+    """Loaded only by facades that ask for it (SQLA-10, SQLA-22).
+
+    One-way: the detail reads an organization's units with a query of
+    its own, so there is no ``child_organizations`` relationship to
+    load by mistake on a list.
+    """
+
     __table_args__ = (
+        positive("fandom_page_id"),
         not_empty("fandom_page_title"),
         not_empty("name"),
         not_own_parent("parent_organization_id"),

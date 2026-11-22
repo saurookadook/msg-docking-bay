@@ -98,6 +98,12 @@ a foreign key.
 slug, or a code that should not repeat gets a `UNIQUE` constraint. Surrogate keys are
 never derived from business data and never reused.
 
+The one exception is a slug redirect table (`project_slug_redirects`), which maps each
+slug a row used to have onto that row. A redirect row is nothing but its old slug: it is
+only inserted or deleted, never updated, and nothing refers to it. So its primary key is
+`old_slug` and it has no surrogate `id`. Its `CASCADE` foreign key to the row it points at
+is indexed, because it does not lead the key (RDB-18).
+
 ---
 
 ## Constraints

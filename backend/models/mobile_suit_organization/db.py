@@ -5,14 +5,18 @@ developer.
 """
 
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, ForeignKeyConstraint, Index, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from constants.catalog import MobileSuitOrganizationRole
 from constants.db_types import MOBILE_SUIT_ORGANIZATION_ROLE_DB_TYPE
 from db.base_db import BaseDB
 from models.mixins.db import CreatedAtDB
+
+if TYPE_CHECKING:
+    from models.source.db import SourceDB
 
 
 class MobileSuitOrganizationDB(BaseDB, CreatedAtDB):
@@ -47,6 +51,13 @@ class MobileSuitOrganizationDB(BaseDB, CreatedAtDB):
     """RESTRICT: a source still cited cannot be deleted (RDB-15)."""
     work_id: Mapped[uuid.UUID | None]
     """The work the role is in; null when the page does not say."""
+
+    source: Mapped[SourceDB] = relationship(lazy="raise")
+    """Loaded only by facades that ask for it (SQLA-10, SQLA-22).
+
+    One-way: nothing lists a source's citations, so ``SourceDB`` has
+    no reverse side to keep in step.
+    """
 
     __table_args__ = (
         # CASCADE: a link needs both appearances it relies on.

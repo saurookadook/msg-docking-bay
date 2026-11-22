@@ -44,6 +44,11 @@ was removed in 2.1).
 Override `__tablename__` only when the derived plural is wrong (`article_data`), and say
 why in a comment.
 
+A table whose key is not a surrogate `id` inherits from `JunctionBaseDB` instead, which
+provides the same table name, metadata and type map with no `id`. That covers junction
+tables, keyed on their foreign-key pair (RDB-2), and slug redirect tables, keyed on
+`old_slug` (RDB-13). Each such model marks its key columns `primary_key=True`.
+
 **SQLA-3 — Give `BaseDB`'s `MetaData` the naming convention in the class body**, as
 SQLAlchemy's docs show, so every constraint has its name before any table is defined (the
 keyword is `naming_convention`, singular):

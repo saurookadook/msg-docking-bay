@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import date
+from typing import Self
 
 from pydantic import Field
 
@@ -40,6 +41,15 @@ class WorkRefEntity(BaseEntityModel):
 
     slug: str
     title: str
+
+    @classmethod
+    def from_optional(cls, work: object | None) -> Self | None:
+        """Serve an outer-joined work, null when none is recorded.
+
+        SQLAlchemy types an outer-joined entity in a result row as
+        present, so the ``None`` it can hold is spelled out here.
+        """
+        return None if work is None else cls.model_validate(work)
 
 
 class WorkCardEntity(BaseEntityModel, TimestampsEntityMixin):
@@ -86,3 +96,16 @@ class WorkDetailEntity(WorkCardEntity):
     parent_work: WorkRefEntity | None = None
     # ----- from `work_relations`, in either direction
     relations: list[RelatedWorkEntity] = Field(default_factory=list[RelatedWorkEntity])
+
+
+class CitedWorkEntity(BaseEntityModel, CreatedAtEntityMixin):
+    """A work someone or something appears in, with the page saying so.
+
+    Shared by character and organization details, whose appearance
+    rows carry no episode range (unlike a suit's).
+    """
+
+    # ----- from `sources`, through the appearance's `source_id`
+    source: SourceCitationEntity
+    # ----- from `works`, through the appearance's `work_id`
+    work: WorkCardEntity

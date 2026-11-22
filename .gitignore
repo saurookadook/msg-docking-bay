@@ -173,3 +173,6 @@ htmlcov/
 
 # Downloaded source dumps (3a's loader reads them; record each in ingestion-spike.md).
 ingest/data/
+
+# Local state from the standards-review and comprehensive-review skills.
+/reviews/

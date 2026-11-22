@@ -1,19 +1,18 @@
 from collections.abc import Iterator
 from datetime import datetime
+from typing import Any
 
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import inspect, select
 from sqlalchemy.orm import Session
 
 from _factories.ingest_run.db import IngestRunDBFactory
 from config.env_vars import EnvVarManager
 from constants.catalog import IngestRunStatus
+from db.base_db import RootDB
 from models.mobile_suit.db import MobileSuitDB
-from models.source.db import SourceDB
-from models.spec_sheet.db import SpecSheetDB
-from models.work.db import WorkDB
 from scripts.seed_dev import SeedRefusedError, fandom_url, main, run
 
 
@@ -26,12 +25,22 @@ def prod_environment(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     EnvVarManager().reload()
 
 
-def updated_ats(db_session: Session) -> dict[str, datetime]:
-    stamps: dict[str, datetime] = {}
-    for model in (SourceDB, WorkDB, MobileSuitDB, SpecSheetDB):
+def snapshot(db_session: Session) -> dict[tuple[str, tuple[object, ...]], datetime]:
+    """Every row of every table, by primary key, with its last write.
+
+    ``updated_at`` where the table has one, else ``created_at``: a link
+    rewritten by delete and insert gets a new one, and a duplicate adds
+    a key.
+    """
+    rows: dict[tuple[str, tuple[object, ...]], datetime] = {}
+    for mapper in RootDB.registry.mappers:
+        model = mapper.class_
+        stamp = "updated_at" if hasattr(model, "updated_at") else "created_at"
         for row in db_session.scalars(select(model)):
-            stamps[f"{model.__name__}:{row.id}"] = row.updated_at
-    return stamps
+            identity = inspect(row).identity
+            assert identity is not None
+            rows[(model.__tablename__, identity)] = getattr(row, stamp)
+    return rows
 
 
 class TestRun:
@@ -89,13 +98,98 @@ class TestRun:
             ("compilation_of", "mobile-suit-gundam")
         ]
 
+    def test_seeds_every_people_route(
+        self, test_db_session: Session, test_app_client: TestClient
+    ) -> None:
+        """Old slugs resolve, and each page lists what its infobox does.
+
+        Okawara is credited with three of the four suits; the Origin's
+        Amuro pilots with no work, as his suit's infobox gives none.
+        """
+        run(test_db_session, force=False)
+
+        def get(path: str) -> dict[str, Any]:
+            response = test_app_client.get(path)
+            assert response.status_code == status.HTTP_200_OK, path
+            return response.json()
+
+        characters = get("/api/characters?q=amuro")
+        amuro = get("/api/characters/amuro")["data"]
+        organizations = get("/api/organizations?work=mobile-suit-gundam")
+        federation = get("/api/organizations/earth-federation-universal-century")
+        zeon_suits = get("/api/organizations/principality-of-zeon/mobile-suits")
+        designers = get("/api/mechanical-designers")
+        katoki = get("/api/mechanical-designers/katoki-hajime")["data"]
+        okawara_suits = get("/api/mechanical-designers/kunio-okawara/mobile-suits")
+        origin_gundam = get("/api/mobile-suits/rx-78-02-gundam")["data"]
+        rx_78_2_gundam = get("/api/mobile-suits/rx-78-2-gundam")["data"]
+
+        assert [c["slug"] for c in characters["data"]] == [
+            "amuro-ray",
+            "amuro-ray-origin",
+        ]
+        assert amuro["slug"] == "amuro-ray"
+        assert [a["work"]["slug"] for a in amuro["appearances"]] == [
+            "mobile-suit-gundam",
+            "mobile-suit-gundam-i",
+        ]
+        assert [
+            (p["mobile_suit"]["slug"], p["work"]["slug"])
+            for p in amuro["piloted_mobile_suits"]
+        ] == [("rx-78-2-gundam", "mobile-suit-gundam")]
+        assert amuro["appearances"][0]["source"]["url"] == (
+            "https://gundam.fandom.com/wiki/Amuro_Ray"
+        )
+        assert [o["slug"] for o in organizations["data"]] == [
+            "earth-federation",
+            "principality-of-zeon",
+        ]
+        assert federation["data"]["slug"] == "earth-federation"
+        assert [
+            (item["mobile_suit"]["slug"], [link["role"] for link in item["links"]])
+            for item in zeon_suits["data"]
+        ] == [("ms-06f-zaku-ii", ["operator"])]
+        assert [d["slug"] for d in designers["data"]] == [
+            "hajime-katoki",
+            "kunio-okawara",
+            "masaki-kawahara",
+        ]
+        assert katoki["slug"] == "hajime-katoki"
+        assert okawara_suits["meta"]["total"] == 3
+        assert [
+            d["mechanical_designer"]["slug"] for d in origin_gundam["designers"]
+        ] == [
+            "hajime-katoki",
+            "kunio-okawara",
+        ]
+        assert [
+            (p["character"]["slug"], p["work"]) for p in origin_gundam["pilots"]
+        ] == [("amuro-ray-origin", None)]
+        assert [
+            (o["organization"]["slug"], o["role"])
+            for o in rx_78_2_gundam["organizations"]
+        ] == [("earth-federation", "manufacturer")]
+        assert rx_78_2_gundam["pilots"][0]["source"]["url"] == (
+            "https://gundam.fandom.com/wiki/RX-78-2_Gundam"
+        )
+
     def test_rerun_changes_nothing(self, test_db_session: Session) -> None:
+        """No table gains, loses or rewrites a row, links included."""
         run(test_db_session, force=False)
-        before = updated_ats(test_db_session)
+        before = snapshot(test_db_session)
 
         run(test_db_session, force=False)
+        after = snapshot(test_db_session)
 
-        assert updated_ats(test_db_session) == before
+        assert after.keys() == before.keys()
+        assert after == before
+        assert {table for table, _ in before} >= {
+            "character_slug_redirects",
+            "mobile_suit_designers",
+            "mobile_suit_organizations",
+            "mobile_suit_pilots",
+            "organization_appearances",
+        }
 
     def test_refuses_after_a_completed_ingest_run(
         self, test_db_session: Session, mock_utcnow: datetime

@@ -33,9 +33,13 @@ const WIKI = 'https://gundam.fandom.com/wiki';
 
 /** @description Each seeded page's citation, at the revision the dump holds. */
 export const mockSources = {
+  amuroRay: fandomCitation(`${WIKI}/Amuro_Ray`, 705278),
+  amuroRayOrigin: fandomCitation(`${WIKI}/Amuro_Ray_(Origin)`, 694015),
+  earthFederation: fandomCitation(`${WIKI}/Earth_Federation`, 685169),
   itMoves: fandomCitation(`${WIKI}/It_Moves%3F_Gundam,_Follow_Your_Dreams!`, 637504),
   mobileSuitGundam: fandomCitation(`${WIKI}/Mobile_Suit_Gundam`, 665644),
   mobileSuitGundamI: fandomCitation(`${WIKI}/Mobile_Suit_Gundam_I`, 703163),
+  principalityOfZeon: fandomCitation(`${WIKI}/Principality_of_Zeon`, 701574),
   ms06fZakuII: fandomCitation(`${WIKI}/MS-06F_Zaku_II`, 706593),
   rx7802Gundam: fandomCitation(`${WIKI}/RX-78-02_Gundam`, 707929),
   rx782Gundam: fandomCitation(`${WIKI}/RX-78-2_Gundam`, 707889),

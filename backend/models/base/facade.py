@@ -3,10 +3,11 @@
 import re
 import uuid
 from collections.abc import Mapping, Sequence
-from typing import Any, Final
+from typing import Any, Final, NamedTuple
 
 from sqlalchemy import (
     ColumnElement,
+    Select,
     SQLColumnExpression,
     case,
     func,
@@ -19,9 +20,19 @@ from sqlalchemy.orm import Session
 
 from db.base_db import RootDB
 from db.db_session_manager import DBSessionManager
+from models.base.entity import BaseEntityModel
 
 _NOT_SEARCHABLE: Final = re.compile(r"[^a-z0-9]")
 _NOT_SEARCHABLE_SQL: Final = "[^a-z0-9]"
+
+
+class SlugColumns(NamedTuple):
+    """Where a table keeps its current slug and its old ones (D2)."""
+
+    slug: SQLColumnExpression[str]
+    row_id: SQLColumnExpression[uuid.UUID]
+    redirect_old_slug: SQLColumnExpression[str]
+    redirect_target: SQLColumnExpression[uuid.UUID]
 
 
 def normalize_search(q: str | None) -> str | None:
@@ -100,6 +111,60 @@ class BaseFacade:
     ) -> ColumnElement[int]:
         """Rank a current slug before an old one (D2)."""
         return case((slug_column == slug, 0), else_=1)
+
+    def _first_by_slug[T](
+        self,
+        stmt: Select[T],
+        slug: str,
+        *,
+        columns: SlugColumns,
+        not_found: type[Exception],
+        record: str,
+    ) -> T:
+        """Run ``stmt`` for the row with this current or old slug (D2).
+
+        A current slug wins when an old one names another row too.
+
+        Args:
+            stmt: the select to narrow, with its loader options.
+            slug: the slug from the URL.
+            columns: the table's slug and redirect columns.
+            not_found: the facade's ``NotFoundError``.
+            record: the record's name, for the error message.
+
+        Raises:
+            Exception: ``not_found``, when no slug matches.
+        """
+        row = self.db_session.scalars(
+            stmt.where(
+                self._has_slug(
+                    columns.slug,
+                    columns.row_id,
+                    columns.redirect_old_slug,
+                    columns.redirect_target,
+                    slug,
+                )
+            )
+            .order_by(self._current_slug_first(columns.slug, slug))
+            .limit(1)
+        ).one_or_none()
+        if row is None:
+            raise not_found(f"{record} record with ``slug='{slug}'`` not found")
+        return row
+
+    def _upsert_slug_redirect[E: BaseEntityModel](
+        self,
+        model: type[RootDB],
+        entity: type[E],
+        *,
+        payload: Mapping[str, Any],
+    ) -> E:
+        """Upsert an old slug, pointing it at its row (D2, RDB-13).
+
+        A redirect is keyed on its old slug, so a rerun repoints it.
+        """
+        redirect = self._upsert(model, payload=payload, conflict_columns=["old_slug"])
+        return entity.model_validate(redirect)
 
     def _upsert[T: RootDB](
         self,

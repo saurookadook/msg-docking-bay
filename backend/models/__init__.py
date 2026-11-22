@@ -8,11 +8,13 @@ first.
 from models.armament.db import ArmamentDB
 from models.character.db import CharacterDB
 from models.character_appearance.db import CharacterAppearanceDB
+from models.character_slug_redirect.db import CharacterSlugRedirectDB
 from models.continuity.db import ContinuityDB
 from models.equipment.db import EquipmentDB
 from models.ingest_run.db import IngestRunDB
 from models.material.db import MaterialDB
 from models.mechanical_designer.db import MechanicalDesignerDB
+from models.mechanical_designer_slug_redirect.db import MechanicalDesignerSlugRedirectDB
 from models.mobile_suit.db import MobileSuitDB
 from models.mobile_suit_appearance.db import MobileSuitAppearanceDB
 from models.mobile_suit_designer.db import MobileSuitDesignerDB
@@ -22,6 +24,7 @@ from models.mobile_suit_relation.db import MobileSuitRelationDB
 from models.mobile_suit_slug_redirect.db import MobileSuitSlugRedirectDB
 from models.organization.db import OrganizationDB
 from models.organization_appearance.db import OrganizationAppearanceDB
+from models.organization_slug_redirect.db import OrganizationSlugRedirectDB
 from models.powerplant.db import PowerplantDB
 from models.source.db import SourceDB
 from models.spec_sheet.db import SpecSheetDB
@@ -38,11 +41,13 @@ __all__ = [
     "ArmamentDB",
     "CharacterAppearanceDB",
     "CharacterDB",
+    "CharacterSlugRedirectDB",
     "ContinuityDB",
     "EquipmentDB",
     "IngestRunDB",
     "MaterialDB",
     "MechanicalDesignerDB",
+    "MechanicalDesignerSlugRedirectDB",
     "MobileSuitAppearanceDB",
     "MobileSuitDB",
     "MobileSuitDesignerDB",
@@ -52,6 +57,7 @@ __all__ = [
     "MobileSuitSlugRedirectDB",
     "OrganizationAppearanceDB",
     "OrganizationDB",
+    "OrganizationSlugRedirectDB",
     "PowerplantDB",
     "SourceDB",
     "SpecSheetArmamentDB",

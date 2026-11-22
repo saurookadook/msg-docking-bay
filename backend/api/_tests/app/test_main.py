@@ -51,10 +51,24 @@ class TestOperationIds:
 
         assert operation_ids == {
             "/api": ["read_home"],
+            "/api/characters": ["read_characters_list"],
+            "/api/characters/{character_slug}": ["read_character"],
             "/api/continuities": ["read_continuities_list"],
             "/api/health-check": ["read_health_check"],
+            "/api/mechanical-designers": ["read_mechanical_designers_list"],
+            "/api/mechanical-designers/{mechanical_designer_slug}": [
+                "read_mechanical_designer"
+            ],
+            "/api/mechanical-designers/{mechanical_designer_slug}/mobile-suits": [
+                "read_mechanical_designer_mobile_suits"
+            ],
             "/api/mobile-suits": ["read_mobile_suits_list"],
             "/api/mobile-suits/{mobile_suit_slug}": ["read_mobile_suit"],
+            "/api/organizations": ["read_organizations_list"],
+            "/api/organizations/{organization_slug}": ["read_organization"],
+            "/api/organizations/{organization_slug}/mobile-suits": [
+                "read_organization_mobile_suits"
+            ],
             "/api/works": ["read_works_list"],
             "/api/works/{work_slug}": ["read_work"],
             "/api/works/{work_slug}/mobile-suits": ["read_work_mobile_suits"],

@@ -1,12 +1,17 @@
 """The ``character_appearances`` table: the works a character is in."""
 
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base_db import JunctionBaseDB
 from models.mixins.db import CreatedAtDB
+
+if TYPE_CHECKING:
+    from models.source.db import SourceDB
+    from models.work.db import WorkDB
 
 
 class CharacterAppearanceDB(JunctionBaseDB, CreatedAtDB):
@@ -28,3 +33,11 @@ class CharacterAppearanceDB(JunctionBaseDB, CreatedAtDB):
         ForeignKey("works.id", ondelete="CASCADE"), primary_key=True, index=True
     )
     """Indexed: it does not lead the primary key (RDB-18)."""
+
+    source: Mapped[SourceDB] = relationship(lazy="raise")
+    work: Mapped[WorkDB] = relationship(lazy="raise")
+    """Both load only when a facade asks for them (SQLA-10, SQLA-22).
+
+    One-way: readers start from the character, never from a source
+    or a work, so neither of those needs a list of these rows.
+    """

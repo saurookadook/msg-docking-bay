@@ -29,6 +29,7 @@ class TestOrganizationDB:
         OrganizationDBFactory(id=EFF_ID, name="Earth Federation Forces")
         OrganizationDBFactory(
             id=TITANS_ID,
+            fandom_page_id=3307,
             fandom_page_title="Titans",
             name="Titans",
             parent_organization_id=EFF_ID,
@@ -41,6 +42,7 @@ class TestOrganizationDB:
             select(OrganizationDB).where(OrganizationDB.id == TITANS_ID)
         ).scalar_one()
 
+        assert titans.fandom_page_id == 3307
         assert titans.fandom_page_title == "Titans"
         assert titans.name == "Titans"
         assert titans.parent_organization_id == EFF_ID
@@ -84,12 +86,17 @@ class TestOrganizationDBConstraints:
     @pytest.mark.parametrize(
         "column, value, constraint",
         [
+            ("fandom_page_id", 3307, "organizations_fandom_page_id_key"),
             ("fandom_page_title", "Titans", "organizations_fandom_page_title_key"),
             ("slug", "titans", "organizations_slug_key"),
         ],
     )
     def test_rejects_a_duplicate(
-        self, test_db_session: Session, column: str, value: str, constraint: str
+        self,
+        test_db_session: Session,
+        column: str,
+        value: str | int,
+        constraint: str,
     ) -> None:
         OrganizationDBFactory(**{column: value})
         OrganizationDBFactory(**{column: value})
@@ -100,10 +107,31 @@ class TestOrganizationDBConstraints:
         assert violated_constraint(exc_info.value) == ("23505", constraint)
 
     @pytest.mark.parametrize(
+        "overrides",
+        [
+            # the smallest accepted page ID
+            {"fandom_page_id": 1},
+            # the shortest accepted texts
+            {"fandom_page_title": "A", "name": "A"},
+            {"slug": "a"},
+        ],
+    )
+    def test_accepts_a_boundary_value(
+        self, test_db_session: Session, overrides: dict[str, Any]
+    ) -> None:
+        OrganizationDBFactory(**overrides)
+
+        test_db_session.flush()
+
+    @pytest.mark.parametrize(
         "overrides, constraint",
         [
+            # one below the smallest accepted page ID
+            ({"fandom_page_id": 0}, "ck_organizations_fandom_page_id_positive"),
+            # empty text
             ({"fandom_page_title": ""}, "ck_organizations_fandom_page_title_not_empty"),
             ({"name": ""}, "ck_organizations_name_not_empty"),
+            # not a slug
             ({"slug": "Earth_Federation"}, "ck_organizations_slug_format"),
         ],
     )

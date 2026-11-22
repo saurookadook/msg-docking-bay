@@ -7,16 +7,29 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from _factories.character.db import CharacterDBFactory
+from _factories.character_appearance.db import CharacterAppearanceDBFactory
 from _factories.continuity.db import ContinuityDBFactory
+from _factories.mechanical_designer.db import MechanicalDesignerDBFactory
 from _factories.mobile_suit.db import MobileSuitDBFactory
 from _factories.mobile_suit_appearance.db import MobileSuitAppearanceDBFactory
+from _factories.mobile_suit_designer.db import MobileSuitDesignerDBFactory
+from _factories.mobile_suit_organization.db import MobileSuitOrganizationDBFactory
+from _factories.mobile_suit_pilot.db import MobileSuitPilotDBFactory
 from _factories.mobile_suit_relation.db import MobileSuitRelationDBFactory
 from _factories.mobile_suit_slug_redirect.db import MobileSuitSlugRedirectDBFactory
+from _factories.organization.db import OrganizationDBFactory
+from _factories.organization_appearance.db import OrganizationAppearanceDBFactory
 from _factories.source.db import SourceDBFactory
 from _factories.spec_sheet.db import SpecSheetDBFactory
 from _factories.work.db import WorkDBFactory
 from _factories.work_slug_redirect.db import WorkSlugRedirectDBFactory
-from constants.catalog import MobileSuitRelationType, SourceKind, UnitType
+from constants.catalog import (
+    MobileSuitOrganizationRole,
+    MobileSuitRelationType,
+    SourceKind,
+    UnitType,
+)
 from models._tests.query_count import CountStatements
 from models.mobile_suit.db import MobileSuitDB
 from models.mobile_suit.entity import MobileSuitCardEntity
@@ -361,6 +374,25 @@ class TestMobileSuitFacadeGetOneBySlug:
         self, test_db_session: Session, count_statements: CountStatements
     ) -> None:
         """A row of each kind costs what five do (PYTEST-24)."""
+        for suit_id, count in ((ZAKU_ID, 5), (ACT_ZAKU_ID, 1)):
+            for _ in range(count):
+                character = CharacterDBFactory()
+                designer = MechanicalDesignerDBFactory()
+                organization = OrganizationDBFactory()
+                test_db_session.flush()
+                MobileSuitPilotDBFactory(
+                    character_id=character.id, mobile_suit_id=suit_id, source_id=WIKI_ID
+                )
+                MobileSuitOrganizationDBFactory(
+                    mobile_suit_id=suit_id,
+                    organization_id=organization.id,
+                    source_id=WIKI_ID,
+                )
+                MobileSuitDesignerDBFactory(
+                    mechanical_designer_id=designer.id,
+                    mobile_suit_id=suit_id,
+                    source_id=WIKI_ID,
+                )
         for index in range(5):
             other = MobileSuitDBFactory(continuity_id=UC_ID)
             work = WorkDBFactory(continuity_id=UC_ID)
@@ -395,7 +427,10 @@ class TestMobileSuitFacadeGetOneBySlug:
             zaku = facade.get_one_by_slug("zaku-ii")
 
         assert (len(act_zaku.relations), len(zaku.relations)) == (1, 6)
-        assert few.value == many.value == 4
+        assert (len(act_zaku.pilots), len(zaku.pilots)) == (1, 5)
+        assert (len(act_zaku.organizations), len(zaku.organizations)) == (1, 5)
+        assert (len(act_zaku.designers), len(zaku.designers)) == (1, 5)
+        assert few.value == many.value == 7
 
 
 @pytest.mark.usefixtures("suits")
@@ -489,3 +524,124 @@ class TestMobileSuitCardEntity:
 
         with pytest.raises(ValidationError, match="get_attribute_error"):
             MobileSuitCardEntity.model_validate(row)
+
+
+@pytest.mark.usefixtures("suits")
+class TestMobileSuitFacadeCredits:
+    def test_get_one_by_slug_lists_its_credits(
+        self, test_db_session: Session, mock_utcnow: datetime
+    ) -> None:
+        """Refs only (Q5); a credit with no work comes last (Q2)."""
+        amuro = CharacterDBFactory(name="Amuro Ray", slug="amuro-ray")
+        sayla = CharacterDBFactory(name="Sayla Mass", slug="sayla-mass")
+        kai = CharacterDBFactory(name="Kai Shiden", slug="kai-shiden")
+        federation = OrganizationDBFactory(
+            name="Earth Federation", slug="earth-federation"
+        )
+        anaheim = OrganizationDBFactory(
+            name="Anaheim Electronics", slug="anaheim-electronics"
+        )
+        okawara = MechanicalDesignerDBFactory(
+            name="Kunio Okawara", slug="kunio-okawara"
+        )
+        katoki = MechanicalDesignerDBFactory(name="Hajime Katoki", slug="hajime-katoki")
+        test_db_session.flush()
+        for character in (amuro, sayla):
+            CharacterAppearanceDBFactory(
+                character_id=character.id, source_id=WIKI_ID, work_id=MSG_ID
+            )
+        CharacterAppearanceDBFactory(
+            character_id=amuro.id, source_id=WIKI_ID, work_id=ORIGIN_ID
+        )
+        for organization_id, work_id in (
+            (federation.id, MSG_ID),
+            (federation.id, ORIGIN_ID),
+        ):
+            OrganizationAppearanceDBFactory(
+                organization_id=organization_id, source_id=WIKI_ID, work_id=work_id
+            )
+        test_db_session.flush()
+        for character_id, work_id in (
+            (kai.id, None),
+            (amuro.id, ORIGIN_ID),
+            (sayla.id, MSG_ID),
+            (amuro.id, MSG_ID),
+        ):
+            MobileSuitPilotDBFactory(
+                character_id=character_id,
+                mobile_suit_id=GUNDAM_ID,
+                source_id=WIKI_ID,
+                work_id=work_id,
+            )
+        for organization_id, role, work_id in (
+            (anaheim.id, MobileSuitOrganizationRole.OPERATOR, None),
+            (federation.id, MobileSuitOrganizationRole.DEVELOPER, MSG_ID),
+            (federation.id, MobileSuitOrganizationRole.OPERATOR, ORIGIN_ID),
+            (federation.id, MobileSuitOrganizationRole.OPERATOR, MSG_ID),
+        ):
+            MobileSuitOrganizationDBFactory(
+                mobile_suit_id=GUNDAM_ID,
+                organization_id=organization_id,
+                role=role,
+                source_id=WIKI_ID,
+                work_id=work_id,
+            )
+        for designer in (okawara, katoki):
+            MobileSuitDesignerDBFactory(
+                mechanical_designer_id=designer.id,
+                mobile_suit_id=GUNDAM_ID,
+                source_id=WIKI_ID,
+            )
+        test_db_session.commit()
+
+        gundam = MobileSuitFacade(db_session=test_db_session).get_one_by_slug(
+            "rx-78-2-gundam"
+        )
+
+        assert [
+            (p.character.slug, p.work.slug if p.work else None) for p in gundam.pilots
+        ] == [
+            ("amuro-ray", "mobile-suit-gundam"),
+            ("sayla-mass", "mobile-suit-gundam"),
+            ("amuro-ray", "mobile-suit-gundam-the-origin"),
+            ("kai-shiden", None),
+        ]
+        assert gundam.pilots[0].character.model_dump() == {
+            "name": "Amuro Ray",
+            "slug": "amuro-ray",
+        }
+        assert gundam.pilots[0].source.url == "https://gundam.fandom.com/?curid=2034"
+        assert gundam.pilots[0].created_at == mock_utcnow
+        assert [
+            (o.role, o.work.slug if o.work else None, o.organization.slug)
+            for o in gundam.organizations
+        ] == [
+            (
+                MobileSuitOrganizationRole.OPERATOR,
+                "mobile-suit-gundam",
+                "earth-federation",
+            ),
+            (
+                MobileSuitOrganizationRole.OPERATOR,
+                "mobile-suit-gundam-the-origin",
+                "earth-federation",
+            ),
+            (MobileSuitOrganizationRole.OPERATOR, None, "anaheim-electronics"),
+            (
+                MobileSuitOrganizationRole.DEVELOPER,
+                "mobile-suit-gundam",
+                "earth-federation",
+            ),
+        ]
+        assert [d.mechanical_designer.slug for d in gundam.designers] == [
+            "hajime-katoki",
+            "kunio-okawara",
+        ]
+        assert gundam.designers[0].source.url == (
+            "https://gundam.fandom.com/?curid=2034"
+        )
+
+    def test_get_one_by_slug_with_no_credits(self, test_db_session: Session) -> None:
+        zaku = MobileSuitFacade(db_session=test_db_session).get_one_by_slug("zaku-ii")
+
+        assert (zaku.pilots, zaku.organizations, zaku.designers) == ([], [], [])

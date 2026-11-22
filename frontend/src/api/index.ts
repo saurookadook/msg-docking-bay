@@ -37,7 +37,42 @@ export type WorkResponse = Schemas['WorkResponse'];
 export type WorkType = Schemas['WorkType'];
 export type WorksListResponse = Schemas['WorksListResponse'];
 
+// Characters.
+export type CharacterCardEntity = Schemas['CharacterCardEntity'];
+export type CharacterDetailEntity = Schemas['CharacterDetailEntity'];
+export type CharacterRefEntity = Schemas['CharacterRefEntity'];
+export type CharacterResponse = Schemas['CharacterResponse'];
+export type CharactersListResponse = Schemas['CharactersListResponse'];
+export type CitedWorkEntity = Schemas['CitedWorkEntity'];
+export type PilotedMobileSuitEntity = Schemas['PilotedMobileSuitEntity'];
+
+// Organizations.
+export type MobileSuitOrganizationRole = Schemas['MobileSuitOrganizationRole'];
+export type OrganizationCardEntity = Schemas['OrganizationCardEntity'];
+export type OrganizationDetailEntity = Schemas['OrganizationDetailEntity'];
+export type OrganizationLinkEntity = Schemas['OrganizationLinkEntity'];
+export type OrganizationMobileSuitEntity = Schemas['OrganizationMobileSuitEntity'];
+export type OrganizationMobileSuitsListResponse =
+  Schemas['OrganizationMobileSuitsListResponse'];
+export type OrganizationRefEntity = Schemas['OrganizationRefEntity'];
+export type OrganizationResponse = Schemas['OrganizationResponse'];
+export type OrganizationsListResponse = Schemas['OrganizationsListResponse'];
+
+// Mechanical designers.
+export type DesignedMobileSuitEntity = Schemas['DesignedMobileSuitEntity'];
+export type MechanicalDesignerCardEntity = Schemas['MechanicalDesignerCardEntity'];
+export type MechanicalDesignerDetailEntity = Schemas['MechanicalDesignerDetailEntity'];
+export type MechanicalDesignerMobileSuitsListResponse =
+  Schemas['MechanicalDesignerMobileSuitsListResponse'];
+export type MechanicalDesignerRefEntity = Schemas['MechanicalDesignerRefEntity'];
+export type MechanicalDesignerResponse = Schemas['MechanicalDesignerResponse'];
+export type MechanicalDesignersListResponse =
+  Schemas['MechanicalDesignersListResponse'];
+
 // Mobile suits.
+export type DesignerCreditEntity = Schemas['DesignerCreditEntity'];
+export type OrganizationCreditEntity = Schemas['OrganizationCreditEntity'];
+export type PilotCreditEntity = Schemas['PilotCreditEntity'];
 export type MobileSuitAppearanceCardEntity = Schemas['MobileSuitAppearanceCardEntity'];
 export type MobileSuitCardEntity = Schemas['MobileSuitCardEntity'];
 export type MobileSuitDetailEntity = Schemas['MobileSuitDetailEntity'];

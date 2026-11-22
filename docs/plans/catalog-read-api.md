@@ -409,11 +409,20 @@ Route names follow FAPI-6. They become the operation IDs, and so the generated c
 | `GET /api/characters` | `read_characters_list` | Paginated character cards. Filters: `work`, `q` (slug, D8) |
 | `GET /api/characters/{character_slug}` | `read_character` | A character, with appearances and the suits they pilot |
 | `GET /api/organizations` | `read_organizations_list` | Paginated organization cards. Filters: `work`, `q` (slug, D8) |
-| `GET /api/organizations/{organization_slug}` | `read_organization` | An organization, with its parent, appearances and its suits by role |
-| `GET /api/mechanical-designers/{mechanical_designer_slug}` | `read_mechanical_designer` | A designer and the suits they designed |
+| `GET /api/organizations/{organization_slug}` | `read_organization` | An organization, with its parent and child organizations as refs, and its appearances |
+| `GET /api/organizations/{organization_slug}/mobile-suits` | `read_organization_mobile_suits` | Paginated, one item per suit with its `links` (role, work, source). Filter: `role`, on both suits and links |
+| `GET /api/mechanical-designers` | `read_mechanical_designers_list` | Paginated designer cards. Filter: `q` (slug, D8) |
+| `GET /api/mechanical-designers/{mechanical_designer_slug}` | `read_mechanical_designer` | A designer |
+| `GET /api/mechanical-designers/{mechanical_designer_slug}/mobile-suits` | `read_mechanical_designer_mobile_suits` | Paginated suit cards the designer is credited with, each with its source |
 
-PR C also adds `pilots`, `organizations` and `designers` to `read_mobile_suit`. That changes an
-existing response, so PR C regenerates the contract (MONO-14).
+PR C also adds `pilots`, `organizations` and `designers` to `read_mobile_suit`, as refs
+with their work and source. That changes an existing response, so PR C regenerates the
+contract (MONO-14).
+
+An organization's and a designer's suits are paged sub-resources, not lists in the
+detail: in the 2026-11-15 dump, Kunio Okawara is the designer on 438 infoboxes and the
+Earth Federation the operator on 603 (RDB-23). The grilling that settled these routes is
+in [`people-read-routes.md`](people-read-routes.md).
 
 Each resource gets its own router in `api/routes/<resources>.py` (FAPI-4) and its own envelopes in
 `api/models/<resource>.py` (FAPI-12). Routes stay thin (FAPI-14): one facade call, or a handler in
@@ -536,6 +545,15 @@ Branch `feat/add-people-read-routes`. The same steps as PR B:
   those three tables.
 - Then entities and facades, routes and the contract.
 - It also makes the `read_mobile_suit` additions.
+- Its decisions (Q1 to Q10) and steps are in
+  [`people-read-routes.md`](people-read-routes.md):
+  - Q1: an organization's and a designer's suits are paged sub-resources.
+  - Q3: a designers list, with `q`.
+  - Q6: a character's detail nests the suits they pilot.
+  - Q7: an organization's suit list has one item per suit, its links grouped.
+  - Q8: character and organization details nest their appearances.
+  - Q9: `role` filters both the suits and their links.
+  - Q10: an organization's detail names its parent and children.
 
 ### PR D — `feat(backend): serve suit parts on spec sheets`
 Branch `feat/add-suit-parts-read`.
@@ -590,7 +608,8 @@ real data.
 - **Envelope aliases.** `BaseResponseModel` camel-cases envelope field names, so `meta` must stay a
   single word. The fields inside `meta` belong to a plain model, so they stay snake_case.
 - **Work-unknown rows.** Pilot and organization links with `work_id` NULL (from PR C's schema) need a
-  defined place in responses. For example, group them under "work not recorded"; don't drop them.
+  defined place in responses. PR C settled it (Q2): they stay in the same flat list with
+  `work: null`, sorted after the links that name a work, never dropped or grouped.
   3a's loader keeps a pair to either a work-unknown row or work-specific rows, never both
   ([`data-ingestion.md`](data-ingestion.md) 3a), so that group holds only pairs with no specific row.
 - **Empty database.** Every list returns `{"data": [], "meta": {..., "total": 0}}` before the first load

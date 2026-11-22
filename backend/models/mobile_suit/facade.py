@@ -8,7 +8,7 @@ from sqlalchemy import ColumnElement, case, func, or_, select
 from sqlalchemy.orm import aliased, contains_eager, joinedload
 
 from constants.catalog import UnitType
-from models.base.facade import BaseFacade, normalize_search
+from models.base.facade import BaseFacade, SlugColumns, normalize_search
 from models.base.page import Page
 from models.continuity.db import ContinuityDB
 from models.mobile_suit.db import MobileSuitDB
@@ -22,6 +22,9 @@ from models.mobile_suit.entity import (
 )
 from models.mobile_suit_appearance.db import MobileSuitAppearanceDB
 from models.mobile_suit_appearance.entity import MobileSuitAppearanceEntity
+from models.mobile_suit_designer.facade import MobileSuitDesignerFacade
+from models.mobile_suit_organization.facade import MobileSuitOrganizationFacade
+from models.mobile_suit_pilot.facade import MobileSuitPilotFacade
 from models.mobile_suit_relation.db import MobileSuitRelationDB
 from models.mobile_suit_relation.entity import MobileSuitRelationEntity
 from models.mobile_suit_slug_redirect.db import MobileSuitSlugRedirectDB
@@ -151,39 +154,40 @@ class MobileSuitFacade(BaseFacade):
         )
 
     def get_one_by_slug(self, slug: str) -> MobileSuitDetailEntity:
-        """Return a suit with its sheets, relations and appearances.
+        """Return a suit with its sheets, relations, works and credits.
 
         An old slug finds the renamed suit, whose ``slug`` then holds
-        the current one (D2). Four statements, however many rows each
+        the current one (D2). Seven statements, however many rows each
         list holds: the suit, then one per list (PYTEST-24).
 
         Raises:
             MobileSuitFacade.NotFoundError: when no suit has the slug.
         """
-        suit = self.db_session.scalars(
-            select(MobileSuitDB)
-            .options(joinedload(MobileSuitDB.continuity))
-            .where(
-                self._has_slug(
-                    MobileSuitDB.slug,
-                    MobileSuitDB.id,
-                    MobileSuitSlugRedirectDB.old_slug,
-                    MobileSuitSlugRedirectDB.mobile_suit_id,
-                    slug,
-                )
-            )
-            .order_by(self._current_slug_first(MobileSuitDB.slug, slug))
-            .limit(1)
-        ).first()
-        if suit is None:
-            raise MobileSuitFacade.NotFoundError(
-                f"Mobile suit record with ``slug='{slug}'`` not found"
-            )
-
+        suit = self._first_by_slug(
+            select(MobileSuitDB).options(joinedload(MobileSuitDB.continuity)),
+            slug,
+            columns=SlugColumns(
+                MobileSuitDB.slug,
+                MobileSuitDB.id,
+                MobileSuitSlugRedirectDB.old_slug,
+                MobileSuitSlugRedirectDB.mobile_suit_id,
+            ),
+            not_found=MobileSuitFacade.NotFoundError,
+            record="Mobile suit",
+        )
         return MobileSuitDetailEntity.model_validate(
             {
                 **MobileSuitCardEntity.model_validate(suit).model_dump(),
                 "appearances": self._get_appearances(suit.id),
+                "designers": MobileSuitDesignerFacade(
+                    db_session=self.db_session
+                ).get_for_suit(suit.id),
+                "organizations": MobileSuitOrganizationFacade(
+                    db_session=self.db_session
+                ).get_for_suit(suit.id),
+                "pilots": MobileSuitPilotFacade(
+                    db_session=self.db_session
+                ).get_for_suit(suit.id),
                 "relations": self._get_relations(suit.id),
                 "spec_sheets": self._get_spec_sheets(suit.id),
             }
@@ -239,10 +243,9 @@ class MobileSuitFacade(BaseFacade):
         self, *, payload: Mapping[str, Any]
     ) -> MobileSuitSlugRedirectEntity:
         """Upsert an old slug, pointing it at a suit (D2)."""
-        redirect = self._upsert(
-            MobileSuitSlugRedirectDB, payload=payload, conflict_columns=["old_slug"]
+        return self._upsert_slug_redirect(
+            MobileSuitSlugRedirectDB, MobileSuitSlugRedirectEntity, payload=payload
         )
-        return MobileSuitSlugRedirectEntity.model_validate(redirect)
 
     def _get_spec_sheets(
         self, mobile_suit_id: uuid.UUID

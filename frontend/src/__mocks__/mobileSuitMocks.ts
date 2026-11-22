@@ -1,17 +1,37 @@
 // Read from the 2026-11-15 Gundam Wiki dump; `backend/scripts/seed_dev.py` holds the
 // other copy (see `catalogMocks.ts`).
 import type {
+  DesignerCreditEntity,
+  MechanicalDesignerRefEntity,
   MobileSuitAppearanceCardEntity,
   MobileSuitCardEntity,
   MobileSuitDetailEntity,
+  MobileSuitOrganizationRole,
   MobileSuitSpecSheetEntity,
+  OrganizationCreditEntity,
+  OrganizationRefEntity,
+  PilotCreditEntity,
   RelatedMobileSuitEntity,
   SourceCitationEntity,
   WorkAppearanceEntity,
   WorkCardEntity,
+  WorkRefEntity,
 } from '@/api';
 
+import type { Nullable } from '@/types';
+
 import { mockNow, mockSources, mockUniversalCenturyRef } from './catalogMocks';
+import {
+  findBySlugOrRedirect,
+  mockAmuroRayOriginRef,
+  mockAmuroRayRef,
+  mockEarthFederationRef,
+  mockHajimeKatokiRef,
+  mockKunioOkawaraRef,
+  mockMasakiKawaharaRef,
+  mockPrincipalityOfZeonRef,
+  mockZeonicRef,
+} from './peopleMocks';
 import {
   mockItMoves,
   mockMobileSuitGundam,
@@ -145,7 +165,56 @@ function alternateVersion(
   };
 }
 
-/** @description Each suit's detail, keyed by its current slug. */
+/** @description Just a work's `slug` and `title`, as a credit's `work` carries them. */
+export function toWorkRef({ slug, title }: WorkCardEntity): WorkRefEntity {
+  return { slug, title };
+}
+
+/** @description A pilot credit; `work` is null when the infobox gives the pairing none. */
+function createPilotCreditMock({
+  character,
+  source,
+  work,
+}: {
+  character: PilotCreditEntity['character'];
+  source: SourceCitationEntity;
+  work: Nullable<WorkCardEntity>;
+}): PilotCreditEntity {
+  return {
+    character,
+    created_at: mockNow,
+    source,
+    work: work === null ? null : toWorkRef(work),
+  };
+}
+
+// NOTE: none of the seeded organization links is tagged with a work, so `work` is null.
+function createOrganizationCreditMock({
+  organization,
+  role,
+  source,
+}: {
+  organization: OrganizationRefEntity;
+  role: MobileSuitOrganizationRole;
+  source: SourceCitationEntity;
+}): OrganizationCreditEntity {
+  return { created_at: mockNow, organization, role, source, work: null };
+}
+
+function createDesignerCreditMock({
+  mechanicalDesigner,
+  source,
+}: {
+  mechanicalDesigner: MechanicalDesignerRefEntity;
+  source: SourceCitationEntity;
+}): DesignerCreditEntity {
+  return { created_at: mockNow, mechanical_designer: mechanicalDesigner, source };
+}
+
+/**
+ * @description Each suit's detail, keyed by its current slug. Credits follow the API's
+ * order: pilots by work (none last), organizations by role, designers by name.
+ */
 export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEntity>> = {
   [mockRx782Gundam.slug]: {
     ...mockRx782Gundam,
@@ -156,6 +225,26 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
         last_episode: 43,
       }),
       appearance(mockMobileSuitGundamI, mockSources.rx782Gundam),
+    ],
+    designers: [
+      createDesignerCreditMock({
+        mechanicalDesigner: mockKunioOkawaraRef,
+        source: mockSources.rx782Gundam,
+      }),
+    ],
+    organizations: [
+      createOrganizationCreditMock({
+        organization: mockEarthFederationRef,
+        role: 'manufacturer',
+        source: mockSources.rx782Gundam,
+      }),
+    ],
+    pilots: [
+      createPilotCreditMock({
+        character: mockAmuroRayRef,
+        source: mockSources.rx782Gundam,
+        work: mockMobileSuitGundam,
+      }),
     ],
     relations: [
       alternateVersion('incoming', mockRx7802Gundam, mockSources.rx7802Gundam),
@@ -189,6 +278,26 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
       appearance(mockTheOrigin, mockSources.rx7802Gundam),
       appearance(mockTheOriginAdvent, mockSources.rx7802Gundam),
     ],
+    // Okawara for the manga, Katoki for the anime.
+    designers: [
+      createDesignerCreditMock({
+        mechanicalDesigner: mockHajimeKatokiRef,
+        source: mockSources.rx7802Gundam,
+      }),
+      createDesignerCreditMock({
+        mechanicalDesigner: mockKunioOkawaraRef,
+        source: mockSources.rx7802Gundam,
+      }),
+    ],
+    organizations: [],
+    // The infobox gives this pairing no work.
+    pilots: [
+      createPilotCreditMock({
+        character: mockAmuroRayOriginRef,
+        source: mockSources.rx7802Gundam,
+        work: null,
+      }),
+    ],
     relations: [
       alternateVersion('outgoing', mockRx782Gundam, mockSources.rx7802Gundam),
     ],
@@ -199,6 +308,14 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
     appearances: [
       appearance(mockItMoves, mockSources.rx78f00Gundam, { is_debut: true }),
     ],
+    designers: [
+      createDesignerCreditMock({
+        mechanicalDesigner: mockMasakiKawaharaRef,
+        source: mockSources.rx78f00Gundam,
+      }),
+    ],
+    organizations: [],
+    pilots: [],
     relations: [
       alternateVersion('outgoing', mockRx782Gundam, mockSources.rx78f00Gundam),
     ],
@@ -215,6 +332,25 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
       appearance(mockMobileSuitGundam, mockSources.ms06fZakuII, { is_debut: true }),
       appearance(mockMobileSuitGundamI, mockSources.ms06fZakuII),
     ],
+    designers: [
+      createDesignerCreditMock({
+        mechanicalDesigner: mockKunioOkawaraRef,
+        source: mockSources.ms06fZakuII,
+      }),
+    ],
+    organizations: [
+      createOrganizationCreditMock({
+        organization: mockZeonicRef,
+        role: 'manufacturer',
+        source: mockSources.ms06fZakuII,
+      }),
+      createOrganizationCreditMock({
+        organization: mockPrincipalityOfZeonRef,
+        role: 'operator',
+        source: mockSources.ms06fZakuII,
+      }),
+    ],
+    pilots: [],
     relations: [],
     spec_sheets: [
       specSheet(mockSources.ms06fZakuII, {
@@ -239,10 +375,30 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
  * @returns `undefined` for an unknown slug, which the route answers with a 404.
  */
 export function findMobileSuitMock(slug: string): MobileSuitDetailEntity | undefined {
-  return (
-    mockMobileSuitDetails[slug] ??
-    mockMobileSuitDetails[mockMobileSuitSlugRedirects[slug] ?? '']
-  );
+  return findBySlugOrRedirect({
+    byCurrentSlug: mockMobileSuitDetails,
+    redirects: mockMobileSuitSlugRedirects,
+    slug,
+  });
+}
+
+/**
+ * @description The suits with a credit that `matches`, each with those credits, in
+ * `mockMobileSuits` order (by name). The people fixtures derive their suit lists from
+ * it, so the suit fixtures stay the one copy of every credit.
+ */
+export function creditsBySuit<Credit>({
+  credits,
+  matches,
+}: {
+  credits: (detail: MobileSuitDetailEntity) => readonly Credit[];
+  matches: (credit: Credit) => boolean;
+}): { card: MobileSuitCardEntity; credits: Credit[] }[] {
+  return mockMobileSuits.flatMap((card) => {
+    const detail = mockMobileSuitDetails[card.slug];
+    const found = detail === undefined ? [] : credits(detail).filter(matches);
+    return found.length === 0 ? [] : [{ card, credits: found }];
+  });
 }
 
 /**

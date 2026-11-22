@@ -1,6 +1,166 @@
 {
     "components": {
         "schemas": {
+            "CharacterCardEntity": {
+                "description": "One character in a list.\n\nDeliberately not ``CharacterEntity``: ``id`` and the wiki page keys\nare not public (D5). Appearances and piloted suits are on the\ndetail only (``models.character.detail``).",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "name_ja": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name Ja"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    }
+                },
+                "required": ["created_at", "updated_at", "name", "name_ja", "slug"],
+                "title": "CharacterCardEntity",
+                "type": "object"
+            },
+            "CharacterDetailEntity": {
+                "description": "A character, with their works and the suits they pilot.\n\nBoth lists are bounded (a character pilots tens of suits, not\nhundreds), so they nest instead of paging.",
+                "properties": {
+                    "appearances": {
+                        "items": {
+                            "$ref": "#/components/schemas/CitedWorkEntity"
+                        },
+                        "title": "Appearances",
+                        "type": "array"
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "name_ja": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name Ja"
+                    },
+                    "piloted_mobile_suits": {
+                        "items": {
+                            "$ref": "#/components/schemas/PilotedMobileSuitEntity"
+                        },
+                        "title": "Piloted Mobile Suits",
+                        "type": "array"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "updated_at",
+                    "name",
+                    "name_ja",
+                    "slug",
+                    "appearances",
+                    "piloted_mobile_suits"
+                ],
+                "title": "CharacterDetailEntity",
+                "type": "object"
+            },
+            "CharacterRefEntity": {
+                "description": "Just enough of a character to name and link them elsewhere.",
+                "properties": {
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    }
+                },
+                "required": ["name", "slug"],
+                "title": "CharacterRefEntity",
+                "type": "object"
+            },
+            "CharacterResponse": {
+                "description": "One character, with their works and the suits they pilot.",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/CharacterDetailEntity"
+                    }
+                },
+                "required": ["data"],
+                "title": "CharacterResponse",
+                "type": "object"
+            },
+            "CharactersListResponse": {
+                "description": "One page of characters.",
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/CharacterCardEntity"
+                        },
+                        "title": "Data",
+                        "type": "array"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/PageMeta"
+                    }
+                },
+                "required": ["data", "meta"],
+                "title": "CharactersListResponse",
+                "type": "object"
+            },
+            "CitedWorkEntity": {
+                "description": "A work someone or something appears in, with the page saying so.\n\nShared by character and organization details, whose appearance\nrows carry no episode range (unlike a suit's).",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceCitationEntity"
+                    },
+                    "work": {
+                        "$ref": "#/components/schemas/WorkCardEntity"
+                    }
+                },
+                "required": ["created_at", "source", "work"],
+                "title": "CitedWorkEntity",
+                "type": "object"
+            },
             "ContentLicense": {
                 "description": "The terms a source's content is published under (ADR 0002).",
                 "enum": ["cc_by_sa_3_0", "cc_by_sa_4_0", "cc0_1_0"],
@@ -80,6 +240,44 @@
                 "title": "ContinuityRefEntity",
                 "type": "object"
             },
+            "DesignedMobileSuitEntity": {
+                "description": "A suit in a designer's list, with the page crediting them.\n\nDeliberately not ``MobileSuitDesignerEntity``: the designer's page\nneeds the suit's card, not the credit's foreign keys (D5).",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "mobile_suit": {
+                        "$ref": "#/components/schemas/MobileSuitCardEntity"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceCitationEntity"
+                    }
+                },
+                "required": ["created_at", "mobile_suit", "source"],
+                "title": "DesignedMobileSuitEntity",
+                "type": "object"
+            },
+            "DesignerCreditEntity": {
+                "description": "A mechanical designer credited with the suit.\n\nDeliberately not ``MobileSuitDesignerEntity``: the suit's page names\neach designer with a ref (Q5), and the credit's keys are not public\n(D5).",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "mechanical_designer": {
+                        "$ref": "#/components/schemas/MechanicalDesignerRefEntity"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceCitationEntity"
+                    }
+                },
+                "required": ["created_at", "mechanical_designer", "source"],
+                "title": "DesignerCreditEntity",
+                "type": "object"
+            },
             "HTTPValidationError": {
                 "properties": {
                     "detail": {
@@ -142,6 +340,143 @@
                 },
                 "required": ["data"],
                 "title": "HomeResponse",
+                "type": "object"
+            },
+            "MechanicalDesignerCardEntity": {
+                "description": "One mechanical designer in a list.\n\nDeliberately not ``MechanicalDesignerEntity``: ``id`` and the wiki\npage keys are not public (D5).",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "name_ja": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name Ja"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    }
+                },
+                "required": ["created_at", "updated_at", "name", "name_ja", "slug"],
+                "title": "MechanicalDesignerCardEntity",
+                "type": "object"
+            },
+            "MechanicalDesignerDetailEntity": {
+                "description": "A mechanical designer, on their own page.\n\nIt holds only the card's fields today. Their suits are a paginated\nroute of their own, since one designer can have hundreds (Q1,\nRDB-23). A separate type keeps the page's contract apart from the\nlist's, so a field added to the page leaves the cards unchanged.",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "name_ja": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name Ja"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    }
+                },
+                "required": ["created_at", "updated_at", "name", "name_ja", "slug"],
+                "title": "MechanicalDesignerDetailEntity",
+                "type": "object"
+            },
+            "MechanicalDesignerMobileSuitsListResponse": {
+                "description": "One page of the suits a designer is credited with.",
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/DesignedMobileSuitEntity"
+                        },
+                        "title": "Data",
+                        "type": "array"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/PageMeta"
+                    }
+                },
+                "required": ["data", "meta"],
+                "title": "MechanicalDesignerMobileSuitsListResponse",
+                "type": "object"
+            },
+            "MechanicalDesignerRefEntity": {
+                "description": "Just enough of a designer to name and link them elsewhere.",
+                "properties": {
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    }
+                },
+                "required": ["name", "slug"],
+                "title": "MechanicalDesignerRefEntity",
+                "type": "object"
+            },
+            "MechanicalDesignerResponse": {
+                "description": "One mechanical designer.",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/MechanicalDesignerDetailEntity"
+                    }
+                },
+                "required": ["data"],
+                "title": "MechanicalDesignerResponse",
+                "type": "object"
+            },
+            "MechanicalDesignersListResponse": {
+                "description": "One page of mechanical designers.",
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/MechanicalDesignerCardEntity"
+                        },
+                        "title": "Data",
+                        "type": "array"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/PageMeta"
+                    }
+                },
+                "required": ["data", "meta"],
+                "title": "MechanicalDesignersListResponse",
                 "type": "object"
             },
             "MobileSuitAppearanceCardEntity": {
@@ -314,7 +649,7 @@
                 "type": "object"
             },
             "MobileSuitDetailEntity": {
-                "description": "A suit, with its spec sheets, direct relations and appearances.\n\nEach nested list is read in one query, so a detail read costs the\nsame few statements however many rows it holds (PYTEST-24). Parts\njoin the spec sheets in a later PR; pilots and organizations too.",
+                "description": "A suit, with its sheets, relations, appearances and credits.\n\nEach nested list is read in one query, so a detail read costs the\nsame few statements however many rows it holds (PYTEST-24). The\npeople and organizations are refs: their own pages hold the rest\n(Q5). Parts join the spec sheets in a later PR.",
                 "properties": {
                     "appearances": {
                         "items": {
@@ -337,6 +672,13 @@
                         "format": "date-time",
                         "title": "Created At",
                         "type": "string"
+                    },
+                    "designers": {
+                        "items": {
+                            "$ref": "#/components/schemas/DesignerCreditEntity"
+                        },
+                        "title": "Designers",
+                        "type": "array"
                     },
                     "model_number": {
                         "anyOf": [
@@ -363,6 +705,20 @@
                             }
                         ],
                         "title": "Name Ja"
+                    },
+                    "organizations": {
+                        "items": {
+                            "$ref": "#/components/schemas/OrganizationCreditEntity"
+                        },
+                        "title": "Organizations",
+                        "type": "array"
+                    },
+                    "pilots": {
+                        "items": {
+                            "$ref": "#/components/schemas/PilotCreditEntity"
+                        },
+                        "title": "Pilots",
+                        "type": "array"
                     },
                     "relations": {
                         "items": {
@@ -401,11 +757,20 @@
                     "unit_type",
                     "continuity",
                     "appearances",
+                    "designers",
+                    "organizations",
+                    "pilots",
                     "relations",
                     "spec_sheets"
                 ],
                 "title": "MobileSuitDetailEntity",
                 "type": "object"
+            },
+            "MobileSuitOrganizationRole": {
+                "description": "What an organization does for a mobile suit.",
+                "enum": ["manufacturer", "operator", "developer"],
+                "title": "MobileSuitOrganizationRole",
+                "type": "string"
             },
             "MobileSuitRelationType": {
                 "description": "How one mobile suit descends from another, read from \u2192 to.\n\n``(Worker Zaku, Zaku II, variant_of)`` reads \"the Worker Zaku is a\nvariant of the Zaku II\".",
@@ -624,6 +989,248 @@
                 "title": "MobileSuitsListResponse",
                 "type": "object"
             },
+            "OrganizationCardEntity": {
+                "description": "One organization in a list.\n\nDeliberately not ``OrganizationEntity``: ``id`` and the wiki page\nkeys are not public (D5). The parent is a ref, so a list costs no\nquery per card.",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "parent_organization": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/OrganizationRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "updated_at",
+                    "name",
+                    "slug",
+                    "parent_organization"
+                ],
+                "title": "OrganizationCardEntity",
+                "type": "object"
+            },
+            "OrganizationCreditEntity": {
+                "description": "An organization's role for the suit, in one work or in none.\n\nDeliberately not ``MobileSuitOrganizationEntity``: the suit's page\nnames each organization with a ref (Q5), and the link's keys are\nnot public (D5).",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "organization": {
+                        "$ref": "#/components/schemas/OrganizationRefEntity"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/MobileSuitOrganizationRole"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceCitationEntity"
+                    },
+                    "work": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/WorkRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "required": ["created_at", "organization", "role", "source", "work"],
+                "title": "OrganizationCreditEntity",
+                "type": "object"
+            },
+            "OrganizationDetailEntity": {
+                "description": "An organization, with its units and the works it appears in.\n\nLeaves out its suits, which have their own paginated route: the\nEarth Federation alone operates hundreds (RDB-23).",
+                "properties": {
+                    "appearances": {
+                        "items": {
+                            "$ref": "#/components/schemas/CitedWorkEntity"
+                        },
+                        "title": "Appearances",
+                        "type": "array"
+                    },
+                    "child_organizations": {
+                        "items": {
+                            "$ref": "#/components/schemas/OrganizationRefEntity"
+                        },
+                        "title": "Child Organizations",
+                        "type": "array"
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "parent_organization": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/OrganizationRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "updated_at",
+                    "name",
+                    "slug",
+                    "parent_organization",
+                    "appearances",
+                    "child_organizations"
+                ],
+                "title": "OrganizationDetailEntity",
+                "type": "object"
+            },
+            "OrganizationLinkEntity": {
+                "description": "One role an organization has for a suit, in one work or none.\n\nDeliberately not ``MobileSuitOrganizationEntity``: the suit and the\norganization are already on the page around it, so only the role,\nwork and source are left to show, and the link's keys are not\npublic (D5).",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/MobileSuitOrganizationRole"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceCitationEntity"
+                    },
+                    "work": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/WorkRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "required": ["created_at", "role", "source", "work"],
+                "title": "OrganizationLinkEntity",
+                "type": "object"
+            },
+            "OrganizationMobileSuitEntity": {
+                "description": "A suit in an organization's list, with every role it has there.\n\nOne item per suit, not per link, so a page of cards holds distinct\nsuits; its links (one per role and work) are grouped in ``links``.",
+                "properties": {
+                    "links": {
+                        "items": {
+                            "$ref": "#/components/schemas/OrganizationLinkEntity"
+                        },
+                        "title": "Links",
+                        "type": "array"
+                    },
+                    "mobile_suit": {
+                        "$ref": "#/components/schemas/MobileSuitCardEntity"
+                    }
+                },
+                "required": ["mobile_suit", "links"],
+                "title": "OrganizationMobileSuitEntity",
+                "type": "object"
+            },
+            "OrganizationMobileSuitsListResponse": {
+                "description": "One page of an organization's suits, each with its links.",
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/OrganizationMobileSuitEntity"
+                        },
+                        "title": "Data",
+                        "type": "array"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/PageMeta"
+                    }
+                },
+                "required": ["data", "meta"],
+                "title": "OrganizationMobileSuitsListResponse",
+                "type": "object"
+            },
+            "OrganizationRefEntity": {
+                "description": "Just enough of an organization to name and link it elsewhere.",
+                "properties": {
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    }
+                },
+                "required": ["name", "slug"],
+                "title": "OrganizationRefEntity",
+                "type": "object"
+            },
+            "OrganizationResponse": {
+                "description": "One organization, with its parent, units and works.",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/OrganizationDetailEntity"
+                    }
+                },
+                "required": ["data"],
+                "title": "OrganizationResponse",
+                "type": "object"
+            },
+            "OrganizationsListResponse": {
+                "description": "One page of organizations.",
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/OrganizationCardEntity"
+                        },
+                        "title": "Data",
+                        "type": "array"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/PageMeta"
+                    }
+                },
+                "required": ["data", "meta"],
+                "title": "OrganizationsListResponse",
+                "type": "object"
+            },
             "PageMeta": {
                 "description": "Where a page sits in its list (fastapi.md FAPI-12).\n\nA plain model, not an envelope, so its fields stay ``snake_case``.\n``total`` counts every row the filters match, across every page.",
                 "properties": {
@@ -642,6 +1249,64 @@
                 },
                 "required": ["limit", "offset", "total"],
                 "title": "PageMeta",
+                "type": "object"
+            },
+            "PilotCreditEntity": {
+                "description": "A character who pilots the suit, in one work or in none.\n\nDeliberately not ``MobileSuitPilotEntity``: the suit's page names\neach pilot with a ref, and their own page holds the rest (Q5); the\nlink's keys are not public (D5).",
+                "properties": {
+                    "character": {
+                        "$ref": "#/components/schemas/CharacterRefEntity"
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceCitationEntity"
+                    },
+                    "work": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/WorkRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "required": ["created_at", "character", "source", "work"],
+                "title": "PilotCreditEntity",
+                "type": "object"
+            },
+            "PilotedMobileSuitEntity": {
+                "description": "A suit a character pilots, in one work or in a work not recorded.\n\nDeliberately not ``MobileSuitPilotEntity``: the character's page\nneeds the suit's card and the work's name, not the link's foreign\nkeys and ``id``, which are not public (D5). ``work`` is null when\nthe page names no work for the pairing; such rows sort last.",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "mobile_suit": {
+                        "$ref": "#/components/schemas/MobileSuitCardEntity"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceCitationEntity"
+                    },
+                    "work": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/WorkRefEntity"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "required": ["created_at", "mobile_suit", "source", "work"],
+                "title": "PilotedMobileSuitEntity",
                 "type": "object"
             },
             "RelatedMobileSuitEntity": {
@@ -1195,6 +1860,144 @@
                 "summary": "Read Home"
             }
         },
+        "/api/characters": {
+            "get": {
+                "description": "Return one page of characters, by name.\n\nA page past the end is 200 with an empty ``data`` and the real\n``total`` (D3). Reads only, and calls no external API.",
+                "operationId": "read_characters_list",
+                "parameters": [
+                    {
+                        "description": "Only characters in this work (its slug).",
+                        "in": "query",
+                        "name": "work",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Only characters in this work (its slug).",
+                            "title": "Work"
+                        }
+                    },
+                    {
+                        "description": "Search slugs, ignoring case, spaces and punctuation: `amuro` finds Amuro Ray. Prefix matches come first.",
+                        "in": "query",
+                        "name": "q",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "maxLength": 100,
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Search slugs, ignoring case, spaces and punctuation: `amuro` finds Amuro Ray. Prefix matches come first.",
+                            "title": "Q"
+                        }
+                    },
+                    {
+                        "description": "Rows per page, at most 100.",
+                        "in": "query",
+                        "name": "limit",
+                        "required": false,
+                        "schema": {
+                            "default": 50,
+                            "description": "Rows per page, at most 100.",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "title": "Limit",
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Rows to skip.",
+                        "in": "query",
+                        "name": "offset",
+                        "required": false,
+                        "schema": {
+                            "default": 0,
+                            "description": "Rows to skip.",
+                            "minimum": 0,
+                            "title": "Offset",
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CharactersListResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Characters List"
+            }
+        },
+        "/api/characters/{character_slug}": {
+            "get": {
+                "description": "Return a character with their works and the suits they pilot.\n\nAn old slug returns 200 with the renamed character, whose ``slug``\nis the current one; the frontend replaces its URL (D2). Reads only,\nand calls no external API.",
+                "operationId": "read_character",
+                "parameters": [
+                    {
+                        "description": "The character's current or an old slug.",
+                        "in": "path",
+                        "name": "character_slug",
+                        "required": true,
+                        "schema": {
+                            "description": "The character's current or an old slug.",
+                            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                            "title": "Character Slug",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CharacterResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Character"
+            }
+        },
         "/api/continuities": {
             "get": {
                 "description": "Return every continuity by name, each with its parent continuity.\n\nUnpaginated: there are a few dozen at most. Reads only, and calls\nno external API.",
@@ -1231,6 +2034,196 @@
                     }
                 },
                 "summary": "Read Health Check"
+            }
+        },
+        "/api/mechanical-designers": {
+            "get": {
+                "description": "Return one page of mechanical designers, by name.\n\nA page past the end is 200 with an empty ``data`` and the real\n``total`` (D3). Reads only, and calls no external API.",
+                "operationId": "read_mechanical_designers_list",
+                "parameters": [
+                    {
+                        "description": "Search slugs, ignoring case, spaces and punctuation: `okawara` finds Kunio Okawara. Prefix matches come first.",
+                        "in": "query",
+                        "name": "q",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "maxLength": 100,
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Search slugs, ignoring case, spaces and punctuation: `okawara` finds Kunio Okawara. Prefix matches come first.",
+                            "title": "Q"
+                        }
+                    },
+                    {
+                        "description": "Rows per page, at most 100.",
+                        "in": "query",
+                        "name": "limit",
+                        "required": false,
+                        "schema": {
+                            "default": 50,
+                            "description": "Rows per page, at most 100.",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "title": "Limit",
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Rows to skip.",
+                        "in": "query",
+                        "name": "offset",
+                        "required": false,
+                        "schema": {
+                            "default": 0,
+                            "description": "Rows to skip.",
+                            "minimum": 0,
+                            "title": "Offset",
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MechanicalDesignersListResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Mechanical Designers List"
+            }
+        },
+        "/api/mechanical-designers/{mechanical_designer_slug}": {
+            "get": {
+                "description": "Return a mechanical designer.\n\nTheir suits are a separate, paginated route, since one designer can\nhave hundreds (Q1). An old slug returns 200 with the renamed\ndesigner, whose ``slug`` is the current one (D2). Reads only, and\ncalls no external API.",
+                "operationId": "read_mechanical_designer",
+                "parameters": [
+                    {
+                        "description": "The designer's current or an old slug.",
+                        "in": "path",
+                        "name": "mechanical_designer_slug",
+                        "required": true,
+                        "schema": {
+                            "description": "The designer's current or an old slug.",
+                            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                            "title": "Mechanical Designer Slug",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MechanicalDesignerResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Mechanical Designer"
+            }
+        },
+        "/api/mechanical-designers/{mechanical_designer_slug}/mobile-suits": {
+            "get": {
+                "description": "Return one page of the suits credited to a designer, by name.\n\nEach carries the source that credits the designer. An unknown\ndesigner is a 404; a known one with no suits is 200 with an empty\n``data`` (FAPI-12). Reads only, and calls no external API.",
+                "operationId": "read_mechanical_designer_mobile_suits",
+                "parameters": [
+                    {
+                        "description": "The designer's current or an old slug.",
+                        "in": "path",
+                        "name": "mechanical_designer_slug",
+                        "required": true,
+                        "schema": {
+                            "description": "The designer's current or an old slug.",
+                            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                            "title": "Mechanical Designer Slug",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Rows per page, at most 100.",
+                        "in": "query",
+                        "name": "limit",
+                        "required": false,
+                        "schema": {
+                            "default": 50,
+                            "description": "Rows per page, at most 100.",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "title": "Limit",
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Rows to skip.",
+                        "in": "query",
+                        "name": "offset",
+                        "required": false,
+                        "schema": {
+                            "default": 0,
+                            "description": "Rows to skip.",
+                            "minimum": 0,
+                            "title": "Offset",
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MechanicalDesignerMobileSuitsListResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Mechanical Designer Mobile Suits"
             }
         },
         "/api/mobile-suits": {
@@ -1366,7 +2359,7 @@
         },
         "/api/mobile-suits/{mobile_suit_slug}": {
             "get": {
-                "description": "Return a suit with its spec sheets, relations and appearances.\n\nEach fact carries its source, for attribution (D6). Named spec\nsheets are filled from the same source's base sheet, and list the\ncolumns they took. An old slug returns 200 with the renamed suit,\nwhose ``slug`` is the current one (D2). Reads only.",
+                "description": "Return a suit with its spec sheets, relations and appearances.\n\nEach fact carries its source, for attribution (D6). Named spec\nsheets are filled from the same source's base sheet, and list the\ncolumns they took. An old slug returns 200 with the renamed suit,\nwhose ``slug`` is the current one (D2). Reads only, and calls no\nexternal API.",
                 "operationId": "read_mobile_suit",
                 "parameters": [
                     {
@@ -1405,6 +2398,232 @@
                     }
                 },
                 "summary": "Read Mobile Suit"
+            }
+        },
+        "/api/organizations": {
+            "get": {
+                "description": "Return one page of organizations, by name, each with its parent.\n\nA page past the end is 200 with an empty ``data`` and the real\n``total`` (D3). Reads only, and calls no external API.",
+                "operationId": "read_organizations_list",
+                "parameters": [
+                    {
+                        "description": "Only organizations in this work (its slug).",
+                        "in": "query",
+                        "name": "work",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Only organizations in this work (its slug).",
+                            "title": "Work"
+                        }
+                    },
+                    {
+                        "description": "Search slugs, ignoring case, spaces and punctuation: `zeon` finds the Principality of Zeon. Prefix matches come first.",
+                        "in": "query",
+                        "name": "q",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "maxLength": 100,
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Search slugs, ignoring case, spaces and punctuation: `zeon` finds the Principality of Zeon. Prefix matches come first.",
+                            "title": "Q"
+                        }
+                    },
+                    {
+                        "description": "Rows per page, at most 100.",
+                        "in": "query",
+                        "name": "limit",
+                        "required": false,
+                        "schema": {
+                            "default": 50,
+                            "description": "Rows per page, at most 100.",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "title": "Limit",
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Rows to skip.",
+                        "in": "query",
+                        "name": "offset",
+                        "required": false,
+                        "schema": {
+                            "default": 0,
+                            "description": "Rows to skip.",
+                            "minimum": 0,
+                            "title": "Offset",
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrganizationsListResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Organizations List"
+            }
+        },
+        "/api/organizations/{organization_slug}": {
+            "get": {
+                "description": "Return an organization with its parent, units and works.\n\nIts suits are a separate, paginated route, since one organization\ncan have hundreds (Q1). An old slug returns 200 with the renamed\norganization, whose ``slug`` is the current one (D2). Reads only,\nand calls no external API.",
+                "operationId": "read_organization",
+                "parameters": [
+                    {
+                        "description": "The organization's current or an old slug.",
+                        "in": "path",
+                        "name": "organization_slug",
+                        "required": true,
+                        "schema": {
+                            "description": "The organization's current or an old slug.",
+                            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                            "title": "Organization Slug",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrganizationResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Organization"
+            }
+        },
+        "/api/organizations/{organization_slug}/mobile-suits": {
+            "get": {
+                "description": "Return one page of an organization's suits, by name.\n\nOne item per suit, with its links (role, work and source) grouped;\n``total`` counts suits (Q7). An unknown organization is a 404; a\nknown one with no suits is 200 with an empty ``data`` (FAPI-12).\nReads only, and calls no external API.",
+                "operationId": "read_organization_mobile_suits",
+                "parameters": [
+                    {
+                        "description": "The organization's current or an old slug.",
+                        "in": "path",
+                        "name": "organization_slug",
+                        "required": true,
+                        "schema": {
+                            "description": "The organization's current or an old slug.",
+                            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                            "title": "Organization Slug",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Only suits with this role, and only those links.",
+                        "in": "query",
+                        "name": "role",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/MobileSuitOrganizationRole"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Only suits with this role, and only those links.",
+                            "title": "Role"
+                        }
+                    },
+                    {
+                        "description": "Rows per page, at most 100.",
+                        "in": "query",
+                        "name": "limit",
+                        "required": false,
+                        "schema": {
+                            "default": 50,
+                            "description": "Rows per page, at most 100.",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "title": "Limit",
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Rows to skip.",
+                        "in": "query",
+                        "name": "offset",
+                        "required": false,
+                        "schema": {
+                            "default": 0,
+                            "description": "Rows to skip.",
+                            "minimum": 0,
+                            "title": "Offset",
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrganizationMobileSuitsListResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Organization Mobile Suits"
             }
         },
         "/api/works": {
