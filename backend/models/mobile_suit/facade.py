@@ -2,7 +2,7 @@
 
 import uuid
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, Final
 
 from sqlalchemy import ColumnElement, case, func, or_, select
 from sqlalchemy.orm import aliased, contains_eager, joinedload
@@ -53,6 +53,24 @@ type SheetParts = Mapping[
     SpecSheetPartKind, Mapping[uuid.UUID, Sequence[BaseEntityModel]]
 ]
 """Each kind's listings by sheet id, from ``get_for_sheets``."""
+
+_PART_FACADES: Final[
+    Mapping[
+        SpecSheetPartKind,
+        type[
+            SpecSheetArmamentFacade
+            | SpecSheetEquipmentFacade
+            | SpecSheetMaterialFacade
+            | SpecSheetPowerplantFacade
+        ],
+    ]
+] = {
+    "armaments": SpecSheetArmamentFacade,
+    "equipment": SpecSheetEquipmentFacade,
+    "materials": SpecSheetMaterialFacade,
+    "powerplants": SpecSheetPowerplantFacade,
+}
+"""The junction facade that reads each part kind."""
 
 
 class MobileSuitFacade(BaseFacade):
@@ -286,18 +304,10 @@ class MobileSuitFacade(BaseFacade):
         ).all()
         sheet_ids = [sheet.id for sheet in sheets]
         parts: SheetParts = {
-            "armaments": SpecSheetArmamentFacade(
-                db_session=self.db_session
-            ).get_for_sheets(sheet_ids),
-            "equipment": SpecSheetEquipmentFacade(
-                db_session=self.db_session
-            ).get_for_sheets(sheet_ids),
-            "materials": SpecSheetMaterialFacade(
-                db_session=self.db_session
-            ).get_for_sheets(sheet_ids),
-            "powerplants": SpecSheetPowerplantFacade(
-                db_session=self.db_session
-            ).get_for_sheets(sheet_ids),
+            kind: _PART_FACADES[kind](db_session=self.db_session).get_for_sheets(
+                sheet_ids
+            )
+            for kind in SPEC_SHEET_PART_KINDS
         }
         base_by_source = {
             sheet.source_id: sheet for sheet in sheets if sheet.configuration is None
