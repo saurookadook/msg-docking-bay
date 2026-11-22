@@ -28,7 +28,7 @@ import uuid
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
-from typing import Any, Final, NamedTuple, Protocol, TypedDict
+from typing import TYPE_CHECKING, Any, Final, NamedTuple, Protocol, TypedDict
 from urllib.parse import quote
 
 from sqlalchemy import exists, select
@@ -69,6 +69,9 @@ from models.spec_sheet_material.facade import SpecSheetMaterialFacade
 from models.spec_sheet_powerplant.facade import SpecSheetPowerplantFacade
 from models.work.facade import WorkFacade
 from utils.logging.init import init_logging
+
+if TYPE_CHECKING:
+    from models.spec_sheet.entity import SpecSheetPartKind
 
 DESCRIPTION: Final = "Seed a small, real slice of the catalog for development."
 
@@ -966,6 +969,23 @@ def _seed_people(db_session: Session, *, ids: SeededIds) -> None:
         )
 
 
+class _Upserted(Protocol):
+    """An upserted row's entity, read only for its ``id``."""
+
+    @property
+    def id(self) -> uuid.UUID:
+        """The row's primary key."""
+        ...
+
+
+class _PartUpsert(Protocol):
+    """A part facade's ``create_or_update``."""
+
+    def __call__(self, *, payload: Mapping[str, Any]) -> _Upserted:
+        """Upsert one part."""
+        ...
+
+
 def _seed_parts(
     db_session: Session, *, base_sheet_ids: Mapping[str, uuid.UUID]
 ) -> None:
@@ -974,15 +994,32 @@ def _seed_parts(
     The infobox lists parts once, so the named configurations inherit
     them (``inherited_parts``).
     """
-    part_ids: dict[str, dict[str, uuid.UUID]] = {}
-    for kind, facade, rows in (
-        ("armaments", ArmamentFacade(db_session=db_session), ARMAMENTS),
-        ("equipment", EquipmentFacade(db_session=db_session), EQUIPMENT),
-        ("materials", MaterialFacade(db_session=db_session), MATERIALS),
-        ("powerplants", PowerplantFacade(db_session=db_session), POWERPLANTS),
-    ):
+    part_upserts: tuple[tuple[SpecSheetPartKind, _PartUpsert, list[PartRow]], ...] = (
+        (
+            "armaments",
+            ArmamentFacade(db_session=db_session).create_or_update,
+            ARMAMENTS,
+        ),
+        (
+            "equipment",
+            EquipmentFacade(db_session=db_session).create_or_update,
+            EQUIPMENT,
+        ),
+        (
+            "materials",
+            MaterialFacade(db_session=db_session).create_or_update,
+            MATERIALS,
+        ),
+        (
+            "powerplants",
+            PowerplantFacade(db_session=db_session).create_or_update,
+            POWERPLANTS,
+        ),
+    )
+    part_ids: dict[SpecSheetPartKind, dict[str, uuid.UUID]] = {}
+    for kind, upsert, rows in part_upserts:
         part_ids[kind] = {
-            row.slug: facade.create_or_update(
+            row.slug: upsert(
                 payload={
                     "fandom_page_id": row.page_id,
                     "fandom_page_title": None if row.page_id is None else row.name,
