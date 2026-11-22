@@ -1,9 +1,20 @@
-"""Entities for ``spec_sheet_equipment`` (PYD-2, PYD-4)."""
+"""Entities for ``spec_sheet_equipment`` (PYD-2, PYD-3, PYD-4)."""
+
+import uuid
 
 from constants.catalog import EquipmentFit
 from models.base.entity import BaseEntityModel
 from models.equipment.entity import EquipmentRefEntity
 from models.mixins.entity import CreatedAtEntityMixin
+
+
+class SpecSheetEquipmentEntity(BaseEntityModel, CreatedAtEntityMixin):
+    """A row of ``spec_sheet_equipment``, as stored."""
+
+    equipment_id: uuid.UUID
+    fit: EquipmentFit
+    note: str | None = None
+    spec_sheet_id: uuid.UUID
 
 
 class EquipmentListingEntity(BaseEntityModel, CreatedAtEntityMixin):

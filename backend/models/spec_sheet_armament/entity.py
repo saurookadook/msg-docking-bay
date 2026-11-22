@@ -1,9 +1,22 @@
-"""Entities for ``spec_sheet_armaments`` (PYD-2, PYD-4)."""
+"""Entities for ``spec_sheet_armaments`` (PYD-2, PYD-3, PYD-4)."""
+
+import uuid
 
 from constants.catalog import ArmamentMount
 from models.armament.entity import ArmamentRefEntity
 from models.base.entity import BaseEntityModel
 from models.mixins.entity import CreatedAtEntityMixin
+
+
+class SpecSheetArmamentEntity(BaseEntityModel, CreatedAtEntityMixin):
+    """A row of ``spec_sheet_armaments``, as stored."""
+
+    armament_id: uuid.UUID
+    mount: ArmamentMount
+    note: str | None = None
+    quantity_max: int | None = None
+    quantity_min: int | None = None
+    spec_sheet_id: uuid.UUID
 
 
 class ArmamentListingEntity(BaseEntityModel, CreatedAtEntityMixin):

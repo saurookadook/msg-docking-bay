@@ -1,7 +1,8 @@
 """Data access for ``spec_sheet_armaments`` (SQLA-16)."""
 
 import uuid
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from sqlalchemy import select
 
@@ -9,11 +10,14 @@ from models.armament.db import ArmamentDB
 from models.armament.entity import ArmamentRefEntity
 from models.base.facade import BaseFacade
 from models.spec_sheet_armament.db import SpecSheetArmamentDB
-from models.spec_sheet_armament.entity import ArmamentListingEntity
+from models.spec_sheet_armament.entity import (
+    ArmamentListingEntity,
+    SpecSheetArmamentEntity,
+)
 
 
 class SpecSheetArmamentFacade(BaseFacade):
-    """Read which armaments each spec sheet lists."""
+    """Read and write which armaments each spec sheet lists."""
 
     def get_for_sheets(
         self, spec_sheet_ids: Sequence[uuid.UUID]
@@ -51,3 +55,14 @@ class SpecSheetArmamentFacade(BaseFacade):
                 )
             )
         return by_sheet
+
+    def create_or_update(
+        self, *, payload: Mapping[str, Any]
+    ) -> SpecSheetArmamentEntity:
+        """Upsert a listing on its armament, mount and spec sheet."""
+        listing = self._upsert(
+            SpecSheetArmamentDB,
+            payload=payload,
+            conflict_columns=["armament_id", "mount", "spec_sheet_id"],
+        )
+        return SpecSheetArmamentEntity.model_validate(listing)

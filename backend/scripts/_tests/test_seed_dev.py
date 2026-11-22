@@ -12,7 +12,11 @@ from _factories.ingest_run.db import IngestRunDBFactory
 from config.env_vars import EnvVarManager
 from constants.catalog import IngestRunStatus
 from db.base_db import RootDB
+from models.armament.db import ArmamentDB
+from models.equipment.db import EquipmentDB
+from models.material.db import MaterialDB
 from models.mobile_suit.db import MobileSuitDB
+from models.powerplant.db import PowerplantDB
 from scripts.seed_dev import SeedRefusedError, fandom_url, main, run
 
 
@@ -172,6 +176,92 @@ class TestRun:
         assert rx_78_2_gundam["pilots"][0]["source"]["url"] == (
             "https://gundam.fandom.com/wiki/RX-78-2_Gundam"
         )
+
+    def test_seeds_the_spec_sheet_parts(
+        self, test_db_session: Session, test_app_client: TestClient
+    ) -> None:
+        """Parts sit on the base sheets, and named sheets inherit them.
+
+        Shared parts are one row each: both Gundams list the same alloy
+        and reactor, and the Beam Saber is handheld on one and fixed on
+        the other. Only parts with their own article have a page ID.
+        """
+        run(test_db_session, force=False)
+
+        def sheets(slug: str) -> list[dict[str, Any]]:
+            response = test_app_client.get(f"/api/mobile-suits/{slug}")
+            assert response.status_code == status.HTTP_200_OK, slug
+            return response.json()["data"]["spec_sheets"]
+
+        base, magnet_coating = sheets("rx-78-2-gundam")
+        (origin_base,) = sheets("rx-78-02-gundam")
+        (zaku_base,) = sheets("ms-06f-zaku-ii")
+        (statue_base,) = sheets("rx-78f00-gundam")
+
+        assert [
+            (
+                a["armament"]["slug"],
+                a["mount"],
+                a["quantity_min"],
+                a["quantity_max"],
+                a["note"],
+            )
+            for a in base["armaments"]
+        ] == [
+            ("60mm-vulcan-gun", "fixed", 2, 2, None),
+            # By name in the database's collation, case ignored first.
+            ("beam-saber", "handheld", 2, 2, "2 x Beam Javelin"),
+            ("bowa-xbr-m-79-07g-beam-rifle", "handheld", None, None, None),
+            (
+                "blash-xhb-l-03-n-std-380mm-hyper-bazooka",
+                "optional_handheld",
+                1,
+                2,
+                None,
+            ),
+        ]
+        assert [(e["equipment"]["name"], e["note"]) for e in base["equipment"]] == [
+            ("Core Block System", None),
+            ("Magnet Coating", "field upgrade"),
+        ]
+        assert base["inherited_parts"] == []
+        assert magnet_coating["inherited_parts"] == [
+            "armaments",
+            "equipment",
+            "materials",
+            "powerplants",
+        ]
+        assert magnet_coating["armaments"] == base["armaments"]
+        assert [(a["armament"]["slug"], a["mount"]) for a in origin_base["armaments"]][
+            :2
+        ] == [("beam-saber", "fixed"), ("vulcan-gun", "fixed")]
+        assert origin_base["materials"] == [
+            {
+                **base["materials"][0],
+                "created_at": origin_base["materials"][0]["created_at"],
+            }
+        ]
+        assert (
+            origin_base["powerplants"][0]["powerplant"]
+            == (base["powerplants"][0]["powerplant"])
+        )
+        assert [m["material"]["slug"] for m in zaku_base["materials"]] == [
+            "super-hard-steel-alloy"
+        ]
+        assert zaku_base["powerplants"] == []
+        assert [statue_base[kind] for kind in ("armaments", "equipment")] == [[], []]
+        page_ids = {
+            part.slug: part.fandom_page_id
+            for model in (ArmamentDB, EquipmentDB, MaterialDB, PowerplantDB)
+            for part in test_db_session.scalars(select(model))
+            if part.fandom_page_id is not None
+        }
+        assert page_ids == {
+            "beam-saber": 2405,
+            "core-block-system": 8697,
+            "luna-titanium-alloy": 3877,
+            "vulcan-gun": 3606,
+        }
 
     def test_rerun_changes_nothing(self, test_db_session: Session) -> None:
         """No table gains, loses or rewrites a row, links included."""

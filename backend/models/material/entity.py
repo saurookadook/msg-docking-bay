@@ -1,6 +1,16 @@
 """Entities for ``materials`` (PYD-2, PYD-4)."""
 
 from models.base.entity import BaseEntityModel
+from models.mixins.entity import IdEntityMixin, TimestampsEntityMixin
+
+
+class MaterialEntity(BaseEntityModel, IdEntityMixin, TimestampsEntityMixin):
+    """A material row, as stored."""
+
+    fandom_page_id: int | None = None
+    fandom_page_title: str | None = None
+    name: str
+    slug: str
 
 
 class MaterialRefEntity(BaseEntityModel):

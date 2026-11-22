@@ -143,3 +143,24 @@ class TestSpecSheetEquipmentFacadeGetForSheets:
             "equipment": {"name": "Core Block System", "slug": listing.equipment.slug},
             "note": "field upgrade",
         }
+
+
+@pytest.mark.usefixtures("parts")
+class TestSpecSheetEquipmentFacadeCreateOrUpdate:
+    def test_updates_the_note_on_its_key(
+        self, test_db_session: Session, mock_utcnow: datetime
+    ) -> None:
+        """A rerun with a new note updates the listing in place."""
+        facade = SpecSheetEquipmentFacade(db_session=test_db_session)
+        payload = {
+            "equipment_id": FIRST_ID,
+            "fit": EquipmentFit.STANDARD,
+            "spec_sheet_id": SHEET_ID,
+            "note": None,
+        }
+
+        created = facade.create_or_update(payload=payload)
+        noted = facade.create_or_update(payload={**payload, "note": "refit"})
+
+        assert (created.note, noted.note) == (None, "refit")
+        assert noted.created_at == created.created_at != mock_utcnow

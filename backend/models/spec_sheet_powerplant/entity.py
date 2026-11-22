@@ -1,8 +1,20 @@
-"""Entities for ``spec_sheet_powerplants`` (PYD-2, PYD-4)."""
+"""Entities for ``spec_sheet_powerplants`` (PYD-2, PYD-3, PYD-4)."""
+
+import uuid
 
 from models.base.entity import BaseEntityModel
 from models.mixins.entity import CreatedAtEntityMixin
 from models.powerplant.entity import PowerplantRefEntity
+
+
+class SpecSheetPowerplantEntity(BaseEntityModel, CreatedAtEntityMixin):
+    """A row of ``spec_sheet_powerplants``, as stored."""
+
+    powerplant_id: uuid.UUID
+    note: str | None = None
+    quantity_max: int | None = None
+    quantity_min: int | None = None
+    spec_sheet_id: uuid.UUID
 
 
 class PowerplantListingEntity(BaseEntityModel, CreatedAtEntityMixin):

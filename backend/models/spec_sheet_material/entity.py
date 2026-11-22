@@ -1,9 +1,20 @@
-"""Entities for ``spec_sheet_materials`` (PYD-2, PYD-4)."""
+"""Entities for ``spec_sheet_materials`` (PYD-2, PYD-3, PYD-4)."""
+
+import uuid
 
 from constants.catalog import MaterialUse
 from models.base.entity import BaseEntityModel
 from models.material.entity import MaterialRefEntity
 from models.mixins.entity import CreatedAtEntityMixin
+
+
+class SpecSheetMaterialEntity(BaseEntityModel, CreatedAtEntityMixin):
+    """A row of ``spec_sheet_materials``, as stored."""
+
+    material_id: uuid.UUID
+    material_use: MaterialUse
+    note: str | None = None
+    spec_sheet_id: uuid.UUID
 
 
 class MaterialListingEntity(BaseEntityModel, CreatedAtEntityMixin):

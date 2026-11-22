@@ -1,6 +1,16 @@
 """Entities for ``armaments`` (PYD-2, PYD-4)."""
 
 from models.base.entity import BaseEntityModel
+from models.mixins.entity import IdEntityMixin, TimestampsEntityMixin
+
+
+class ArmamentEntity(BaseEntityModel, IdEntityMixin, TimestampsEntityMixin):
+    """An armament row, as stored."""
+
+    fandom_page_id: int | None = None
+    fandom_page_title: str | None = None
+    name: str
+    slug: str
 
 
 class ArmamentRefEntity(BaseEntityModel):

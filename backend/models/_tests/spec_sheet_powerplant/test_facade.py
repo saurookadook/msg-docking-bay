@@ -131,3 +131,25 @@ class TestSpecSheetPowerplantFacadeGetForSheets:
             "quantity_max": 2,
             "quantity_min": 1,
         }
+
+
+@pytest.mark.usefixtures("parts")
+class TestSpecSheetPowerplantFacadeCreateOrUpdate:
+    def test_updates_the_note_on_its_key(
+        self, test_db_session: Session, mock_utcnow: datetime
+    ) -> None:
+        """A rerun with a new note updates the listing in place."""
+        facade = SpecSheetPowerplantFacade(db_session=test_db_session)
+        payload = {
+            "powerplant_id": FIRST_ID,
+            "spec_sheet_id": SHEET_ID,
+            "quantity_max": None,
+            "quantity_min": None,
+            "note": None,
+        }
+
+        created = facade.create_or_update(payload=payload)
+        noted = facade.create_or_update(payload={**payload, "note": "refit"})
+
+        assert (created.note, noted.note) == (None, "refit")
+        assert noted.created_at == created.created_at != mock_utcnow
