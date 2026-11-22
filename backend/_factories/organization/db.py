@@ -1,10 +1,11 @@
 # pyright: reportIncompatibleVariableOverride=false
 """The ``OrganizationDB`` factory (PYTEST-11)."""
 
+import uuid
 from uuid import uuid7
 
 from factory.alchemy import SQLAlchemyModelFactory
-from factory.declarations import LazyFunction
+from factory.declarations import LazyFunction, Sequence
 
 from _factories.base_meta import BaseMetaFactory
 from _factories.mixins.timestamps import TimestampsDBMixinFactory
@@ -24,9 +25,10 @@ class OrganizationDBFactory(
         model = OrganizationDB
         sqlalchemy_session = DBSessionManager().scoped_session
 
-    id = LazyFunction(uuid7)
-    fandom_page_id = None
-    fandom_page_title = None
-    name = numbered("Organization {n}")
-    parent_organization_id = None  # a real foreign key: pass an existing id
-    slug = numbered("organization-{n}")
+    id: LazyFunction = LazyFunction(uuid7)
+    fandom_page_id: int | None = None
+    fandom_page_title: str | None = None
+    name: Sequence = numbered("Organization {n}")
+    # a real foreign key: pass an existing id
+    parent_organization_id: uuid.UUID | None = None
+    slug: Sequence = numbered("organization-{n}")

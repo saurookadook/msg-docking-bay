@@ -1,7 +1,10 @@
 # pyright: reportIncompatibleVariableOverride=false
 """The ``MechanicalDesignerSlugRedirectDB`` factory (PYTEST-11)."""
 
+import uuid
+
 from factory.alchemy import SQLAlchemyModelFactory
+from factory.declarations import Sequence
 
 from _factories.base_meta import BaseMetaFactory
 from _factories.mixins.timestamps import CreatedAtDBMixinFactory
@@ -21,5 +24,6 @@ class MechanicalDesignerSlugRedirectDBFactory(
         model = MechanicalDesignerSlugRedirectDB
         sqlalchemy_session = DBSessionManager().scoped_session
 
-    old_slug = numbered("old-designer-{n}")
-    mechanical_designer_id = None  # a real foreign key: pass an existing designer's id
+    # a real foreign key: pass an existing designer's id
+    mechanical_designer_id: uuid.UUID | None = None
+    old_slug: Sequence = numbered("old-designer-{n}")

@@ -4,7 +4,7 @@
 from uuid import uuid7
 
 from factory.alchemy import SQLAlchemyModelFactory
-from factory.declarations import LazyFunction
+from factory.declarations import LazyFunction, Sequence
 
 from _factories.base_meta import BaseMetaFactory
 from _factories.mixins.timestamps import TimestampsDBMixinFactory
@@ -24,9 +24,9 @@ class MechanicalDesignerDBFactory(
         model = MechanicalDesignerDB
         sqlalchemy_session = DBSessionManager().scoped_session
 
-    id = LazyFunction(uuid7)
-    fandom_page_id = None
-    fandom_page_title = None
-    name = numbered("Mechanical Designer {n}")
-    name_ja = None
-    slug = numbered("mechanical-designer-{n}")
+    id: LazyFunction = LazyFunction(uuid7)
+    fandom_page_id: int | None = None
+    fandom_page_title: str | None = None
+    name: Sequence = numbered("Mechanical Designer {n}")
+    name_ja: str | None = None
+    slug: Sequence = numbered("mechanical-designer-{n}")
