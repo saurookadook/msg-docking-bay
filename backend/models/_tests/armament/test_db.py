@@ -52,6 +52,17 @@ class TestArmamentDB:
 
         test_db_session.flush()
 
+    def test_allows_two_without_a_page(self, test_db_session: Session) -> None:
+        """Most parts have no article, so the page ID is null."""
+        ids = [ArmamentDBFactory().id, ArmamentDBFactory().id]
+        test_db_session.flush()
+
+        page_ids = test_db_session.scalars(
+            select(ArmamentDB.fandom_page_id).where(ArmamentDB.id.in_(ids))
+        ).all()
+
+        assert page_ids == [None, None]
+
 
 class TestArmamentDBConstraints:
     @pytest.mark.parametrize(

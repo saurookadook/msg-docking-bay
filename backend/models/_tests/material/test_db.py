@@ -52,6 +52,17 @@ class TestMaterialDB:
 
         test_db_session.flush()
 
+    def test_allows_two_without_a_page(self, test_db_session: Session) -> None:
+        """Most parts have no article, so the page ID is null."""
+        ids = [MaterialDBFactory().id, MaterialDBFactory().id]
+        test_db_session.flush()
+
+        page_ids = test_db_session.scalars(
+            select(MaterialDB.fandom_page_id).where(MaterialDB.id.in_(ids))
+        ).all()
+
+        assert page_ids == [None, None]
+
 
 class TestMaterialDBConstraints:
     @pytest.mark.parametrize(
