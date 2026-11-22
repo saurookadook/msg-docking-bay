@@ -157,16 +157,18 @@ const minovskyReactor: PowerplantRefEntity = {
   slug: 'minovsky-ultracompact-fusion-reactor',
 };
 
+/** @description What every part listing starts from: the seed's time and no note. */
+const listing = { created_at: mockNow, note: null };
+
 function armament(
   ref: ArmamentRefEntity,
   mount: ArmamentMount,
   values: Partial<ArmamentListingEntity> = {},
 ): ArmamentListingEntity {
   return {
+    ...listing,
     armament: ref,
-    created_at: mockNow,
     mount,
-    note: null,
     quantity_max: null,
     quantity_min: null,
     ...values,
@@ -178,22 +180,20 @@ function equipment(
   values: Partial<EquipmentListingEntity> = {},
 ): EquipmentListingEntity {
   return {
-    created_at: mockNow,
+    ...listing,
     equipment: ref,
     fit: 'standard',
-    note: null,
     ...values,
   };
 }
 
 function armor(ref: MaterialRefEntity): MaterialListingEntity {
-  return { created_at: mockNow, material: ref, material_use: 'armor', note: null };
+  return { ...listing, material: ref, material_use: 'armor' };
 }
 
 function powerplant(ref: PowerplantRefEntity): PowerplantListingEntity {
   return {
-    created_at: mockNow,
-    note: null,
+    ...listing,
     powerplant: ref,
     quantity_max: null,
     quantity_min: null,
