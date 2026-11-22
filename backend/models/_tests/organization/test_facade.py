@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import Sequence
 from datetime import date, datetime
 
 import pytest
@@ -124,11 +125,11 @@ def organizations(test_db_session: Session) -> None:
     test_db_session.commit()
 
 
-def slugs(page_items: list[OrganizationCardEntity]) -> list[str]:
+def slugs(page_items: Sequence[OrganizationCardEntity]) -> list[str]:
     return [organization.slug for organization in page_items]
 
 
-def suit_slugs(page_items: list[OrganizationMobileSuitEntity]) -> list[str]:
+def suit_slugs(page_items: Sequence[OrganizationMobileSuitEntity]) -> list[str]:
     return [item.mobile_suit.slug for item in page_items]
 
 
@@ -264,20 +265,40 @@ class TestOrganizationFacadeGetOneBySlug:
         assert federation.slug == "earth-federation"
 
     def test_get_one_by_slug_no_result(self, test_db_session: Session) -> None:
-        with pytest.raises(OrganizationFacade.NotFoundError):
+        with pytest.raises(OrganizationFacade.NotFoundError, match="slug='aeug'"):
             OrganizationFacade(db_session=test_db_session).get_one_by_slug("aeug")
 
     def test_get_one_by_slug_sends_three_statements(
         self, test_db_session: Session, count_statements: CountStatements
     ) -> None:
-        """The organization, its units and its works (PYTEST-24)."""
-        facade = OrganizationFacade(db_session=test_db_session)
-        with count_statements() as few:
-            facade.get_one_by_slug("titans")
-        with count_statements() as several:
-            facade.get_one_by_slug("earth-federation")
+        """Its parent, units and works, at 1 row or 5 (PYTEST-24).
 
-        assert few.value == several.value == 3
+        Titans gets one unit to go with its one work; Zeon gets five of
+        each.
+        """
+        OrganizationDBFactory(parent_organization_id=TITANS_ID)
+        zeon = OrganizationDBFactory(name="Principality of Zeon", slug="zeon")
+        works = [WorkDBFactory(continuity_id=UC_ID) for _ in range(5)]
+        test_db_session.flush()
+        for work in works:
+            OrganizationDBFactory(parent_organization_id=zeon.id)
+            OrganizationAppearanceDBFactory(
+                organization_id=zeon.id, source_id=SOURCE_ID, work_id=work.id
+            )
+        test_db_session.commit()
+        facade = OrganizationFacade(db_session=test_db_session)
+
+        with count_statements() as titans_statements:
+            titans = facade.get_one_by_slug("titans")
+        with count_statements() as zeon_statements:
+            zeon_detail = facade.get_one_by_slug("zeon")
+
+        assert (len(titans.appearances), len(titans.child_organizations)) == (1, 1)
+        assert (
+            len(zeon_detail.appearances),
+            len(zeon_detail.child_organizations),
+        ) == (5, 5)
+        assert titans_statements.value == zeon_statements.value == 3
 
 
 @pytest.mark.usefixtures("organizations")
@@ -361,7 +382,7 @@ class TestOrganizationFacadeGetMobileSuitPage:
         assert page.total == 3
 
     def test_get_mobile_suit_page_no_result(self, test_db_session: Session) -> None:
-        with pytest.raises(OrganizationFacade.NotFoundError):
+        with pytest.raises(OrganizationFacade.NotFoundError, match="slug='aeug'"):
             OrganizationFacade(db_session=test_db_session).get_mobile_suit_page(
                 "aeug", limit=50, offset=0
             )
@@ -369,7 +390,10 @@ class TestOrganizationFacadeGetMobileSuitPage:
     def test_get_mobile_suit_page_sends_four_statements(
         self, test_db_session: Session, count_statements: CountStatements
     ) -> None:
-        """The slug, the page, the count and the links (PYTEST-24)."""
+        """The slug, the page, the count and the links (PYTEST-24).
+
+        An empty page skips the links query, so it costs one fewer.
+        """
         facade = OrganizationFacade(db_session=test_db_session)
         with count_statements() as one_link:
             facade.get_mobile_suit_page("zeonic", limit=50, offset=0)
@@ -387,6 +411,7 @@ class TestOrganizationFacadeWrites:
     def test_create_or_update(
         self, test_db_session: Session, mock_utcnow: datetime
     ) -> None:
+        """A changed page ID stamps ``updated_at``; a rerun does not."""
         facade = OrganizationFacade(db_session=test_db_session)
         payload = {
             "fandom_page_id": 3307,

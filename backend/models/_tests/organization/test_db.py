@@ -107,11 +107,31 @@ class TestOrganizationDBConstraints:
         assert violated_constraint(exc_info.value) == ("23505", constraint)
 
     @pytest.mark.parametrize(
+        "overrides",
+        [
+            # the smallest accepted page ID
+            {"fandom_page_id": 1},
+            # the shortest accepted texts
+            {"fandom_page_title": "A", "name": "A"},
+            {"slug": "a"},
+        ],
+    )
+    def test_accepts_a_boundary_value(
+        self, test_db_session: Session, overrides: dict[str, Any]
+    ) -> None:
+        OrganizationDBFactory(**overrides)
+
+        test_db_session.flush()
+
+    @pytest.mark.parametrize(
         "overrides, constraint",
         [
+            # one below the smallest accepted page ID
             ({"fandom_page_id": 0}, "ck_organizations_fandom_page_id_positive"),
+            # empty text
             ({"fandom_page_title": ""}, "ck_organizations_fandom_page_title_not_empty"),
             ({"name": ""}, "ck_organizations_name_not_empty"),
+            # not a slug
             ({"slug": "Earth_Federation"}, "ck_organizations_slug_format"),
         ],
     )

@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import Sequence
 from datetime import date, datetime
 
 import pytest
@@ -99,7 +100,7 @@ def characters(test_db_session: Session) -> None:
     test_db_session.commit()
 
 
-def slugs(page_items: list[CharacterCardEntity]) -> list[str]:
+def slugs(page_items: Sequence[CharacterCardEntity]) -> list[str]:
     return [character.slug for character in page_items]
 
 
@@ -244,20 +245,49 @@ class TestCharacterFacadeGetOneBySlug:
         assert amuro.slug == "amuro-ray"
 
     def test_get_one_by_slug_no_result(self, test_db_session: Session) -> None:
-        with pytest.raises(CharacterFacade.NotFoundError):
+        with pytest.raises(CharacterFacade.NotFoundError, match="slug='char-aznable'"):
             CharacterFacade(db_session=test_db_session).get_one_by_slug("char-aznable")
 
     def test_get_one_by_slug_sends_three_statements(
         self, test_db_session: Session, count_statements: CountStatements
     ) -> None:
-        """The character, works and suits, at any count (PYTEST-24)."""
-        facade = CharacterFacade(db_session=test_db_session)
-        with count_statements() as one_each:
-            facade.get_one_by_slug("kai-shiden")
-        with count_statements() as several:
-            facade.get_one_by_slug("amuro-ray")
+        """The character, works and suits, at 1 row or 5 (PYTEST-24).
 
-        assert one_each.value == several.value == 3
+        Kai has one work and one suit; Char gets five of each.
+        """
+        char = CharacterDBFactory(name="Char Aznable", slug="char-aznable")
+        works = [WorkDBFactory(continuity_id=UC_ID) for _ in range(5)]
+        suits = [MobileSuitDBFactory(continuity_id=UC_ID) for _ in range(5)]
+        test_db_session.flush()
+        for work, suit in zip(works, suits, strict=True):
+            CharacterAppearanceDBFactory(
+                character_id=char.id, source_id=SOURCE_ID, work_id=work.id
+            )
+            MobileSuitAppearanceDBFactory(
+                mobile_suit_id=suit.id, source_id=SOURCE_ID, work_id=work.id
+            )
+        test_db_session.flush()
+        for work, suit in zip(works, suits, strict=True):
+            MobileSuitPilotDBFactory(
+                character_id=char.id,
+                mobile_suit_id=suit.id,
+                source_id=SOURCE_ID,
+                work_id=work.id,
+            )
+        test_db_session.commit()
+        facade = CharacterFacade(db_session=test_db_session)
+
+        with count_statements() as kai_statements:
+            kai = facade.get_one_by_slug("kai-shiden")
+        with count_statements() as char_statements:
+            char_detail = facade.get_one_by_slug("char-aznable")
+
+        assert (len(kai.appearances), len(kai.piloted_mobile_suits)) == (1, 1)
+        assert (
+            len(char_detail.appearances),
+            len(char_detail.piloted_mobile_suits),
+        ) == (5, 5)
+        assert kai_statements.value == char_statements.value == 3
 
 
 @pytest.mark.usefixtures("characters")
