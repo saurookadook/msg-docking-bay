@@ -142,7 +142,7 @@ function specSheet(
   };
 }
 
-// Parts with their own wiki article; the seed also stores their page IDs.
+// NOTE: parts with their own wiki article; the seed also stores their page IDs.
 const beamSaber: ArmamentRefEntity = { name: 'Beam Saber', slug: 'beam-saber' };
 const coreBlockSystem: EquipmentRefEntity = {
   name: 'Core Block System',
@@ -213,7 +213,7 @@ function powerplant(ref: PowerplantRefEntity): PowerplantListingEntity {
 const twice = { quantity_max: 2, quantity_min: 2 };
 const onceOrTwice = { quantity_max: 2, quantity_min: 1 };
 
-// In the API's order: by mount, then by name in the database's collation.
+// NOTE: in the API's order: by mount, then by name in the database's collation.
 const rx782Parts = {
   armaments: [
     armament('60mm Vulcan Gun', '60mm-vulcan-gun', 'fixed', twice),
@@ -373,7 +373,7 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
         ...rx782Parts,
         turn_time_s: 1.5,
       }),
-      // The infobox gives "1.1~after magnet coating upgrade"; the rest comes from the
+      // NOTE: the infobox gives "1.1~after magnet coating upgrade"; the rest comes from the
       // base sheet of the same source, parts included, since the infobox lists them once.
       specSheet(mockSources.rx782Gundam, {
         ...rx782BaseSpecs,
@@ -489,7 +489,7 @@ export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEnti
     pilots: [],
     relations: [],
     spec_sheets: [
-      // The infobox names no powerplant.
+      // NOTE: the infobox names no powerplant.
       specSheet(mockSources.ms06fZakuII, {
         armaments: [
           armament('Shoulder Shield', 'shoulder-shield', 'fixed'),
