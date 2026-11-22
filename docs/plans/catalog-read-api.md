@@ -108,6 +108,10 @@ and no slug-to-ID lookup is needed.
   changes on a rename.
 - The 3a loader upserts on `fandom_page_id` and updates the title and slug in place.
 - The migrations go with the redirect tables: `works` in PR B, the other three in PR C.
+- *Amended 2026-11-22 (PR D, Q5):* the four part tables (`armaments`, `equipment`, `materials`
+  and `powerplants`) get the same `fandom_page_id` in PR D, so 3a matches part renames from
+  the start. Their redirect tables wait for part detail routes. A part whose title is a
+  redirect to a list section has no page of its own, so its title and page ID stay null.
 
 ### D3. Lists use limit/offset pagination with a total (**Agreed** 2026-11-13)
 
@@ -190,6 +194,11 @@ appearances[]:  work: <work card>, first_episode, last_episode, is_debut, source
 - **Parts wait for PR D.** Parts hang off spec sheets, so PR D nests `armaments[]`, `equipment[]`,
   `materials[]` and `powerplants[]` under each spec sheet. They need no `source` of their own,
   because their junctions take the spec sheet's.
+  - *Amended 2026-11-22 (PR D, Q1 and Q2):* each item nests a `{slug, name}` ref of its part,
+    next to the listing's own columns, as in `{armament: ref, mount, quantity_min, quantity_max,
+    note, created_at}`. A named configuration with no rows of a kind takes the same source's
+    base sheet list of that kind, and names it in `inherited_parts`. `inherited_fields` stays
+    measurements-only. See [`suit-parts-read.md`](suit-parts-read.md).
 
 **Timestamps are this app's row times.** `created_at` and `updated_at` say when this database created
 or last changed the row. They say nothing about when upstream edited the page: `source.retrieved_at`
@@ -424,6 +433,9 @@ detail: in the 2026-11-15 dump, Kunio Okawara is the designer on 438 infoboxes a
 Earth Federation the operator on 603 (RDB-23). The grilling that settled these routes is
 in [`people-read-routes.md`](people-read-routes.md).
 
+**PR D** adds no routes. It adds the four part lists and `inherited_parts` to each spec sheet
+in `read_mobile_suit`, and regenerates the contract.
+
 Each resource gets its own router in `api/routes/<resources>.py` (FAPI-4) and its own envelopes in
 `api/models/<resource>.py` (FAPI-12). Routes stay thin (FAPI-14): one facade call, or a handler in
 `api/routes/handlers/` when a detail response combines several facades.
@@ -560,9 +572,14 @@ Branch `feat/add-suit-parts-read`.
 
 - **Entities and facades** for armaments, equipment, materials and powerplants and their spec sheet
   junctions (D4 rule 3: this is their first caller).
-- **Part cards** with slugs, ready for part detail routes later.
+- **Part refs** (`{slug, name}`), ready for part detail routes later. *Amended 2026-11-22:* this
+  was "part cards", but a sheet nests refs, as PR C's credits do. Cards wait for a part list
+  route.
+- **Page IDs:** `fandom_page_id` on the four part tables (D2, amended).
 - **Suit detail:** `read_mobile_suit` nests the four part lists under each spec sheet, still loaded in
-  a fixed number of queries.
+  a fixed number of queries. Named configurations inherit empty kinds (`inherited_parts`).
+- **Seed:** the real parts of three of the seeded suits.
+- The grilled plan is [`suit-parts-read.md`](suit-parts-read.md).
 - **Contract:** run `api:generate`, then update the MONO-15 aliases, the endpoint table and the
   fixtures.
 
