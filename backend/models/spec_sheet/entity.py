@@ -13,6 +13,9 @@ from models.spec_sheet_equipment.entity import EquipmentListingEntity
 from models.spec_sheet_material.entity import MaterialListingEntity
 from models.spec_sheet_powerplant.entity import PowerplantListingEntity
 
+# NOTE: SpecSheetField and SpecSheetPartKind are plain assignments,
+# not ``type`` statements (a departure from PY-43): ``get_args`` reads
+# each at import time, and a ``type`` alias would give it nothing.
 SpecSheetField = Literal[
     "empty_weight_kg",
     "generator_output_kw",
