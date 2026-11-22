@@ -61,6 +61,7 @@ export type OrganizationsListResponse = Schemas['OrganizationsListResponse'];
 // Mechanical designers.
 export type DesignedMobileSuitEntity = Schemas['DesignedMobileSuitEntity'];
 export type MechanicalDesignerCardEntity = Schemas['MechanicalDesignerCardEntity'];
+export type MechanicalDesignerDetailEntity = Schemas['MechanicalDesignerDetailEntity'];
 export type MechanicalDesignerMobileSuitsListResponse =
   Schemas['MechanicalDesignerMobileSuitsListResponse'];
 export type MechanicalDesignerRefEntity = Schemas['MechanicalDesignerRefEntity'];

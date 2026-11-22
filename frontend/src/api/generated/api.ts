@@ -61,7 +61,8 @@ export interface paths {
      * @description Return a character with their works and the suits they pilot.
      *
      *     An old slug returns 200 with the renamed character, whose ``slug``
-     *     is the current one; the frontend replaces its URL (D2). Reads only.
+     *     is the current one; the frontend replaces its URL (D2). Reads only,
+     *     and calls no external API.
      */
     get: operations['read_character'];
     put?: never;
@@ -154,7 +155,8 @@ export interface paths {
      *
      *     Their suits are a separate, paginated route, since one designer can
      *     have hundreds (Q1). An old slug returns 200 with the renamed
-     *     designer, whose ``slug`` is the current one (D2). Reads only.
+     *     designer, whose ``slug`` is the current one (D2). Reads only, and
+     *     calls no external API.
      */
     get: operations['read_mechanical_designer'];
     put?: never;
@@ -178,7 +180,7 @@ export interface paths {
      *
      *     Each carries the source that credits the designer. An unknown
      *     designer is a 404; a known one with no suits is 200 with an empty
-     *     ``data`` (FAPI-12). Reads only.
+     *     ``data`` (FAPI-12). Reads only, and calls no external API.
      */
     get: operations['read_mechanical_designer_mobile_suits'];
     put?: never;
@@ -228,7 +230,8 @@ export interface paths {
      *     Each fact carries its source, for attribution (D6). Named spec
      *     sheets are filled from the same source's base sheet, and list the
      *     columns they took. An old slug returns 200 with the renamed suit,
-     *     whose ``slug`` is the current one (D2). Reads only.
+     *     whose ``slug`` is the current one (D2). Reads only, and calls no
+     *     external API.
      */
     get: operations['read_mobile_suit'];
     put?: never;
@@ -275,7 +278,8 @@ export interface paths {
      *
      *     Its suits are a separate, paginated route, since one organization
      *     can have hundreds (Q1). An old slug returns 200 with the renamed
-     *     organization, whose ``slug`` is the current one (D2). Reads only.
+     *     organization, whose ``slug`` is the current one (D2). Reads only,
+     *     and calls no external API.
      */
     get: operations['read_organization'];
     put?: never;
@@ -300,7 +304,7 @@ export interface paths {
      *     One item per suit, with its links (role, work and source) grouped;
      *     ``total`` counts suits (Q7). An unknown organization is a 404; a
      *     known one with no suits is 200 with an empty ``data`` (FAPI-12).
-     *     Reads only.
+     *     Reads only, and calls no external API.
      */
     get: operations['read_organization_mobile_suits'];
     put?: never;
@@ -536,6 +540,9 @@ export interface components {
     /**
      * DesignedMobileSuitEntity
      * @description A suit in a designer's list, with the page crediting them.
+     *
+     *     Deliberately not ``MobileSuitDesignerEntity``: the designer's page
+     *     needs the suit's card, not the credit's foreign keys (D5).
      */
     DesignedMobileSuitEntity: {
       /**
@@ -549,6 +556,10 @@ export interface components {
     /**
      * DesignerCreditEntity
      * @description A mechanical designer credited with the suit.
+     *
+     *     Deliberately not ``MobileSuitDesignerEntity``: the suit's page names
+     *     each designer with a ref (Q5), and the credit's keys are not public
+     *     (D5).
      */
     DesignerCreditEntity: {
       /**
@@ -601,13 +612,39 @@ export interface components {
     };
     /**
      * MechanicalDesignerCardEntity
-     * @description One mechanical designer, in a list or on their own page.
+     * @description One mechanical designer in a list.
      *
      *     Deliberately not ``MechanicalDesignerEntity``: ``id`` and the wiki
-     *     page keys are not public (D5). Their suits are a paginated route of
-     *     their own, since one designer can have hundreds (RDB-23).
+     *     page keys are not public (D5).
      */
     MechanicalDesignerCardEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Name */
+      name: string;
+      /** Name Ja */
+      name_ja: string | null;
+      /** Slug */
+      slug: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * MechanicalDesignerDetailEntity
+     * @description A mechanical designer, on their own page.
+     *
+     *     It holds only the card's fields today. Their suits are a paginated
+     *     route of their own, since one designer can have hundreds (Q1,
+     *     RDB-23). A separate type keeps the page's contract apart from the
+     *     list's, so a field added to the page leaves the cards unchanged.
+     */
+    MechanicalDesignerDetailEntity: {
       /**
        * Created At
        * Format: date-time
@@ -649,7 +686,7 @@ export interface components {
      * @description One mechanical designer.
      */
     MechanicalDesignerResponse: {
-      data: components['schemas']['MechanicalDesignerCardEntity'];
+      data: components['schemas']['MechanicalDesignerDetailEntity'];
     };
     /**
      * MechanicalDesignersListResponse
@@ -888,6 +925,10 @@ export interface components {
     /**
      * OrganizationCreditEntity
      * @description An organization's role for the suit, in one work or in none.
+     *
+     *     Deliberately not ``MobileSuitOrganizationEntity``: the suit's page
+     *     names each organization with a ref (Q5), and the link's keys are
+     *     not public (D5).
      */
     OrganizationCreditEntity: {
       /**
@@ -931,6 +972,11 @@ export interface components {
     /**
      * OrganizationLinkEntity
      * @description One role an organization has for a suit, in one work or none.
+     *
+     *     Deliberately not ``MobileSuitOrganizationEntity``: the suit and the
+     *     organization are already on the page around it, so only the role,
+     *     work and source are left to show, and the link's keys are not
+     *     public (D5).
      */
     OrganizationLinkEntity: {
       /**
@@ -1007,6 +1053,10 @@ export interface components {
     /**
      * PilotCreditEntity
      * @description A character who pilots the suit, in one work or in none.
+     *
+     *     Deliberately not ``MobileSuitPilotEntity``: the suit's page names
+     *     each pilot with a ref, and their own page holds the rest (Q5); the
+     *     link's keys are not public (D5).
      */
     PilotCreditEntity: {
       character: components['schemas']['CharacterRefEntity'];
@@ -1022,8 +1072,10 @@ export interface components {
      * PilotedMobileSuitEntity
      * @description A suit a character pilots, in one work or in a work not recorded.
      *
-     *     ``work`` is null when the page names no work for the pairing; such
-     *     rows sort after the ones with a work.
+     *     Deliberately not ``MobileSuitPilotEntity``: the character's page
+     *     needs the suit's card and the work's name, not the link's foreign
+     *     keys and ``id``, which are not public (D5). ``work`` is null when
+     *     the page names no work for the pairing; such rows sort last.
      */
     PilotedMobileSuitEntity: {
       /**

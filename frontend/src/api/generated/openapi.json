@@ -241,7 +241,7 @@
                 "type": "object"
             },
             "DesignedMobileSuitEntity": {
-                "description": "A suit in a designer's list, with the page crediting them.",
+                "description": "A suit in a designer's list, with the page crediting them.\n\nDeliberately not ``MobileSuitDesignerEntity``: the designer's page\nneeds the suit's card, not the credit's foreign keys (D5).",
                 "properties": {
                     "created_at": {
                         "format": "date-time",
@@ -260,7 +260,7 @@
                 "type": "object"
             },
             "DesignerCreditEntity": {
-                "description": "A mechanical designer credited with the suit.",
+                "description": "A mechanical designer credited with the suit.\n\nDeliberately not ``MobileSuitDesignerEntity``: the suit's page names\neach designer with a ref (Q5), and the credit's keys are not public\n(D5).",
                 "properties": {
                     "created_at": {
                         "format": "date-time",
@@ -343,7 +343,7 @@
                 "type": "object"
             },
             "MechanicalDesignerCardEntity": {
-                "description": "One mechanical designer, in a list or on their own page.\n\nDeliberately not ``MechanicalDesignerEntity``: ``id`` and the wiki\npage keys are not public (D5). Their suits are a paginated route of\ntheir own, since one designer can have hundreds (RDB-23).",
+                "description": "One mechanical designer in a list.\n\nDeliberately not ``MechanicalDesignerEntity``: ``id`` and the wiki\npage keys are not public (D5).",
                 "properties": {
                     "created_at": {
                         "format": "date-time",
@@ -377,6 +377,43 @@
                 },
                 "required": ["created_at", "updated_at", "name", "name_ja", "slug"],
                 "title": "MechanicalDesignerCardEntity",
+                "type": "object"
+            },
+            "MechanicalDesignerDetailEntity": {
+                "description": "A mechanical designer, on their own page.\n\nIt holds only the card's fields today. Their suits are a paginated\nroute of their own, since one designer can have hundreds (Q1,\nRDB-23). A separate type keeps the page's contract apart from the\nlist's, so a field added to the page leaves the cards unchanged.",
+                "properties": {
+                    "created_at": {
+                        "format": "date-time",
+                        "title": "Created At",
+                        "type": "string"
+                    },
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "name_ja": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name Ja"
+                    },
+                    "slug": {
+                        "title": "Slug",
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "type": "string"
+                    }
+                },
+                "required": ["created_at", "updated_at", "name", "name_ja", "slug"],
+                "title": "MechanicalDesignerDetailEntity",
                 "type": "object"
             },
             "MechanicalDesignerMobileSuitsListResponse": {
@@ -417,7 +454,7 @@
                 "description": "One mechanical designer.",
                 "properties": {
                     "data": {
-                        "$ref": "#/components/schemas/MechanicalDesignerCardEntity"
+                        "$ref": "#/components/schemas/MechanicalDesignerDetailEntity"
                     }
                 },
                 "required": ["data"],
@@ -995,7 +1032,7 @@
                 "type": "object"
             },
             "OrganizationCreditEntity": {
-                "description": "An organization's role for the suit, in one work or in none.",
+                "description": "An organization's role for the suit, in one work or in none.\n\nDeliberately not ``MobileSuitOrganizationEntity``: the suit's page\nnames each organization with a ref (Q5), and the link's keys are\nnot public (D5).",
                 "properties": {
                     "created_at": {
                         "format": "date-time",
@@ -1085,7 +1122,7 @@
                 "type": "object"
             },
             "OrganizationLinkEntity": {
-                "description": "One role an organization has for a suit, in one work or none.",
+                "description": "One role an organization has for a suit, in one work or none.\n\nDeliberately not ``MobileSuitOrganizationEntity``: the suit and the\norganization are already on the page around it, so only the role,\nwork and source are left to show, and the link's keys are not\npublic (D5).",
                 "properties": {
                     "created_at": {
                         "format": "date-time",
@@ -1215,7 +1252,7 @@
                 "type": "object"
             },
             "PilotCreditEntity": {
-                "description": "A character who pilots the suit, in one work or in none.",
+                "description": "A character who pilots the suit, in one work or in none.\n\nDeliberately not ``MobileSuitPilotEntity``: the suit's page names\neach pilot with a ref, and their own page holds the rest (Q5); the\nlink's keys are not public (D5).",
                 "properties": {
                     "character": {
                         "$ref": "#/components/schemas/CharacterRefEntity"
@@ -1244,7 +1281,7 @@
                 "type": "object"
             },
             "PilotedMobileSuitEntity": {
-                "description": "A suit a character pilots, in one work or in a work not recorded.\n\n``work`` is null when the page names no work for the pairing; such\nrows sort after the ones with a work.",
+                "description": "A suit a character pilots, in one work or in a work not recorded.\n\nDeliberately not ``MobileSuitPilotEntity``: the character's page\nneeds the suit's card and the work's name, not the link's foreign\nkeys and ``id``, which are not public (D5). ``work`` is null when\nthe page names no work for the pairing; such rows sort last.",
                 "properties": {
                     "created_at": {
                         "format": "date-time",
@@ -1920,7 +1957,7 @@
         },
         "/api/characters/{character_slug}": {
             "get": {
-                "description": "Return a character with their works and the suits they pilot.\n\nAn old slug returns 200 with the renamed character, whose ``slug``\nis the current one; the frontend replaces its URL (D2). Reads only.",
+                "description": "Return a character with their works and the suits they pilot.\n\nAn old slug returns 200 with the renamed character, whose ``slug``\nis the current one; the frontend replaces its URL (D2). Reads only,\nand calls no external API.",
                 "operationId": "read_character",
                 "parameters": [
                     {
@@ -2078,7 +2115,7 @@
         },
         "/api/mechanical-designers/{mechanical_designer_slug}": {
             "get": {
-                "description": "Return a mechanical designer.\n\nTheir suits are a separate, paginated route, since one designer can\nhave hundreds (Q1). An old slug returns 200 with the renamed\ndesigner, whose ``slug`` is the current one (D2). Reads only.",
+                "description": "Return a mechanical designer.\n\nTheir suits are a separate, paginated route, since one designer can\nhave hundreds (Q1). An old slug returns 200 with the renamed\ndesigner, whose ``slug`` is the current one (D2). Reads only, and\ncalls no external API.",
                 "operationId": "read_mechanical_designer",
                 "parameters": [
                     {
@@ -2121,7 +2158,7 @@
         },
         "/api/mechanical-designers/{mechanical_designer_slug}/mobile-suits": {
             "get": {
-                "description": "Return one page of the suits credited to a designer, by name.\n\nEach carries the source that credits the designer. An unknown\ndesigner is a 404; a known one with no suits is 200 with an empty\n``data`` (FAPI-12). Reads only.",
+                "description": "Return one page of the suits credited to a designer, by name.\n\nEach carries the source that credits the designer. An unknown\ndesigner is a 404; a known one with no suits is 200 with an empty\n``data`` (FAPI-12). Reads only, and calls no external API.",
                 "operationId": "read_mechanical_designer_mobile_suits",
                 "parameters": [
                     {
@@ -2322,7 +2359,7 @@
         },
         "/api/mobile-suits/{mobile_suit_slug}": {
             "get": {
-                "description": "Return a suit with its spec sheets, relations and appearances.\n\nEach fact carries its source, for attribution (D6). Named spec\nsheets are filled from the same source's base sheet, and list the\ncolumns they took. An old slug returns 200 with the renamed suit,\nwhose ``slug`` is the current one (D2). Reads only.",
+                "description": "Return a suit with its spec sheets, relations and appearances.\n\nEach fact carries its source, for attribution (D6). Named spec\nsheets are filled from the same source's base sheet, and list the\ncolumns they took. An old slug returns 200 with the renamed suit,\nwhose ``slug`` is the current one (D2). Reads only, and calls no\nexternal API.",
                 "operationId": "read_mobile_suit",
                 "parameters": [
                     {
@@ -2460,7 +2497,7 @@
         },
         "/api/organizations/{organization_slug}": {
             "get": {
-                "description": "Return an organization with its parent, units and works.\n\nIts suits are a separate, paginated route, since one organization\ncan have hundreds (Q1). An old slug returns 200 with the renamed\norganization, whose ``slug`` is the current one (D2). Reads only.",
+                "description": "Return an organization with its parent, units and works.\n\nIts suits are a separate, paginated route, since one organization\ncan have hundreds (Q1). An old slug returns 200 with the renamed\norganization, whose ``slug`` is the current one (D2). Reads only,\nand calls no external API.",
                 "operationId": "read_organization",
                 "parameters": [
                     {
@@ -2503,7 +2540,7 @@
         },
         "/api/organizations/{organization_slug}/mobile-suits": {
             "get": {
-                "description": "Return one page of an organization's suits, by name.\n\nOne item per suit, with its links (role, work and source) grouped;\n``total`` counts suits (Q7). An unknown organization is a 404; a\nknown one with no suits is 200 with an empty ``data`` (FAPI-12).\nReads only.",
+                "description": "Return one page of an organization's suits, by name.\n\nOne item per suit, with its links (role, work and source) grouped;\n``total`` counts suits (Q7). An unknown organization is a 404; a\nknown one with no suits is 200 with an empty ``data`` (FAPI-12).\nReads only, and calls no external API.",
                 "operationId": "read_organization_mobile_suits",
                 "parameters": [
                     {
