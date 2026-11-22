@@ -2,12 +2,12 @@
 
 import uuid
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Final
 
 from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.orm import contains_eager, joinedload
 
-from models.base.facade import BaseFacade, normalize_search
+from models.base.facade import BaseFacade, SlugColumns, normalize_search
 from models.base.page import Page
 from models.character.db import CharacterDB
 from models.character.detail import CharacterDetailEntity
@@ -16,13 +16,17 @@ from models.character_appearance.db import CharacterAppearanceDB
 from models.character_appearance.entity import CharacterAppearanceEntity
 from models.character_slug_redirect.db import CharacterSlugRedirectDB
 from models.character_slug_redirect.entity import CharacterSlugRedirectEntity
-from models.mobile_suit.db import MobileSuitDB
-from models.mobile_suit.entity import MobileSuitCardEntity, PilotedMobileSuitEntity
-from models.mobile_suit_pilot.db import MobileSuitPilotDB
+from models.mobile_suit_pilot.facade import MobileSuitPilotFacade
 from models.source.entity import SourceCitationEntity
 from models.work.db import WorkDB
 from models.work.entity import CitedWorkEntity, WorkCardEntity
-from models.work.facade import optional_work_ref
+
+_SLUG_COLUMNS: Final = SlugColumns(
+    CharacterDB.slug,
+    CharacterDB.id,
+    CharacterSlugRedirectDB.old_slug,
+    CharacterSlugRedirectDB.character_id,
+)
 
 
 class CharacterFacade(BaseFacade):
@@ -81,17 +85,13 @@ class CharacterFacade(BaseFacade):
         Raises:
             CharacterFacade.NotFoundError: when neither matches.
         """
-        character_id = self.db_session.scalars(
-            select(CharacterDB.id)
-            .where(self._character_has_slug(slug))
-            .order_by(self._current_slug_first(CharacterDB.slug, slug))
-            .limit(1)
-        ).first()
-        if character_id is None:
-            raise CharacterFacade.NotFoundError(
-                f"Character record with ``slug='{slug}'`` not found"
-            )
-        return character_id
+        return self._first_by_slug(
+            select(CharacterDB.id),
+            slug,
+            columns=_SLUG_COLUMNS,
+            not_found=CharacterFacade.NotFoundError,
+            record="Character",
+        )
 
     def get_one_by_slug(self, slug: str) -> CharacterDetailEntity:
         """Return a character with their works and piloted suits.
@@ -102,21 +102,20 @@ class CharacterFacade(BaseFacade):
         Raises:
             CharacterFacade.NotFoundError: when no slug matches.
         """
-        character = self.db_session.scalars(
-            select(CharacterDB)
-            .where(self._character_has_slug(slug))
-            .order_by(self._current_slug_first(CharacterDB.slug, slug))
-            .limit(1)
-        ).first()
-        if character is None:
-            raise CharacterFacade.NotFoundError(
-                f"Character record with ``slug='{slug}'`` not found"
-            )
+        character = self._first_by_slug(
+            select(CharacterDB),
+            slug,
+            columns=_SLUG_COLUMNS,
+            not_found=CharacterFacade.NotFoundError,
+            record="Character",
+        )
         return CharacterDetailEntity.model_validate(
             {
                 **CharacterCardEntity.model_validate(character).model_dump(),
                 "appearances": self._get_appearances(character.id),
-                "piloted_mobile_suits": self._get_piloted(character.id),
+                "piloted_mobile_suits": MobileSuitPilotFacade(
+                    db_session=self.db_session
+                ).get_for_character(character.id),
             }
         )
 
@@ -142,20 +141,8 @@ class CharacterFacade(BaseFacade):
         self, *, payload: Mapping[str, Any]
     ) -> CharacterSlugRedirectEntity:
         """Upsert an old slug, pointing it at a character (D2)."""
-        redirect = self._upsert(
-            CharacterSlugRedirectDB, payload=payload, conflict_columns=["old_slug"]
-        )
-        return CharacterSlugRedirectEntity.model_validate(redirect)
-
-    @classmethod
-    def _character_has_slug(cls, slug: str) -> ColumnElement[bool]:
-        """Match the character with this current or old slug (D2)."""
-        return cls._has_slug(
-            CharacterDB.slug,
-            CharacterDB.id,
-            CharacterSlugRedirectDB.old_slug,
-            CharacterSlugRedirectDB.character_id,
-            slug,
+        return self._upsert_slug_redirect(
+            CharacterSlugRedirectDB, CharacterSlugRedirectEntity, payload=payload
         )
 
     def _get_appearances(self, character_id: uuid.UUID) -> list[CitedWorkEntity]:
@@ -181,38 +168,4 @@ class CharacterFacade(BaseFacade):
                 }
             )
             for appearance in appearances
-        ]
-
-    def _get_piloted(self, character_id: uuid.UUID) -> list[PilotedMobileSuitEntity]:
-        """Return the suits the character pilots, by work, then by name.
-
-        Pairings with no recorded work come after the ones with a work.
-        """
-        rows = self.db_session.execute(
-            select(MobileSuitPilotDB, MobileSuitDB, WorkDB)
-            .join(MobileSuitDB, MobileSuitDB.id == MobileSuitPilotDB.mobile_suit_id)
-            .outerjoin(WorkDB, WorkDB.id == MobileSuitPilotDB.work_id)
-            .options(
-                joinedload(MobileSuitPilotDB.source),
-                joinedload(MobileSuitDB.continuity),
-            )
-            .where(MobileSuitPilotDB.character_id == character_id)
-            .order_by(
-                MobileSuitPilotDB.work_id.is_(None),
-                WorkDB.start_date.asc().nulls_last(),
-                WorkDB.title,
-                MobileSuitDB.name,
-                MobileSuitDB.id,
-            )
-        ).all()
-        return [
-            PilotedMobileSuitEntity.model_validate(
-                {
-                    "created_at": pilot.created_at,
-                    "mobile_suit": MobileSuitCardEntity.model_validate(suit),
-                    "source": SourceCitationEntity.model_validate(pilot.source),
-                    "work": optional_work_ref(work),
-                }
-            )
-            for pilot, suit, work in rows
         ]

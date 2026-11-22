@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import date
+from typing import Self
 
 from pydantic import Field
 
@@ -40,6 +41,15 @@ class WorkRefEntity(BaseEntityModel):
 
     slug: str
     title: str
+
+    @classmethod
+    def from_optional(cls, work: object | None) -> Self | None:
+        """Serve an outer-joined work, null when none is recorded.
+
+        SQLAlchemy types an outer-joined entity in a result row as
+        present, so the ``None`` it can hold is spelled out here.
+        """
+        return None if work is None else cls.model_validate(work)
 
 
 class WorkCardEntity(BaseEntityModel, TimestampsEntityMixin):

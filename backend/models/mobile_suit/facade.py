@@ -8,39 +8,27 @@ from sqlalchemy import ColumnElement, case, func, or_, select
 from sqlalchemy.orm import aliased, contains_eager, joinedload
 
 from constants.catalog import UnitType
-from models.base.facade import BaseFacade, normalize_search
+from models.base.facade import BaseFacade, SlugColumns, normalize_search
 from models.base.page import Page
-from models.character.db import CharacterDB
-from models.character.entity import CharacterRefEntity
 from models.continuity.db import ContinuityDB
-from models.mechanical_designer.db import MechanicalDesignerDB
-from models.mechanical_designer.entity import MechanicalDesignerRefEntity
 from models.mobile_suit.db import MobileSuitDB
 from models.mobile_suit.entity import (
-    DesignerCreditEntity,
     MobileSuitAppearanceCardEntity,
     MobileSuitCardEntity,
     MobileSuitDetailEntity,
     MobileSuitEntity,
-    OrganizationCreditEntity,
-    PilotCreditEntity,
     RelatedMobileSuitEntity,
     WorkAppearanceEntity,
 )
 from models.mobile_suit_appearance.db import MobileSuitAppearanceDB
 from models.mobile_suit_appearance.entity import MobileSuitAppearanceEntity
-from models.mobile_suit_designer.db import MobileSuitDesignerDB
-from models.mobile_suit_designer.entity import MobileSuitDesignerEntity
-from models.mobile_suit_organization.db import MobileSuitOrganizationDB
-from models.mobile_suit_organization.entity import MobileSuitOrganizationEntity
-from models.mobile_suit_pilot.db import MobileSuitPilotDB
-from models.mobile_suit_pilot.entity import MobileSuitPilotEntity
+from models.mobile_suit_designer.facade import MobileSuitDesignerFacade
+from models.mobile_suit_organization.facade import MobileSuitOrganizationFacade
+from models.mobile_suit_pilot.facade import MobileSuitPilotFacade
 from models.mobile_suit_relation.db import MobileSuitRelationDB
 from models.mobile_suit_relation.entity import MobileSuitRelationEntity
 from models.mobile_suit_slug_redirect.db import MobileSuitSlugRedirectDB
 from models.mobile_suit_slug_redirect.entity import MobileSuitSlugRedirectEntity
-from models.organization.db import OrganizationDB
-from models.organization.entity import OrganizationRefEntity
 from models.source.db import SourceDB
 from models.source.entity import SourceCitationEntity
 from models.spec_sheet.db import SpecSheetDB
@@ -52,7 +40,7 @@ from models.spec_sheet.entity import (
 )
 from models.work.db import WorkDB
 from models.work.entity import WorkCardEntity
-from models.work.facade import WorkFacade, optional_work_ref
+from models.work.facade import WorkFacade
 
 
 class MobileSuitFacade(BaseFacade):
@@ -175,33 +163,31 @@ class MobileSuitFacade(BaseFacade):
         Raises:
             MobileSuitFacade.NotFoundError: when no suit has the slug.
         """
-        suit = self.db_session.scalars(
-            select(MobileSuitDB)
-            .options(joinedload(MobileSuitDB.continuity))
-            .where(
-                self._has_slug(
-                    MobileSuitDB.slug,
-                    MobileSuitDB.id,
-                    MobileSuitSlugRedirectDB.old_slug,
-                    MobileSuitSlugRedirectDB.mobile_suit_id,
-                    slug,
-                )
-            )
-            .order_by(self._current_slug_first(MobileSuitDB.slug, slug))
-            .limit(1)
-        ).first()
-        if suit is None:
-            raise MobileSuitFacade.NotFoundError(
-                f"Mobile suit record with ``slug='{slug}'`` not found"
-            )
-
+        suit = self._first_by_slug(
+            select(MobileSuitDB).options(joinedload(MobileSuitDB.continuity)),
+            slug,
+            columns=SlugColumns(
+                MobileSuitDB.slug,
+                MobileSuitDB.id,
+                MobileSuitSlugRedirectDB.old_slug,
+                MobileSuitSlugRedirectDB.mobile_suit_id,
+            ),
+            not_found=MobileSuitFacade.NotFoundError,
+            record="Mobile suit",
+        )
         return MobileSuitDetailEntity.model_validate(
             {
                 **MobileSuitCardEntity.model_validate(suit).model_dump(),
                 "appearances": self._get_appearances(suit.id),
-                "designers": self._get_designers(suit.id),
-                "organizations": self._get_organizations(suit.id),
-                "pilots": self._get_pilots(suit.id),
+                "designers": MobileSuitDesignerFacade(
+                    db_session=self.db_session
+                ).get_for_suit(suit.id),
+                "organizations": MobileSuitOrganizationFacade(
+                    db_session=self.db_session
+                ).get_for_suit(suit.id),
+                "pilots": MobileSuitPilotFacade(
+                    db_session=self.db_session
+                ).get_for_suit(suit.id),
                 "relations": self._get_relations(suit.id),
                 "spec_sheets": self._get_spec_sheets(suit.id),
             }
@@ -257,50 +243,9 @@ class MobileSuitFacade(BaseFacade):
         self, *, payload: Mapping[str, Any]
     ) -> MobileSuitSlugRedirectEntity:
         """Upsert an old slug, pointing it at a suit (D2)."""
-        redirect = self._upsert(
-            MobileSuitSlugRedirectDB, payload=payload, conflict_columns=["old_slug"]
+        return self._upsert_slug_redirect(
+            MobileSuitSlugRedirectDB, MobileSuitSlugRedirectEntity, payload=payload
         )
-        return MobileSuitSlugRedirectEntity.model_validate(redirect)
-
-    def create_or_update_pilot(
-        self, *, payload: Mapping[str, Any]
-    ) -> MobileSuitPilotEntity:
-        """Upsert a pilot link on its character, suit and work.
-
-        A null ``work_id`` is one pairing too: the key treats nulls as
-        equal, so a rerun finds it.
-        """
-        pilot = self._upsert(
-            MobileSuitPilotDB,
-            payload=payload,
-            conflict_columns=["character_id", "mobile_suit_id", "work_id"],
-        )
-        return MobileSuitPilotEntity.model_validate(pilot)
-
-    def create_or_update_organization(
-        self, *, payload: Mapping[str, Any]
-    ) -> MobileSuitOrganizationEntity:
-        """Upsert an organization link on its suit, role and work.
-
-        As with pilots, the key treats a null ``work_id`` as one value.
-        """
-        link = self._upsert(
-            MobileSuitOrganizationDB,
-            payload=payload,
-            conflict_columns=["mobile_suit_id", "organization_id", "role", "work_id"],
-        )
-        return MobileSuitOrganizationEntity.model_validate(link)
-
-    def create_or_update_designer(
-        self, *, payload: Mapping[str, Any]
-    ) -> MobileSuitDesignerEntity:
-        """Upsert a design credit on its designer and suit."""
-        credit = self._upsert(
-            MobileSuitDesignerDB,
-            payload=payload,
-            conflict_columns=["mechanical_designer_id", "mobile_suit_id"],
-        )
-        return MobileSuitDesignerEntity.model_validate(credit)
 
     def _get_spec_sheets(
         self, mobile_suit_id: uuid.UUID
@@ -400,100 +345,6 @@ class MobileSuitFacade(BaseFacade):
                 }
             )
             for appearance in appearances
-        ]
-
-    def _get_designers(self, mobile_suit_id: uuid.UUID) -> list[DesignerCreditEntity]:
-        """Return the suit's designers, by name."""
-        rows = self.db_session.execute(
-            select(MobileSuitDesignerDB, MechanicalDesignerDB)
-            .join(
-                MechanicalDesignerDB,
-                MechanicalDesignerDB.id == MobileSuitDesignerDB.mechanical_designer_id,
-            )
-            .options(joinedload(MobileSuitDesignerDB.source))
-            .where(MobileSuitDesignerDB.mobile_suit_id == mobile_suit_id)
-            .order_by(MechanicalDesignerDB.name, MechanicalDesignerDB.slug)
-        ).all()
-        return [
-            DesignerCreditEntity.model_validate(
-                {
-                    "created_at": credit.created_at,
-                    "mechanical_designer": MechanicalDesignerRefEntity.model_validate(
-                        designer
-                    ),
-                    "source": SourceCitationEntity.model_validate(credit.source),
-                }
-            )
-            for credit, designer in rows
-        ]
-
-    def _get_organizations(
-        self, mobile_suit_id: uuid.UUID
-    ) -> list[OrganizationCreditEntity]:
-        """Return the suit's organizations, by role, work, then name.
-
-        Links with no recorded work come after a role's other links.
-        """
-        rows = self.db_session.execute(
-            select(MobileSuitOrganizationDB, OrganizationDB, WorkDB)
-            .join(
-                OrganizationDB,
-                OrganizationDB.id == MobileSuitOrganizationDB.organization_id,
-            )
-            .outerjoin(WorkDB, WorkDB.id == MobileSuitOrganizationDB.work_id)
-            .options(joinedload(MobileSuitOrganizationDB.source))
-            .where(MobileSuitOrganizationDB.mobile_suit_id == mobile_suit_id)
-            .order_by(
-                MobileSuitOrganizationDB.role,
-                MobileSuitOrganizationDB.work_id.is_(None),
-                WorkDB.start_date.asc().nulls_last(),
-                WorkDB.title,
-                OrganizationDB.name,
-                OrganizationDB.slug,
-            )
-        ).all()
-        return [
-            OrganizationCreditEntity.model_validate(
-                {
-                    "created_at": link.created_at,
-                    "organization": OrganizationRefEntity.model_validate(organization),
-                    "role": link.role,
-                    "source": SourceCitationEntity.model_validate(link.source),
-                    "work": optional_work_ref(work),
-                }
-            )
-            for link, organization, work in rows
-        ]
-
-    def _get_pilots(self, mobile_suit_id: uuid.UUID) -> list[PilotCreditEntity]:
-        """Return the suit's pilots, by work, then by name.
-
-        Pairings with no recorded work come after the ones with a work.
-        """
-        rows = self.db_session.execute(
-            select(MobileSuitPilotDB, CharacterDB, WorkDB)
-            .join(CharacterDB, CharacterDB.id == MobileSuitPilotDB.character_id)
-            .outerjoin(WorkDB, WorkDB.id == MobileSuitPilotDB.work_id)
-            .options(joinedload(MobileSuitPilotDB.source))
-            .where(MobileSuitPilotDB.mobile_suit_id == mobile_suit_id)
-            .order_by(
-                MobileSuitPilotDB.work_id.is_(None),
-                WorkDB.start_date.asc().nulls_last(),
-                WorkDB.title,
-                CharacterDB.name,
-                CharacterDB.slug,
-            )
-        ).all()
-        return [
-            PilotCreditEntity.model_validate(
-                {
-                    "character": CharacterRefEntity.model_validate(character),
-                    "created_at": pilot.created_at,
-                    "source": SourceCitationEntity.model_validate(pilot.source),
-                    "work": optional_work_ref(work),
-                }
-            )
-            for pilot, character, work in rows
         ]
 
 

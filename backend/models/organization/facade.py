@@ -2,21 +2,21 @@
 
 import uuid
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Final
 
 from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.orm import contains_eager, joinedload
 
 from constants.catalog import MobileSuitOrganizationRole
-from models.base.facade import BaseFacade, normalize_search
+from models.base.facade import BaseFacade, SlugColumns, normalize_search
 from models.base.page import Page
 from models.mobile_suit.db import MobileSuitDB
 from models.mobile_suit.entity import (
     MobileSuitCardEntity,
-    OrganizationLinkEntity,
     OrganizationMobileSuitEntity,
 )
 from models.mobile_suit_organization.db import MobileSuitOrganizationDB
+from models.mobile_suit_organization.facade import MobileSuitOrganizationFacade
 from models.organization.db import OrganizationDB
 from models.organization.entity import (
     OrganizationCardEntity,
@@ -31,7 +31,13 @@ from models.organization_slug_redirect.entity import OrganizationSlugRedirectEnt
 from models.source.entity import SourceCitationEntity
 from models.work.db import WorkDB
 from models.work.entity import CitedWorkEntity, WorkCardEntity
-from models.work.facade import optional_work_ref
+
+_SLUG_COLUMNS: Final = SlugColumns(
+    OrganizationDB.slug,
+    OrganizationDB.id,
+    OrganizationSlugRedirectDB.old_slug,
+    OrganizationSlugRedirectDB.organization_id,
+)
 
 
 class OrganizationFacade(BaseFacade):
@@ -91,17 +97,13 @@ class OrganizationFacade(BaseFacade):
         Raises:
             OrganizationFacade.NotFoundError: when neither matches.
         """
-        organization_id = self.db_session.scalars(
-            select(OrganizationDB.id)
-            .where(self._organization_has_slug(slug))
-            .order_by(self._current_slug_first(OrganizationDB.slug, slug))
-            .limit(1)
-        ).first()
-        if organization_id is None:
-            raise OrganizationFacade.NotFoundError(
-                f"Organization record with ``slug='{slug}'`` not found"
-            )
-        return organization_id
+        return self._first_by_slug(
+            select(OrganizationDB.id),
+            slug,
+            columns=_SLUG_COLUMNS,
+            not_found=OrganizationFacade.NotFoundError,
+            record="Organization",
+        )
 
     def get_one_by_slug(self, slug: str) -> OrganizationDetailEntity:
         """Return an organization with its parent, units and works.
@@ -112,17 +114,15 @@ class OrganizationFacade(BaseFacade):
         Raises:
             OrganizationFacade.NotFoundError: when no slug matches.
         """
-        organization = self.db_session.scalars(
-            select(OrganizationDB)
-            .options(joinedload(OrganizationDB.parent_organization))
-            .where(self._organization_has_slug(slug))
-            .order_by(self._current_slug_first(OrganizationDB.slug, slug))
-            .limit(1)
-        ).first()
-        if organization is None:
-            raise OrganizationFacade.NotFoundError(
-                f"Organization record with ``slug='{slug}'`` not found"
-            )
+        organization = self._first_by_slug(
+            select(OrganizationDB).options(
+                joinedload(OrganizationDB.parent_organization)
+            ),
+            slug,
+            columns=_SLUG_COLUMNS,
+            not_found=OrganizationFacade.NotFoundError,
+            record="Organization",
+        )
         children = self.db_session.scalars(
             select(OrganizationDB)
             .where(OrganizationDB.parent_organization_id == organization.id)
@@ -177,7 +177,9 @@ class OrganizationFacade(BaseFacade):
         total = self.db_session.execute(
             select(func.count()).select_from(MobileSuitDB).where(in_organization)
         ).scalar_one()
-        links = self._get_links(link_filters, [suit.id for suit in suits])
+        links = MobileSuitOrganizationFacade(
+            db_session=self.db_session
+        ).get_links_for_suits([suit.id for suit in suits], link_filters=link_filters)
         return Page[OrganizationMobileSuitEntity](
             items=[
                 OrganizationMobileSuitEntity.model_validate(
@@ -213,20 +215,8 @@ class OrganizationFacade(BaseFacade):
         self, *, payload: Mapping[str, Any]
     ) -> OrganizationSlugRedirectEntity:
         """Upsert an old slug, pointing it at an organization (D2)."""
-        redirect = self._upsert(
-            OrganizationSlugRedirectDB, payload=payload, conflict_columns=["old_slug"]
-        )
-        return OrganizationSlugRedirectEntity.model_validate(redirect)
-
-    @classmethod
-    def _organization_has_slug(cls, slug: str) -> ColumnElement[bool]:
-        """Match the organization with this current or old slug (D2)."""
-        return cls._has_slug(
-            OrganizationDB.slug,
-            OrganizationDB.id,
-            OrganizationSlugRedirectDB.old_slug,
-            OrganizationSlugRedirectDB.organization_id,
-            slug,
+        return self._upsert_slug_redirect(
+            OrganizationSlugRedirectDB, OrganizationSlugRedirectEntity, payload=payload
         )
 
     def _get_appearances(self, organization_id: uuid.UUID) -> list[CitedWorkEntity]:
@@ -253,41 +243,3 @@ class OrganizationFacade(BaseFacade):
             )
             for appearance in appearances
         ]
-
-    def _get_links(
-        self, link_filters: list[ColumnElement[bool]], suit_ids: list[uuid.UUID]
-    ) -> dict[uuid.UUID, list[OrganizationLinkEntity]]:
-        """Return the page's links, grouped by suit, in role order.
-
-        Within a role, links with a work come first, earliest first;
-        links with no recorded work come last. Skipped for an empty
-        page.
-        """
-        if not suit_ids:
-            return {}
-        rows = self.db_session.execute(
-            select(MobileSuitOrganizationDB, WorkDB)
-            .outerjoin(WorkDB, WorkDB.id == MobileSuitOrganizationDB.work_id)
-            .options(joinedload(MobileSuitOrganizationDB.source))
-            .where(*link_filters, MobileSuitOrganizationDB.mobile_suit_id.in_(suit_ids))
-            .order_by(
-                MobileSuitOrganizationDB.role,
-                MobileSuitOrganizationDB.work_id.is_(None),
-                WorkDB.start_date.asc().nulls_last(),
-                WorkDB.title,
-                MobileSuitOrganizationDB.id,
-            )
-        ).all()
-        grouped: dict[uuid.UUID, list[OrganizationLinkEntity]] = {}
-        for link, work in rows:
-            grouped.setdefault(link.mobile_suit_id, []).append(
-                OrganizationLinkEntity.model_validate(
-                    {
-                        "created_at": link.created_at,
-                        "role": link.role,
-                        "source": SourceCitationEntity.model_validate(link.source),
-                        "work": optional_work_ref(work),
-                    }
-                )
-            )
-        return grouped

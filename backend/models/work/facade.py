@@ -2,13 +2,13 @@
 
 import uuid
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Final
 
-from sqlalchemy import ColumnElement, case, func, or_, select
+from sqlalchemy import ColumnElement, SQLColumnExpression, case, func, or_, select
 from sqlalchemy.orm import aliased, joinedload
 
 from constants.catalog import WorkType
-from models.base.facade import BaseFacade
+from models.base.facade import BaseFacade, SlugColumns
 from models.base.page import Page
 from models.continuity.db import ContinuityDB
 from models.source.entity import SourceCitationEntity
@@ -24,6 +24,10 @@ from models.work_relation.db import WorkRelationDB
 from models.work_relation.entity import WorkRelationEntity
 from models.work_slug_redirect.db import WorkSlugRedirectDB
 from models.work_slug_redirect.entity import WorkSlugRedirectEntity
+
+_SLUG_COLUMNS: Final = SlugColumns(
+    WorkDB.slug, WorkDB.id, WorkSlugRedirectDB.old_slug, WorkSlugRedirectDB.work_id
+)
 
 
 class WorkFacade(BaseFacade):
@@ -76,17 +80,13 @@ class WorkFacade(BaseFacade):
         Raises:
             WorkFacade.NotFoundError: when neither matches.
         """
-        work_id = self.db_session.scalars(
-            select(WorkDB.id)
-            .where(self._work_has_slug(slug))
-            .order_by(self._current_slug_first(WorkDB.slug, slug))
-            .limit(1)
-        ).first()
-        if work_id is None:
-            raise WorkFacade.NotFoundError(
-                f"Work record with ``slug='{slug}'`` not found"
-            )
-        return work_id
+        return self._first_by_slug(
+            select(WorkDB.id),
+            slug,
+            columns=_SLUG_COLUMNS,
+            not_found=WorkFacade.NotFoundError,
+            record="Work",
+        )
 
     def get_one_by_slug(self, slug: str) -> WorkDetailEntity:
         """Return a work, with its parent and relations, by any slug.
@@ -97,17 +97,15 @@ class WorkFacade(BaseFacade):
         Raises:
             WorkFacade.NotFoundError: when no work has the slug.
         """
-        work = self.db_session.scalars(
-            select(WorkDB)
-            .options(joinedload(WorkDB.continuity), joinedload(WorkDB.parent_work))
-            .where(self._work_has_slug(slug))
-            .order_by(self._current_slug_first(WorkDB.slug, slug))
-            .limit(1)
-        ).first()
-        if work is None:
-            raise WorkFacade.NotFoundError(
-                f"Work record with ``slug='{slug}'`` not found"
-            )
+        work = self._first_by_slug(
+            select(WorkDB).options(
+                joinedload(WorkDB.continuity), joinedload(WorkDB.parent_work)
+            ),
+            slug,
+            columns=_SLUG_COLUMNS,
+            not_found=WorkFacade.NotFoundError,
+            record="Work",
+        )
 
         card = WorkCardEntity.model_validate(work)
         parent = work.parent_work
@@ -141,20 +139,24 @@ class WorkFacade(BaseFacade):
         self, *, payload: Mapping[str, Any]
     ) -> WorkSlugRedirectEntity:
         """Upsert an old slug, pointing it at a work (D2)."""
-        redirect = self._upsert(
-            WorkSlugRedirectDB, payload=payload, conflict_columns=["old_slug"]
+        return self._upsert_slug_redirect(
+            WorkSlugRedirectDB, WorkSlugRedirectEntity, payload=payload
         )
-        return WorkSlugRedirectEntity.model_validate(redirect)
 
-    @classmethod
-    def _work_has_slug(cls, slug: str) -> ColumnElement[bool]:
-        """Match the work whose current or old slug this is (D2)."""
-        return cls._has_slug(
-            WorkDB.slug,
-            WorkDB.id,
-            WorkSlugRedirectDB.old_slug,
-            WorkSlugRedirectDB.work_id,
-            slug,
+    @staticmethod
+    def released_first(
+        work_id: SQLColumnExpression[uuid.UUID | None],
+    ) -> tuple[SQLColumnExpression[Any], ...]:
+        """Order links by their work, first released first.
+
+        For a select that outer-joins ``WorkDB`` on ``work_id``: links
+        with no recorded work come last, then works with no date. The
+        caller adds its own unique tiebreaker (RDB-22).
+        """
+        return (
+            work_id.is_(None),
+            WorkDB.start_date.asc().nulls_last(),
+            WorkDB.title,
         )
 
     def _get_relations(self, work_id: uuid.UUID) -> list[RelatedWorkEntity]:
@@ -187,12 +189,3 @@ class WorkFacade(BaseFacade):
             )
             for relation, other_work, row_direction in rows
         ]
-
-
-def optional_work_ref(work: WorkDB | None) -> WorkRefEntity | None:
-    """Serve an outer-joined work, which is null when none is recorded.
-
-    SQLAlchemy types an outer-joined entity in a result row as present,
-    so the ``None`` it can hold is spelled out here.
-    """
-    return None if work is None else WorkRefEntity.model_validate(work)
