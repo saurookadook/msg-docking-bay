@@ -259,3 +259,9 @@ Where the implementation differs from the steps above:
   - The duplication across the four kinds (the `get_for_sheets` bodies, the junction and
     part facade tests, the seed's listing loops and the ref entities) stays, as Q4
     chose. It is tracked in #31.
+- **Second review round (2026-11-22).** `_filled_sheet` takes `base` and `parts` by
+  name. A test checks that every part kind names a list field on
+  `MobileSuitSpecSheetEntity`, since entities ignore unknown keys. The spec sheet aliases
+  stay plain assignments because Pydantic turns a `type` alias into a named schema,
+  which would change the contract. The mocks' `armament()` takes a ref, and the four
+  listing builders share one envelope. The repeated page ID tests joined #31.
