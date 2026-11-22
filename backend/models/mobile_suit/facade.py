@@ -400,7 +400,11 @@ def _filled_sheet(
     values: dict[str, float | None] = {
         field: getattr(sheet, field) for field in SPEC_SHEET_FIELDS
     }
+    part_lists: dict[SpecSheetPartKind, Sequence[BaseEntityModel]] = {
+        kind: parts[kind][sheet.id] for kind in SPEC_SHEET_PART_KINDS
+    }
     inherited: Sequence[SpecSheetField] = []
+    inherited_parts: list[SpecSheetPartKind] = []
     if sheet.configuration is not None and base is not None:
         inherited = [
             field
@@ -408,21 +412,16 @@ def _filled_sheet(
             if values[field] is None and getattr(base, field) is not None
         ]
         values |= {field: getattr(base, field) for field in inherited}
-    lists: dict[SpecSheetPartKind, Sequence[BaseEntityModel]] = {
-        kind: parts[kind][sheet.id] for kind in SPEC_SHEET_PART_KINDS
-    }
-    inherited_parts: list[SpecSheetPartKind] = []
-    if sheet.configuration is not None and base is not None:
         inherited_parts = [
             kind
             for kind in SPEC_SHEET_PART_KINDS
-            if not lists[kind] and parts[kind][base.id]
+            if not part_lists[kind] and parts[kind][base.id]
         ]
-        lists |= {kind: parts[kind][base.id] for kind in inherited_parts}
+        part_lists |= {kind: parts[kind][base.id] for kind in inherited_parts}
     return MobileSuitSpecSheetEntity.model_validate(
         {
             **values,
-            **lists,
+            **part_lists,
             "configuration": sheet.configuration,
             "created_at": sheet.created_at,
             "inherited_fields": list(inherited),
