@@ -35,7 +35,12 @@ class OrganizationDB(BaseDB, TimestampsDB):
     parent_organization: Mapped[OrganizationDB | None] = relationship(
         lazy="raise", remote_side="OrganizationDB.id"
     )
-    """Loaded only by facades that ask for it (SQLA-10, SQLA-22)."""
+    """Loaded only by facades that ask for it (SQLA-10, SQLA-22).
+
+    One-way: the detail reads an organization's units with a query of
+    its own, so there is no ``child_organizations`` relationship to
+    load by mistake on a list.
+    """
 
     __table_args__ = (
         positive("fandom_page_id"),

@@ -1,14 +1,17 @@
 """The ``organization_appearances`` table: an organization's works."""
 
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base_db import JunctionBaseDB
 from models.mixins.db import CreatedAtDB
-from models.source.db import SourceDB
-from models.work.db import WorkDB
+
+if TYPE_CHECKING:
+    from models.source.db import SourceDB
+    from models.work.db import WorkDB
 
 
 class OrganizationAppearanceDB(JunctionBaseDB, CreatedAtDB):
@@ -34,4 +37,8 @@ class OrganizationAppearanceDB(JunctionBaseDB, CreatedAtDB):
 
     source: Mapped[SourceDB] = relationship(lazy="raise")
     work: Mapped[WorkDB] = relationship(lazy="raise")
-    """Both load only when a facade asks for them (SQLA-10, SQLA-22)."""
+    """Both load only when a facade asks for them (SQLA-10, SQLA-22).
+
+    One-way: readers start from the organization, never from a source
+    or a work, so neither of those needs a list of these rows.
+    """
