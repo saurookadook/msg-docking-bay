@@ -247,3 +247,15 @@ Where the implementation differs from the steps above:
   endpoint tests and a one-off comparison against the seeded API cover them. The
   comparison found every suit detail identical, with timestamps masked.
 - **This section** landed as its own docs commit, since no docs step followed the build.
+- **Review fixes (2026-11-22).** The comprehensive review's chosen fixes landed as their
+  own commits:
+  - Step 2's nullable case, and the accepted page ID of 1, are now tested in each part's
+    `test_db.py`. The powerplant facade has a test that orders by name.
+  - `_get_spec_sheets` reads the part lists by looping over `SPEC_SHEET_PART_KINDS`, each
+    kind mapped to its junction facade in `_PART_FACADES`, rather than through four
+    hand-written entries. `_filled_sheet` checks the named-configuration guard once.
+  - The facade tests are named after their methods (PYTEST-7). The seed's `part_ids` is
+    keyed by `SpecSheetPartKind`.
+  - The duplication across the four kinds (the `get_for_sheets` bodies, the junction and
+    part facade tests, the seed's listing loops and the ref entities) stays, as Q4
+    chose. It is tracked in #31.
