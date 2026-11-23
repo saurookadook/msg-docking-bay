@@ -1,0 +1,17 @@
+.entity-link {
+    align-items: baseline;
+    display: inline-flex;
+    gap: var(--space-1);
+
+    & .entity-link-icon {
+        align-self: center;
+        block-size: 1em;
+        fill: none;
+        flex-shrink: 0;
+        inline-size: 1em;
+        stroke: currentcolor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.5;
+    }
+}

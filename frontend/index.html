@@ -4,6 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MSG Docking Bay</title>
+    <script>
+      // Applies the stored deck shift before first paint, so a Night shift never flashes
+      // Day colors. Mirrors SHIFT_LS_KEY and SHIFTS (src/constants); src/app/indexHtml.test.ts
+      // runs this script to keep the two in step.
+      // NOTE: it parses with JSON.parse inside try/catch, not safeParseJSON (REACT-30):
+      // it runs before the bundle loads, so it cannot import, and the catch plays the
+      // same role.
+      try {
+        var storedShift = JSON.parse(localStorage.getItem('msgdb.shift'));
+        if (storedShift === 'day' || storedShift === 'night') {
+          document.documentElement.dataset.shift = storedShift;
+        }
+      } catch (error) {
+        // Storage disabled or the value is not JSON: stay on the OS color scheme.
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

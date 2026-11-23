@@ -11,4 +11,8 @@ sharedLog.setLevel(process.env.LOG_LEVEL === undefined ? 'SILENT' : 'DEBUG', fal
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.restoreAllMocks();
+  // NOTE: the shift persists in storage and on <html>, which outlive each test (TEST-8).
+  localStorage.clear();
+  delete document.documentElement.dataset.shift;
 });

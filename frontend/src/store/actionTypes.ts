@@ -2,3 +2,6 @@
 export const REQUEST_HEALTH_CHECK = 'REQUEST_HEALTH_CHECK';
 export const SET_HEALTH_CHECK = 'SET_HEALTH_CHECK';
 export const SET_HEALTH_CHECK_ERROR = 'SET_HEALTH_CHECK_ERROR';
+
+// Preferences
+export const SET_SHIFT = 'SET_SHIFT';

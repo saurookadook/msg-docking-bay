@@ -1,0 +1,48 @@
+.deck-panel {
+    --deck-panel-bracket: 0.75rem;
+    --deck-panel-rivet: radial-gradient(
+        circle,
+        var(--color-border-strong) 0 0.125rem,
+        transparent 0.1875rem
+    );
+
+    background:
+        var(--deck-panel-rivet) top var(--space-2) left var(--space-2) / 0.5rem 0.5rem
+            no-repeat,
+        var(--deck-panel-rivet) top var(--space-2) right var(--space-2) / 0.5rem 0.5rem
+            no-repeat,
+        var(--deck-panel-rivet) bottom var(--space-2) left var(--space-2) / 0.5rem
+            0.5rem no-repeat,
+        var(--deck-panel-rivet) bottom var(--space-2) right var(--space-2) / 0.5rem
+            0.5rem no-repeat,
+        var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    position: relative;
+
+    &::before,
+    &::after {
+        block-size: var(--deck-panel-bracket);
+        border: 0.1875rem solid var(--color-accent);
+        content: '';
+        inline-size: var(--deck-panel-bracket);
+        position: absolute;
+    }
+
+    &::before {
+        border-block-end: 0;
+        border-inline-end: 0;
+        inset-block-start: -1px;
+        inset-inline-start: -1px;
+    }
+
+    &::after {
+        border-block-start: 0;
+        border-inline-start: 0;
+        inset-block-end: -1px;
+        inset-inline-end: -1px;
+    }
+}

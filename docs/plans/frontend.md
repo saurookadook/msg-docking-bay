@@ -63,16 +63,19 @@ Design system (PR F1):
   hologram cyan. Light scheme = **"Day shift"** (floodlights on, painted steel); dark = **"Night
   shift"** (sodium lamps, glow). A third flourish, **"Condition Red"**, tints accents red during the
   launch sequence.
-- **Type:** a squared display face for stencils (e.g. Oxanium/Rajdhani) + a mono face for readouts,
-  self-hosted via `@fontsource`.
+- **Type:** Oxanium for stencils + JetBrains Mono for readouts, vendored as latin and latin-ext
+  `.woff2` files in `src/assets/fonts/` with their OFL licences (F1,
+  [`design-system.md`](design-system.md) Q3).
 - **Shared components** (`src/components/`): `DeckPanel` (riveted panel with corner brackets),
   `StencilHeading`, `HazardStripe`, `SpecPlate` (label/value plate), `Readout` (terminal text with
-  optional type-on), `StatusLamp`, `CageNumber`, `Pagination`, `FilterBar`, `EntityLink` (typed by
-  entity; icon per kind), `SourceCitations` (CC BY-SA attribution per `SourceCitation`),
+  optional type-on), `StatusLamp`, `CageNumber`, `Pagination`, `FilterBar` (F2), `EntityLink`
+  (typed by entity; icon per kind), `SourceCitations` (CC BY-SA attribution per `SourceCitation`),
   `VisualSlot` (image placeholder: blueprint silhouette + "NO VISUAL ON FILE").
-- **Shell** (`layouts/Root`): top **deck status bar** (bay name, shift toggle, mode toggle
-  Wiki ⇄ Hangar, search key hint), nav as hanging bay signs (Mobile Suits · Personnel ·
-  Organizations · Works · Designers), footer with the unofficial-fan-project disclaimer and source credits.
+- **Shell** (`layouts/Root`): top **deck status bar** (bay name, shift toggle Auto/Day/Night,
+  status lamp; F5 adds the search key hint and F7 the mode toggle Wiki ⇄ Hangar), nav as hanging
+  bay signs (Mobile Suits · Personnel · Organizations · Works · Designers; a sign is "offline"
+  until its route exists), footer with the unofficial-fan-project disclaimer, source credits and
+  a "Deck systems" health-check link. Unknown paths render a "Cage empty" 404 page.
 - **Motion** (behind `prefers-reduced-motion: no-preference`): lights clunk on row by row at load,
   hazard stripes crawl on hover, beacon spin on loading states, readouts type on.
 
@@ -180,17 +183,19 @@ Backend:
 Frontend:
 
 - [x] **F0** `build(frontend): regenerate the API contract for suit parts` — done in PR D (#32).
-- [ ] **F1** `feat(frontend): add the docking bay design system and shell` — tokens, fonts, shared
+- [x] **F1** `feat(frontend): add the docking bay design system and shell` — tokens, fonts, shared
   components, Root layout, shift toggle, breakpoints, `AppParams`, Storybook stories for each component.
+  Plan: [`design-system.md`](design-system.md).
 - [ ] **F2** `feat(frontend): browse the catalog` — store slices, list pages with filters/pagination
-  in URL params, Mirage filters.
+  in URL params, `FilterBar`, Mirage filters; commission the list routes' nav signs.
 - [ ] **F3** `feat(frontend): add the mobile suit dossier` — detail page, spec tabs, parts, lineage,
   height lineup.
 - [ ] **F4** `feat(frontend): add personnel, faction, operation and designer pages`.
 - [ ] **F5** `feat(frontend): add the deck search terminal` — `Ctrl/⌘+K` overlay + `/search` page
-  (needs BE-1).
+  and the status bar's key hint (needs BE-1).
 - [ ] **F6** `feat(frontend): add compare and random sortie`.
-- [ ] **F7** `feat(frontend): add hangar mode scene` — lazy R3F chunk, WebGL gate, mode toggle,
+- [ ] **F7** `feat(frontend): add hangar mode scene` — lazy R3F chunk, WebGL gate, mode toggle
+  (`mode` in the `preferences` store slice F1 adds),
   deck/cage/crane/lighting, placeholder mech boxes.
 - [ ] **F8** `feat(frontend): generate mechs for hangar cages` — procedural mech + hologram panels;
   suit detail in 3D.

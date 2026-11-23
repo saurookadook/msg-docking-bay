@@ -102,9 +102,23 @@ literals.** Add a token when a new value is needed in more than one place.
 **CSS-12 — Write opaque colors as hex and translucent colors as space-separated
 `rgb(r g b / a)`.**
 
-**CSS-13 — Support light and dark schemes.** Set `color-scheme: light dark`, and redefine
-the tokens (not individual rules) inside `@media (prefers-color-scheme: ...)` in
-`index.css`.
+**CSS-13 — Support light and dark schemes in the tokens, not in individual rules.** Write
+each color token once on `:root` in `index.css` as `light-dark(<light>, <dark>)`, and let
+`color-scheme` pick the value: `light dark` follows the OS, and a user override sets
+`color-scheme: light` or `dark` on `:root` through an attribute (such as `data-shift`).
+`postcss-preset-env` lowers `light-dark()` for older browsers.
+
+```css
+:root {
+    --color-surface: light-dark(#e4e6e1, #121518);
+
+    color-scheme: light dark;
+}
+
+:root[data-shift='night'] {
+    color-scheme: dark;
+}
+```
 
 ---
 

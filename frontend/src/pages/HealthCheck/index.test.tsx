@@ -84,8 +84,8 @@ describe('HealthCheck', () => {
       await within(await findHealthCheckSection()).findByRole('status');
       /* END TEST SETUP */
 
-      await user.click(screen.getByRole('link', { name: 'Home' }));
-      await user.click(screen.getByRole('link', { name: 'Health check' }));
+      await user.click(screen.getByRole('link', { name: 'MSG Docking Bay' }));
+      await user.click(screen.getByRole('link', { name: 'Deck systems' }));
 
       const healthCheckSection = await findHealthCheckSection();
       expect(
