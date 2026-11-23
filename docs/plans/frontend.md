@@ -118,7 +118,9 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
   compilation, adaptation, remake, side story) ✅; **mobile weapons appearing** (with debut flag,
   episode range) ✅. ⏳ staff, studio, episodes, characters list, plot. Framing: operation log.
 - **Mechanical designer.** Name, `name_ja` ✅; designed mobile weapons ✅. Framing: engineering credits.
-- **Every detail page:** `SourceCitations` + link back to the Fandom page (attribution/license).
+- **Every detail page:** `SourceCitations` lists each `SourceCitation`, labelled by `kind` (Gundam
+  Wiki, Wikidata, Wikipedia EN/JA), linking its `url` and its `revision_url` when present, with the
+  content license. A Gundam Wiki link appears only for `fandom_page` citations.
 
 ## Hangar mode (three.js)
 
