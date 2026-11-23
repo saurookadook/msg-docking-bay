@@ -10,10 +10,7 @@
         color: var(--color-text-muted);
         float: left;
         font-family: var(--font-family-mono);
-        font-size: 0.75rem;
-        letter-spacing: 0.1em;
         margin-inline-end: var(--space-1);
-        text-transform: uppercase;
     }
 
     & .shift-toggle-option {

@@ -23,10 +23,17 @@ export function SpecPlate({ className, items, ...props }: SpecPlateProps) {
     <dl className={classNames('spec-plate', className)} {...props}>
       {items.map(({ isInherited = false, label, value }) => (
         <div className="spec-plate-row" key={label}>
-          <dt>{label}</dt>
-          <dd className={classNames({ pending: value == null })}>
+          <dt className="stencil-label">{label}</dt>
+          <dd
+            className={classNames({
+              pending: value == null,
+              'stencil-label': value == null,
+            })}
+          >
             {value ?? 'DATA PENDING'}
-            {isInherited && <span className="spec-plate-inherited">per base spec</span>}
+            {isInherited && (
+              <span className="spec-plate-inherited stencil-label">per base spec</span>
+            )}
           </dd>
         </div>
       ))}

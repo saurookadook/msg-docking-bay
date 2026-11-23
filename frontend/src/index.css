@@ -181,6 +181,13 @@ a {
 /****************************************************************
 Utilities
 ****************************************************************/
+/* A small stencilled label: plate labels, captions, legends, status text. */
+.stencil-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
 /* Hidden on screen, still read by assistive technology. */
 .visually-hidden {
     block-size: 1px;

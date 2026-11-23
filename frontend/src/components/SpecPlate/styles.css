@@ -24,9 +24,6 @@
     & dt {
         color: var(--color-text-muted);
         font-family: var(--font-family-display);
-        font-size: 0.75rem;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
     }
 
     & dd {
@@ -39,8 +36,5 @@
     & dd.pending,
     & .spec-plate-inherited {
         color: var(--color-text-muted);
-        font-size: 0.75rem;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
     }
 }

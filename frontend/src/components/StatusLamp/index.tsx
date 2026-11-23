@@ -23,7 +23,10 @@ export type StatusLampProps = React.HTMLAttributes<HTMLSpanElement> & {
  */
 export function StatusLamp({ children, className, status, ...props }: StatusLampProps) {
   return (
-    <span className={classNames('status-lamp', status, className)} {...props}>
+    <span
+      className={classNames('status-lamp', 'stencil-label', status, className)}
+      {...props}
+    >
       <span aria-hidden="true" className="status-lamp-light" />
       {children ?? STATUS_LABELS[status]}
     </span>

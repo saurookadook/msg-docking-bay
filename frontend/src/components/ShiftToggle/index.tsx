@@ -33,7 +33,7 @@ export function ShiftToggle({ className, ...props }: ShiftToggleProps) {
 
   return (
     <fieldset className={classNames('shift-toggle', className)} {...props}>
-      <legend>Shift</legend>
+      <legend className="stencil-label">Shift</legend>
       {SHIFTS.map((shift) => {
         const inputID = `${inputIDPrefix}-${shift}`;
         return (

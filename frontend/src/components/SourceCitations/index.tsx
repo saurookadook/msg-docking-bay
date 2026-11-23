@@ -36,7 +36,9 @@ export function SourceCitations({
       className={classNames('source-citations', className)}
       {...props}
     >
-      <h3 id={headingID}>Sources</h3>
+      <h3 className="stencil-label" id={headingID}>
+        Sources
+      </h3>
       <ul>
         {citations.map((citation) => (
           <li key={`${citation.kind}-${citation.url}`}>
