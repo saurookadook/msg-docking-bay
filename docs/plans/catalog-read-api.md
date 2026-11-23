@@ -9,7 +9,7 @@
 - [x] Mock mode PR: `feat(frontend): add a mock API mode to the dev server`
 - [x] PR B: `feat(backend): serve mobile suits, works and continuities`
 - [x] PR C: `feat(backend): serve characters, organizations and designers`
-- [ ] PR D: `feat(backend): serve suit parts on spec sheets`
+- [x] PR D: `feat(backend): serve suit parts on spec sheets`
 
 ## Context
 
