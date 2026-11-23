@@ -154,3 +154,27 @@ display names as well as slugs.
 - **Contract:** a second `pnpm run api:generate` leaves no diff.
 - **Through the seeded API:** `/api/search?q=rx782`, `?q=amuro`, `?q=zeon`, `?q=okawara`,
   `?q=%20--%20` (blank), and a 101-character `q` (422). Also `/api/works?q=…`.
+
+## As built (2026-11-23)
+
+Where the implementation differs from the steps above:
+
+- **A refactor commit before step 3.** `works.py` was the last router mapping its 404s and
+  500s by hand. All three works routes moved to `run_read` in
+  `refactor(backend): map the works routes' errors with run_read`, with their details
+  unchanged. Step 3 then added only `q`.
+- **The facade's return type.** `CatalogSearchFacade.search` returns `CatalogSearch`
+  (`results` and `totals`), as `get_page` returns `Page`. `CatalogSearch`,
+  `CatalogSearchResultsEntity` and `CatalogSearchTotals` live in `models/search/entity.py`.
+  Only `CatalogSearchMeta` and `CatalogSearchResponse` are in `api/models/search.py`.
+- **The route's 500 detail** is `"Error searching the catalog"`.
+- **Mirage.**
+  - The matching is in `frontend/src/__mocks__/search.ts`: `normalizeSearch`, and
+    `searchList`, which filters and ranks one list.
+  - The handler is `searchCatalog` in `endpoints.ts`, exported for its tests.
+  - `MAX_SEARCH_LENGTH`, `SEARCH_DEFAULT_LIMIT` and `SEARCH_MAX_LIMIT` were added to
+    `frontend/src/constants`, as mirrors of the backend's.
+  - The `q` length check counts code points, as FastAPI does.
+- **Seeded API check.** Through the proxy: `rx782`, `amuro`, `zeon` and `okawara` find
+  their rows. A blank `q` and `大河原` both list the first rows, with totals of 2, 3, 4,
+  3 and 5, the same as Mirage's. `limit=21` and a 101-character `q` are 422.
