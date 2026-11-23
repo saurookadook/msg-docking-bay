@@ -1,12 +1,14 @@
 import classNames from 'classnames';
 
+import type { Nullable } from '@/types';
+
 import './styles.css';
 
 export type SpecPlateItem = {
   /** @description The row's label; labels are unique within one plate. */
   label: string;
   /** @description The value, or `null` while the catalog has none ("DATA PENDING"). */
-  value: React.ReactNode;
+  value: Nullable<React.ReactElement | string | number>;
   /** @description The value comes from the base spec sheet, not this one. */
   isInherited?: boolean;
 };
