@@ -3,11 +3,12 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Path, Query, status
+from fastapi import APIRouter, Path, Query
 
 from api.dependencies.db_session import DBSessionDep
 from api.models.pagination import PageLimit, PageMeta, PageOffset
 from api.models.work import WorkMobileSuitsListResponse, WorkResponse, WorksListResponse
+from api.routes.handlers.reads import run_read
 from constants.catalog import WorkType
 from constants.pagination import DEFAULT_PAGE_SIZE
 from models.mixins.checks import SLUG_PATTERN
@@ -42,16 +43,13 @@ def read_works_list(
     an empty ``data`` and the real ``total`` (D3). Reads only, and calls
     no external API.
     """
-    try:
-        page = WorkFacade(db_session=api_db_session).get_page(
+    page = run_read(
+        lambda: WorkFacade(db_session=api_db_session).get_page(
             continuity_slug=continuity, work_type=work_type, limit=limit, offset=offset
-        )
-    except Exception as e:
-        error_detail = "Error fetching works"
-        logger.exception(error_detail)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_detail
-        ) from e
+        ),
+        error_detail="Error fetching works",
+        logger=logger,
+    )
     return WorksListResponse(
         data=page.items, meta=PageMeta(limit=limit, offset=offset, total=page.total)
     )
@@ -64,18 +62,13 @@ def read_work(work_slug: WorkSlug, api_db_session: DBSessionDep) -> WorkResponse
     An old slug returns 200 with the renamed work, whose ``slug`` is the
     current one; the frontend replaces its URL (D2). Reads only.
     """
-    try:
-        work = WorkFacade(db_session=api_db_session).get_one_by_slug(work_slug)
-    except WorkFacade.NotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Work not found"
-        ) from e
-    except Exception as e:
-        error_detail = "Error fetching work"
-        logger.exception(error_detail)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_detail
-        ) from e
+    work = run_read(
+        lambda: WorkFacade(db_session=api_db_session).get_one_by_slug(work_slug),
+        error_detail="Error fetching work",
+        logger=logger,
+        not_found=WorkFacade.NotFoundError,
+        not_found_detail="Work not found",
+    )
     return WorkResponse(data=work)
 
 
@@ -92,20 +85,15 @@ def read_work_mobile_suits(
     An unknown work is a 404; a known one with no suits is 200 with an
     empty ``data`` (FAPI-12). Reads only.
     """
-    try:
-        page = MobileSuitFacade(db_session=api_db_session).get_page_by_work_slug(
+    page = run_read(
+        lambda: MobileSuitFacade(db_session=api_db_session).get_page_by_work_slug(
             work_slug, limit=limit, offset=offset
-        )
-    except WorkFacade.NotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Work not found"
-        ) from e
-    except Exception as e:
-        error_detail = "Error fetching the work's mobile suits"
-        logger.exception(error_detail)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_detail
-        ) from e
+        ),
+        error_detail="Error fetching the work's mobile suits",
+        logger=logger,
+        not_found=WorkFacade.NotFoundError,
+        not_found_detail="Work not found",
+    )
     return WorkMobileSuitsListResponse(
         data=page.items, meta=PageMeta(limit=limit, offset=offset, total=page.total)
     )
