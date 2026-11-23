@@ -29,7 +29,7 @@ class CatalogSearchFacade(BaseFacade):
         ``q`` is: a page and a count per kind.
         """
         session = self.db_session
-        suits = MobileSuitFacade(db_session=session).get_page(
+        mobile_suits = MobileSuitFacade(db_session=session).get_page(
             q=q, limit=limit, offset=0
         )
         characters = CharacterFacade(db_session=session).get_page(
@@ -38,22 +38,22 @@ class CatalogSearchFacade(BaseFacade):
         organizations = OrganizationFacade(db_session=session).get_page(
             q=q, limit=limit, offset=0
         )
-        designers = MechanicalDesignerFacade(db_session=session).get_page(
+        mechanical_designers = MechanicalDesignerFacade(db_session=session).get_page(
             q=q, limit=limit, offset=0
         )
         works = WorkFacade(db_session=session).get_page(q=q, limit=limit, offset=0)
         return CatalogSearch(
             results=CatalogSearchResultsEntity(
                 characters=characters.items,
-                mechanical_designers=designers.items,
-                mobile_suits=suits.items,
+                mechanical_designers=mechanical_designers.items,
+                mobile_suits=mobile_suits.items,
                 organizations=organizations.items,
                 works=works.items,
             ),
             totals=CatalogSearchTotals(
                 characters=characters.total,
-                mechanical_designers=designers.total,
-                mobile_suits=suits.total,
+                mechanical_designers=mechanical_designers.total,
+                mobile_suits=mobile_suits.total,
                 organizations=organizations.total,
                 works=works.total,
             ),
