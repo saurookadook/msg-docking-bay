@@ -1,21 +1,69 @@
-import { NavLink, Outlet } from 'react-router';
+import { useEffect } from 'react';
+import { Link, NavLink, Outlet } from 'react-router';
 
-/** @description The app shell: top navigation, then the current route's page. */
+import { HazardStripe, ShiftToggle, StatusLamp } from '@/components';
+import { hydrateShift, useAppStore } from '@/store';
+import { entityPath } from '@/utils';
+
+import { BAY_SIGNS } from './baySigns';
+
+/**
+ * @description The app shell, dressed as the MS deck: a status bar, the bay signs, the
+ * current route's page, and a footer with the fan-project disclaimer and source credits.
+ */
 export function Root() {
+  const { appDispatch } = useAppStore();
+
+  useEffect(() => {
+    hydrateShift({ dispatch: appDispatch });
+  }, [appDispatch]);
+
   return (
     <div id="app-shell">
-      <header className="top-nav-bar">
-        <h1>MSG Docking Bay</h1>
-        <nav aria-label="Main">
-          <NavLink to="/" end>
-            Home
-          </NavLink>
-          <NavLink to="/health-check">Health check</NavLink>
-        </nav>
+      <header className="deck-status-bar">
+        <h1>
+          <Link to="/">MSG Docking Bay</Link>
+        </h1>
+        <StatusLamp status="online">Deck online</StatusLamp>
+        <ShiftToggle />
       </header>
+      <HazardStripe />
+      <nav aria-label="Bays" className="bay-signs">
+        <ul>
+          {BAY_SIGNS.map(({ isCommissioned, kind, label }) => (
+            <li key={kind}>
+              {isCommissioned ? (
+                <NavLink className="bay-sign" to={entityPath({ kind })}>
+                  {label}
+                </NavLink>
+              ) : (
+                <span aria-disabled="true" className="bay-sign offline">
+                  {label} <span className="bay-sign-status">Offline</span>
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
       <main>
         <Outlet />
       </main>
+      <footer className="deck-footer">
+        <p>
+          MSG Docking Bay is an unofficial fan project. It is not affiliated with or
+          endorsed by Sunrise, Bandai Namco or any holder of the Gundam rights.
+        </p>
+        <p>
+          Catalog facts come from the{' '}
+          <a href="https://gundam.fandom.com/" rel="external noreferrer">
+            Gundam Wiki
+          </a>{' '}
+          (CC BY-SA) and Wikidata (CC0); every page credits its own sources.
+        </p>
+        <p>
+          <Link to="/health-check">Deck systems</Link>
+        </p>
+      </footer>
     </div>
   );
 }

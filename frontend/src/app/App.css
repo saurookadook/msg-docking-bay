@@ -2,32 +2,125 @@
 App shell
 ****************************************************************/
 #app-shell {
-    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto auto auto 1fr auto;
+    min-block-size: 100vh;
 
-    & .top-nav-bar {
+    & .deck-status-bar {
+        align-items: center;
+        background: var(--color-surface-raised);
         display: flex;
         flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--space-3);
+        gap: var(--space-3) var(--space-4);
         padding: var(--space-3) var(--space-4);
-        background: var(--color-surface-raised);
-        border-bottom: 1px solid var(--color-border);
     }
 
-    & .top-nav-bar nav {
-        display: flex;
-        gap: var(--space-3);
+    & .deck-status-bar h1 {
+        flex-grow: 1;
+        font-size: 1.25rem;
+        text-transform: uppercase;
     }
 
-    & .top-nav-bar a.active {
-        font-weight: 600;
+    & .deck-status-bar h1 a {
+        color: var(--color-text);
         text-decoration: none;
     }
 
+    & .bay-signs ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        list-style: none;
+        margin: 0;
+        padding: var(--space-3) var(--space-4);
+    }
+
+    & .bay-sign {
+        background: var(--color-surface-sunken);
+        border: 1px solid var(--color-border-strong);
+        border-block-start: 0.25rem solid var(--color-border-strong);
+        color: var(--color-text);
+        display: inline-flex;
+        font-family: var(--font-family-display);
+        font-size: 0.875rem;
+        font-weight: 700;
+        gap: var(--space-2);
+        letter-spacing: 0.08em;
+        padding: var(--space-2) var(--space-3);
+        text-decoration: none;
+        text-transform: uppercase;
+    }
+
+    & a.bay-sign.active {
+        background: var(--color-accent);
+        color: var(--color-accent-contrast);
+    }
+
+    & .bay-sign.offline {
+        border-style: dashed;
+        color: var(--color-text-muted);
+    }
+
+    & .bay-sign-status {
+        font-family: var(--font-family-mono);
+        font-size: 0.625rem;
+        font-weight: 400;
+    }
+
     & main {
-        max-width: 60rem;
+        inline-size: min(100%, 64rem);
         margin: 0 auto;
         padding: var(--space-4);
+    }
+
+    & .deck-footer {
+        border-block-start: 1px solid var(--color-border);
+        color: var(--color-text-muted);
+        display: grid;
+        font-size: 0.875rem;
+        gap: var(--space-2);
+        padding: var(--space-4);
+    }
+}
+
+@media (max-width: 40rem) {
+    #app-shell .deck-status-bar,
+    #app-shell .bay-signs ul,
+    #app-shell main,
+    #app-shell .deck-footer {
+        padding-inline: var(--space-3);
+    }
+}
+
+/* NOTE: the deck's lights clunk on row by row as the shell loads. */
+@keyframes deck-lights-on {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    #app-shell > * {
+        animation: deck-lights-on 0.12s steps(2) both;
+    }
+
+    #app-shell > :nth-child(2) {
+        animation-delay: 0.1s;
+    }
+
+    #app-shell > :nth-child(3) {
+        animation-delay: 0.2s;
+    }
+
+    #app-shell > :nth-child(4) {
+        animation-delay: 0.3s;
+    }
+
+    #app-shell > :nth-child(5) {
+        animation-delay: 0.4s;
     }
 }

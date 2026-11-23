@@ -46,7 +46,7 @@ describe('startApp', () => {
       }),
     );
 
-    await userEvent.click(screen.getByRole('link', { name: 'Health check' }));
+    await userEvent.click(screen.getByRole('link', { name: 'Deck systems' }));
 
     const healthCheckSection = await screen.findByRole('region', {
       name: 'Health Check',
