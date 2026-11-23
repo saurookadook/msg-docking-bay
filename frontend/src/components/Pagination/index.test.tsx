@@ -14,6 +14,8 @@ function LocationReadout() {
   );
 }
 
+// NOTE: Pagination is not a route in routerConfig, so it can't be reached through
+// WithMemoryRouter (TEST-17); a catch-all route renders it in a real router instead.
 function renderPagination({ meta, url }: { meta: PageMeta; url: string }) {
   const router = createMemoryRouter(
     [

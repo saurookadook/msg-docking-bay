@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 
 import { EntityLink } from '.';
 
+// NOTE: EntityLink is not a route in routerConfig, so it can't be reached through
+// WithMemoryRouter (TEST-17); a catch-all route renders it in a real router instead.
 function renderInRouter(element: React.ReactElement) {
   const router = createMemoryRouter([{ path: '*', element }]);
   return render(<RouterProvider router={router} />);

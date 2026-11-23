@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 
 import { BaySign } from '.';
 
+// NOTE: BaySign alone is not a route in routerConfig, so it can't be reached through
+// WithMemoryRouter (TEST-17); a catch-all route renders it in a real router instead.
 function renderInRouter({
   element,
   url = '/',
