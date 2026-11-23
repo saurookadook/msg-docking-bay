@@ -23,9 +23,10 @@ The plan includes the small backend PRs the frontend needs (agreed).
 
 ### Facts checked in the repo
 
-- All list routes: `limit`/`offset`, envelope `{data, meta:{limit,offset,total}}`; details `{data}`;
-  old slugs resolve and return the current `slug` (frontend must `replace` the URL when they
-  differ — D2). `q` exists on mobile suits, characters, organizations, designers
+- Paginated list routes: `limit`/`offset`, envelope `{data, meta:{limit,offset,total}}`; details
+  `{data}`; old slugs resolve and return the current `slug` (frontend must `replace` the URL when
+  they differ — D2). `/api/continuities` is the one exception: it returns `{data}` only, with no
+  `limit`/`offset` or `meta`. `q` exists on mobile suits, characters, organizations, designers
   (slug/model-number match, prefix first); **not** on works; **no cross-entity search**. Filters:
   suits `continuity`, `work`, `unit_type`; works `continuity`, `work_type`; characters/orgs `work`;
   org suits `role`.
@@ -150,9 +151,11 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
 ## Data layer
 
 - Store slices (REACT-12): `mobile-suits`, `characters`, `organizations`, `works`, `designers`,
-  `search`, `continuities`. Each holds `list {items, meta, query, requestInProgress, error}` and
-  `detailsBySlug`. Action creators wrap `safeFetch` with generated types (`paths[...]`); detail
-  actions `replace` the URL when the returned slug differs from the requested one.
+  `search`. Each holds `list {items, meta, query, requestInProgress, error}` and `detailsBySlug`.
+  Action creators wrap `safeFetch` with generated types (`paths[...]`); detail actions `replace`
+  the URL when the returned slug differs from the requested one.
+- `continuities` is unpaginated and has no detail route, so its slice holds only
+  `{items, requestInProgress, error}`, fetched once and reused by filters and decks.
 - Mirage: extend `endpoints.ts` handlers to apply `q` and filters, add `/api/search` and enough
   fixtures (several continuities, a suit with full parts and relations) to make both modes demo-able
   with `MOCK_API=true`.
