@@ -34,7 +34,13 @@ export function Pagination({ className, meta, ...props }: PaginationProps) {
     return search === '' ? '' : `?${search}`;
   }
 
-  function renderPageLink(label: string, offset: Nullable<number>) {
+  function renderPageLink({
+    label,
+    offset,
+  }: {
+    label: string;
+    offset: Nullable<number>;
+  }) {
     if (offset == null) {
       return (
         <span className="pagination-link unavailable">
@@ -56,13 +62,13 @@ export function Pagination({ className, meta, ...props }: PaginationProps) {
       className={classNames('pagination', className)}
       {...props}
     >
-      {renderPageLink('Previous', previousOffset)}
+      {renderPageLink({ label: 'Previous', offset: previousOffset })}
       <p className="pagination-range">
         {firstRow === 0
           ? `None of ${meta.total}`
           : `${firstRow}–${lastRow} of ${meta.total}`}
       </p>
-      {renderPageLink('Next', nextOffset)}
+      {renderPageLink({ label: 'Next', offset: nextOffset })}
     </nav>
   );
 }
