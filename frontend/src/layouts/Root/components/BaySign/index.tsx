@@ -3,6 +3,8 @@ import { NavLink } from 'react-router';
 import type { EntityKind } from '@/types';
 import { entityPath } from '@/utils';
 
+import './styles.css';
+
 export type BaySignProps = {
   kind: EntityKind;
   label: string;

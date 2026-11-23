@@ -35,38 +35,6 @@ App shell
         padding: var(--space-3) var(--space-4);
     }
 
-    & .bay-sign {
-        background: var(--color-surface-sunken);
-        border: 1px solid var(--color-border-strong);
-        border-block-start: 0.25rem solid var(--color-border-strong);
-        color: var(--color-text);
-        display: inline-flex;
-        font-family: var(--font-family-display);
-        font-size: 0.875rem;
-        font-weight: 700;
-        gap: var(--space-2);
-        letter-spacing: 0.08em;
-        padding: var(--space-2) var(--space-3);
-        text-decoration: none;
-        text-transform: uppercase;
-    }
-
-    & a.bay-sign.active {
-        background: var(--color-accent);
-        color: var(--color-accent-contrast);
-    }
-
-    & .bay-sign.offline {
-        border-style: dashed;
-        color: var(--color-text-muted);
-    }
-
-    & .bay-sign-status {
-        font-family: var(--font-family-mono);
-        font-size: 0.625rem;
-        font-weight: 400;
-    }
-
     & main {
         flex-grow: 1;
         inline-size: min(100%, 64rem);
