@@ -1,0 +1,53 @@
+.status-lamp {
+    --lamp-color: var(--color-text-muted);
+
+    align-items: center;
+    display: inline-flex;
+    font-family: var(--font-family-mono);
+    font-size: 0.75rem;
+    gap: var(--space-2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+
+    & .status-lamp-light {
+        background: var(--lamp-color);
+        block-size: 0.625rem;
+        border-radius: 50%;
+        box-shadow: 0 0 6px var(--lamp-color);
+        inline-size: 0.625rem;
+    }
+
+    &.online {
+        --lamp-color: var(--color-readout);
+    }
+
+    &.standby,
+    &.busy {
+        --lamp-color: var(--color-readout-alt);
+    }
+
+    &.alert {
+        --lamp-color: var(--color-danger);
+    }
+
+    &.offline .status-lamp-light {
+        box-shadow: none;
+    }
+}
+
+@keyframes status-lamp-beacon {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .status-lamp.busy .status-lamp-light {
+        animation: status-lamp-beacon 1.2s linear infinite;
+        background: conic-gradient(var(--lamp-color) 0 25%, transparent 25% 100%);
+    }
+}

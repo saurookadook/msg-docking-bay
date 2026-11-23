@@ -1,0 +1,20 @@
+.stencil-heading {
+    font-family: var(--font-family-display);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.stencil-heading-group {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+
+    & .stencil-heading-eyebrow {
+        color: var(--color-text-muted);
+        font-family: var(--font-family-mono);
+        font-size: 0.75rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+    }
+}

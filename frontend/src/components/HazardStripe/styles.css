@@ -1,0 +1,32 @@
+.hazard-stripe {
+    --hazard-band-width: 0.75rem;
+    --hazard-period: calc(var(--hazard-band-width) * 2 * 1.4142);
+
+    background: repeating-linear-gradient(
+        -45deg,
+        var(--color-accent) 0 var(--hazard-band-width),
+        var(--color-accent-contrast) var(--hazard-band-width)
+            calc(var(--hazard-band-width) * 2)
+    );
+    /* NOTE: a square tile one stripe period wide repeats without a seam at 45deg. */
+    background-size: var(--hazard-period) var(--hazard-period);
+    block-size: 0.5rem;
+    inline-size: 100%;
+
+    &.thick {
+        block-size: 1rem;
+    }
+}
+
+@keyframes hazard-crawl {
+    to {
+        background-position: var(--hazard-period) 0;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .hazard-stripe:hover,
+    .hazard-stripe.crawling {
+        animation: hazard-crawl 0.8s linear infinite;
+    }
+}
