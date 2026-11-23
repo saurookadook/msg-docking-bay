@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { SHIFT_LS_KEY } from '@/constants';
 
+import { sharedLog } from './logger';
 import { applyShift, readStoredShift, storeShift } from './shiftStorage';
 
 describe('shiftStorage', () => {
@@ -44,6 +45,27 @@ describe('shiftStorage', () => {
       });
 
       expect(() => storeShift('day')).not.toThrow();
+    });
+
+    it.each([
+      ['an Error', new Error('Quota exceeded')],
+      ['a DOMException', new DOMException('Quota exceeded', 'QuotaExceededError')],
+      ['a non-Error value', 'storage disabled'],
+    ])('logs %s that localStorage throws as an Error', (_kind, thrown) => {
+      const errorSpy = vi
+        .spyOn(sharedLog.getLogger('shiftStorage'), 'error')
+        .mockImplementation(() => {});
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw thrown;
+      });
+
+      storeShift('day');
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        '[storeShift] : Could not store the shift',
+        'day',
+        expect.any(Error),
+      );
     });
   });
 
