@@ -171,22 +171,31 @@ export function searchCatalog({
     return new MirageResponse(422, {}, { detail: errors });
   }
 
-  const characters = searchList(mockCharacters, q, ({ name, slug }) => [slug, name]);
-  const mechanicalDesigners = searchList(
-    mockMechanicalDesigners,
+  const characters = searchList({
+    columns: ({ name, slug }) => [slug, name],
+    items: mockCharacters,
     q,
-    ({ name, slug }) => [slug, name],
-  );
-  const mobileSuits = searchList(mockMobileSuits, q, ({ model_number, name, slug }) => [
-    slug,
-    name,
-    model_number,
-  ]);
-  const organizations = searchList(mockOrganizations, q, ({ name, slug }) => [
-    slug,
-    name,
-  ]);
-  const works = searchList(mockWorks, q, ({ slug, title }) => [slug, title]);
+  });
+  const mechanicalDesigners = searchList({
+    columns: ({ name, slug }) => [slug, name],
+    items: mockMechanicalDesigners,
+    q,
+  });
+  const mobileSuits = searchList({
+    columns: ({ model_number, name, slug }) => [slug, name, model_number],
+    items: mockMobileSuits,
+    q,
+  });
+  const organizations = searchList({
+    columns: ({ name, slug }) => [slug, name],
+    items: mockOrganizations,
+    q,
+  });
+  const works = searchList({
+    columns: ({ slug, title }) => [slug, title],
+    items: mockWorks,
+    q,
+  });
   return {
     data: {
       characters: characters.slice(0, limit),

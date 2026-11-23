@@ -19,11 +19,15 @@ export function normalizeSearch(q: Nullable<string> | undefined): string | undef
  * rest keep the order `items` came in: the route's list order.
  * @returns `items` unchanged when `q` is blank after normalization.
  */
-export function searchList<T>(
-  items: readonly T[],
-  q: Nullable<string> | undefined,
-  columns: (item: T) => readonly (Nullable<string> | undefined)[],
-): readonly T[] {
+export function searchList<T>({
+  columns,
+  items,
+  q,
+}: {
+  columns: (item: T) => readonly (Nullable<string> | undefined)[];
+  items: readonly T[];
+  q: Nullable<string> | undefined;
+}): readonly T[] {
   const needle = normalizeSearch(q);
   if (needle === undefined) return items;
   const normalized = (item: T): string[] =>

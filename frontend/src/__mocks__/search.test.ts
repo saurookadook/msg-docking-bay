@@ -29,19 +29,19 @@ describe('searchList', () => {
   const columns = ({ name, slug }: (typeof items)[number]) => [slug, name];
 
   it('keeps matches, prefix matches first, the rest in their order', () => {
-    expect(searchList(items, 'zaku', columns).map(({ slug }) => slug)).toEqual([
+    expect(searchList({ columns, items, q: 'zaku' }).map(({ slug }) => slug)).toEqual([
       'zaku-ii',
       'act-zaku',
     ]);
   });
 
   it('matches any column', () => {
-    expect(searchList(items, 'gundam', columns).map(({ slug }) => slug)).toEqual([
-      'rx-78-2-gundam',
-    ]);
+    expect(searchList({ columns, items, q: 'gundam' }).map(({ slug }) => slug)).toEqual(
+      ['rx-78-2-gundam'],
+    );
   });
 
   it('returns every item for a blank q', () => {
-    expect(searchList(items, ' -- ', columns)).toBe(items);
+    expect(searchList({ columns, items, q: ' -- ' })).toBe(items);
   });
 });
