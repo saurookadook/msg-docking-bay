@@ -1,5 +1,6 @@
 #home {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: var(--space-4);
 
     & p {

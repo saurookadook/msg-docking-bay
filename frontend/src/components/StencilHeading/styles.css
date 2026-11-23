@@ -7,7 +7,8 @@ the heading inherits the stencil lettering from the group. */
     text-transform: uppercase;
 
     &:is(hgroup) {
-        display: grid;
+        display: flex;
+        flex-direction: column;
         gap: var(--space-1);
         margin: 0;
     }

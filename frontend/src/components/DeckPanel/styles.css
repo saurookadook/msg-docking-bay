@@ -17,7 +17,8 @@
             0.5rem no-repeat,
         var(--color-surface-raised);
     border: 1px solid var(--color-border);
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: var(--space-3);
     padding: var(--space-4);
     position: relative;
