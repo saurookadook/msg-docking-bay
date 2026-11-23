@@ -13,9 +13,5 @@ export type EntityKind = keyof typeof ENTITY_KINDS;
  * @note Slugs, not IDs: the API's public key is the slug (`catalog-read-api.md` D2).
  */
 export type AppParams = {
-  characterSlug?: string;
-  mechanicalDesignerSlug?: string;
-  mobileSuitSlug?: string;
-  organizationSlug?: string;
-  workSlug?: string;
+  [Kind in EntityKind as `${Kind}Slug`]?: string;
 };
