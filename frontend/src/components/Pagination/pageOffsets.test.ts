@@ -46,6 +46,17 @@ describe('pageOffsets', () => {
     });
   });
 
+  it.each([
+    [{ limit: 50, offset: 120, total: 120 }, 100],
+    [{ limit: 10, offset: 25, total: 25 }, 20],
+    [{ limit: 10, offset: 29, total: 25 }, 20],
+  ])(
+    'steps back to the last real page from %o, just past the end',
+    (meta, previousOffset) => {
+      expect(pageOffsets(meta)).toMatchObject({ firstRow: 0, previousOffset });
+    },
+  );
+
   it('steps back to the start from an offset that is not a page boundary', () => {
     expect(pageOffsets({ limit: 50, offset: 30, total: 120 })).toMatchObject({
       previousOffset: 0,

@@ -22,8 +22,11 @@ export function pageOffsets({ limit, offset, total }: PageMeta): PageOffsets {
   return {
     firstRow: isPastEnd ? 0 : offset + 1,
     lastRow: isPastEnd ? 0 : Math.min(offset + limit, total),
-    previousOffset:
-      offset > 0 ? Math.max(0, Math.min(offset - limit, lastPageOffset)) : null,
+    previousOffset: (function () {
+      if (offset <= 0) return null;
+      if (isPastEnd) return lastPageOffset;
+      return Math.max(0, offset - limit);
+    })(),
     nextOffset: offset + limit < total ? offset + limit : null,
   };
 }
