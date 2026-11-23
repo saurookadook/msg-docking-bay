@@ -2,10 +2,14 @@ import { useEffect } from 'react';
 import { Link, Outlet } from 'react-router';
 
 import { HazardStripe, ShiftToggle, StatusLamp } from '@/components';
+import { ENTITY_KINDS } from '@/constants';
 import { hydrateShift, useAppStore } from '@/store';
+import type { EntityKind } from '@/types';
 
-import { BAY_SIGNS } from './baySigns';
 import { BaySign } from './components';
+
+// NOTE: `Object.keys` types its result as string[]; these are ENTITY_KINDS' own keys.
+const BAY_KINDS = Object.keys(ENTITY_KINDS) as EntityKind[];
 
 /**
  * @description The app shell, dressed as the MS deck: a status bar, the bay signs, the
@@ -30,9 +34,13 @@ export function Root() {
       <HazardStripe />
       <nav aria-label="Bays" className="bay-signs">
         <ul>
-          {BAY_SIGNS.map((baySign) => (
-            <li key={baySign.kind}>
-              <BaySign {...baySign} />
+          {BAY_KINDS.map((kind) => (
+            <li key={kind}>
+              <BaySign
+                isCommissioned={ENTITY_KINDS[kind].isCommissioned}
+                kind={kind}
+                label={ENTITY_KINDS[kind].navLabel}
+              />
             </li>
           ))}
         </ul>

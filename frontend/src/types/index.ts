@@ -1,17 +1,12 @@
-import type { SHIFTS } from '@/constants';
+import type { ENTITY_KINDS, SHIFTS } from '@/constants';
 
 export type Nullable<T> = T | null;
 
 /** @description A deck shift, which picks the color scheme (`SHIFTS`). */
 export type Shift = (typeof SHIFTS)[number];
 
-/** @description A kind of catalog entity that has its own pages. */
-export type EntityKind =
-  | 'character'
-  | 'mechanicalDesigner'
-  | 'mobileSuit'
-  | 'organization'
-  | 'work';
+/** @description A kind of catalog entity that has its own pages (`ENTITY_KINDS`). */
+export type EntityKind = keyof typeof ENTITY_KINDS;
 
 /**
  * @description Every route param in the app (REACT-27). Each is the entity's current slug.

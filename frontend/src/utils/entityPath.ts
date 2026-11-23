@@ -1,13 +1,5 @@
+import { ENTITY_KINDS } from '@/constants';
 import type { EntityKind } from '@/types';
-
-/** @description Each entity kind's list route; its detail route adds `/:<kind>Slug`. */
-export const ENTITY_LIST_PATHS: Record<EntityKind, string> = {
-  character: '/characters',
-  mechanicalDesigner: '/mechanical-designers',
-  mobileSuit: '/mobile-suits',
-  organization: '/organizations',
-  work: '/works',
-};
 
 /**
  * @description The path to an entity's page, or to its kind's list without a `slug`.
@@ -24,6 +16,6 @@ export function entityPath({
   kind: EntityKind;
   slug?: string;
 }): string {
-  const listPath = ENTITY_LIST_PATHS[kind];
+  const { listPath } = ENTITY_KINDS[kind];
   return slug == null ? listPath : `${listPath}/${encodeURIComponent(slug)}`;
 }

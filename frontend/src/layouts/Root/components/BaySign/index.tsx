@@ -1,11 +1,17 @@
 import { NavLink } from 'react-router';
 
+import type { EntityKind } from '@/types';
 import { entityPath } from '@/utils';
 
-import type { BaySign as BaySignConfig } from '../../baySigns';
+export type BaySignProps = {
+  kind: EntityKind;
+  label: string;
+  /** @description The bay's list route exists; until then its sign shows "Offline". */
+  isCommissioned: boolean;
+};
 
 /** @description One hanging bay sign: a link once its bay is commissioned, else offline. */
-export function BaySign({ isCommissioned, kind, label }: BaySignConfig) {
+export function BaySign({ isCommissioned, kind, label }: BaySignProps) {
   if (!isCommissioned) {
     return (
       <span className="bay-sign offline">
