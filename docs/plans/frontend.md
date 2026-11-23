@@ -5,9 +5,9 @@
 
 ## Context
 
-The backend now serves the catalog (PR B, PR C; PR D in progress on `feat/add-suit-parts-read`), but
-the frontend is still a placeholder (`pages/Home`, `pages/HealthCheck`). `catalog-read-api.md` says
-"Frontend pages are a separate plan" — this is it.
+The backend now serves the catalog, including the parts on each spec sheet (PR B, PR C and
+PR D, #32), but the frontend is still a placeholder (`pages/Home`, `pages/HealthCheck`).
+`catalog-read-api.md` says "Frontend pages are a separate plan" — this is it.
 
 Goal: one React app where a user searches and browses mobile suits, characters, organizations, works
 and mechanical designers, and feels like they're walking an MS deck. Two **modes over the same routes
@@ -32,7 +32,8 @@ The plan includes the small backend PRs the frontend needs (agreed).
 - **No image fields anywhere** in models or contract. Image rights research
   (`docs/research/image-rights.md`) requires self-hosted copies, credit, link-back and an
   "unofficial" disclaimer — so images are a separate ingest/storage plan; this plan only reserves slots.
-- `openapi.json` lags PR D (parts not yet in the contract) → run `pnpm run api:generate` after PR D.
+- PR D (#32) regenerated `openapi.json`, so the contract already has the parts (armaments,
+  equipment, materials, powerplants).
 - Existing frontend pieces to reuse: `safeFetch` (`src/utils/safeFetch.ts`), the store pattern
   (`src/store/health/*`, `useAppStore()` in `store/hooks.ts`), `routerConfig` (`src/app/router.tsx`),
   `Root` layout, type aliases in `src/api/index.ts`, Mirage mock mode (`__mocks__/endpoints.ts`,
@@ -99,13 +100,13 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
 
 - **Mobile suit** (wiki infobox `Infobox/Mobile Weapon`). Header: model number stencil + name, `name_ja`,
   unit type, continuity ✅. Infobox: designers ✅, manufacturer/operator/developer orgs ✅, pilots ✅,
-  first appearance (debut) ✅, height/weight ✅, powerplant ✅*, armor/frame materials ✅*, image ⏳,
+  first appearance (debut) ✅, height/weight ✅, powerplant ✅, armor/frame materials ✅, image ⏳,
   `kanji`/`other names`/`archetype`/`production` ⏳. Sections: **Specifications** (spec sheets as
   configuration tabs; inherited fields marked "per base spec") ✅; **Armaments** grouped fixed /
-  handheld / optional ✅*; **Special Equipment & Features** ✅*; **Variants & lineage**
+  handheld / optional ✅; **Special Equipment & Features** ✅; **Variants & lineage**
   (`relations` as a small dev-tree: developed from / upgrade of / variants) ✅; **Appearances** ✅;
   **History**, **Gallery**, **Trivia** ⏳. Fun: **height lineup** silhouette vs a human and an 18 m
-  reference frame. (*after PR D + `api:generate`.)
+  reference frame.
 - **Character** (wiki `Infobox/Character`). Name, `name_ja` ✅; appearances ✅; **mobile weapons
   piloted** ✅ (as a "qualified units" rack). ⏳ affiliation, rank, gender, age, voice actors,
   personality, skills, history, relationships, quotes. Framing: a pilot ID card.
@@ -168,7 +169,7 @@ Backend:
 
 Frontend:
 
-- [ ] **F0** `build(frontend): regenerate the API contract for suit parts` (after PR D merges).
+- [x] **F0** `build(frontend): regenerate the API contract for suit parts` — done in PR D (#32).
 - [ ] **F1** `feat(frontend): add the docking bay design system and shell` — tokens, fonts, shared
   components, Root layout, shift toggle, breakpoints, `AppParams`, Storybook stories for each component.
 - [ ] **F2** `feat(frontend): browse the catalog` — store slices, list pages with filters/pagination
