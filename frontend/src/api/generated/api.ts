@@ -330,6 +330,10 @@ export interface paths {
      *     designers and works. ``meta.totals`` counts every match, so the
      *     frontend can link to the kind's list with the same ``q`` for the
      *     rest. Reads only, and calls no external API.
+     *
+     *     The path is singular, a departure from FAPI-5's plural nouns: it
+     *     reads across every kind rather than naming one collection, and
+     *     ``frontend.md`` agreed it as ``/api/search`` (BE-1).
      */
     get: operations['read_search'];
     put?: never;

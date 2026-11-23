@@ -3042,7 +3042,7 @@
         },
         "/api/search": {
             "get": {
-                "description": "Return the first matches of each kind, with every kind's total.\n\nThe kinds are mobile suits, characters, organizations, mechanical\ndesigners and works. ``meta.totals`` counts every match, so the\nfrontend can link to the kind's list with the same ``q`` for the\nrest. Reads only, and calls no external API.",
+                "description": "Return the first matches of each kind, with every kind's total.\n\nThe kinds are mobile suits, characters, organizations, mechanical\ndesigners and works. ``meta.totals`` counts every match, so the\nfrontend can link to the kind's list with the same ``q`` for the\nrest. Reads only, and calls no external API.\n\nThe path is singular, a departure from FAPI-5's plural nouns: it\nreads across every kind rather than naming one collection, and\n``frontend.md`` agreed it as ``/api/search`` (BE-1).",
                 "operationId": "read_search",
                 "parameters": [
                     {
