@@ -8,7 +8,7 @@ import type { BaySign as BaySignConfig } from '../../baySigns';
 export function BaySign({ isCommissioned, kind, label }: BaySignConfig) {
   if (!isCommissioned) {
     return (
-      <span aria-disabled="true" className="bay-sign offline">
+      <span className="bay-sign offline">
         {label} <span className="bay-sign-status">Offline</span>
       </span>
     );

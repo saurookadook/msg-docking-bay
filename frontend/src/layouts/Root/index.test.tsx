@@ -41,7 +41,6 @@ describe('Root', () => {
       'Designers',
     ]) {
       const sign = within(bays).getByText(label);
-      expect(sign).toHaveAttribute('aria-disabled', 'true');
       expect(sign).toHaveTextContent(`${label} Offline`);
     }
     expect(within(bays).queryByRole('link')).not.toBeInTheDocument();

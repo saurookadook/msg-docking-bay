@@ -37,8 +37,9 @@ export function Pagination({ className, meta, ...props }: PaginationProps) {
   function renderPageLink(label: string, offset: Nullable<number>) {
     if (offset == null) {
       return (
-        <span aria-disabled="true" className="pagination-link">
+        <span className="pagination-link unavailable">
           {label}
+          <span className="visually-hidden"> (unavailable)</span>
         </span>
       );
     }

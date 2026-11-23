@@ -16,7 +16,7 @@
         text-transform: uppercase;
     }
 
-    & .pagination-link[aria-disabled='true'] {
+    & .pagination-link.unavailable {
         border-style: dashed;
         color: var(--color-text-muted);
     }

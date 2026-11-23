@@ -27,6 +27,6 @@ describe('BaySign', () => {
     renderInRouter(<BaySign isCommissioned={false} kind="work" label="Works" />);
 
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    expect(screen.getByText('Works')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByText('Works')).toHaveTextContent('Works Offline');
   });
 });

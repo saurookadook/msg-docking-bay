@@ -49,14 +49,14 @@ describe('Pagination', () => {
     );
   });
 
-  it('marks the missing previous page as unavailable, not as a link', () => {
+  it('names the missing previous page as unavailable, not as a link', () => {
     renderPagination({
       meta: { limit: 50, offset: 0, total: 120 },
       url: '/mobile-suits',
     });
 
     expect(screen.queryByRole('link', { name: 'Previous' })).not.toBeInTheDocument();
-    expect(screen.getByText('Previous')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByText('Previous')).toHaveTextContent('Previous (unavailable)');
   });
 
   it('drops the offset param when going back to the first page', async () => {
