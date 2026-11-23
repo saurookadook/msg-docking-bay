@@ -27,6 +27,7 @@ class TestArmamentDB:
     ) -> None:
         ArmamentDBFactory(
             id=PART_ID,
+            fandom_page_id=3606,
             fandom_page_title="60mm Vulcan Gun",
             name="60mm Vulcan Gun",
             slug="60mm-vulcan-gun",
@@ -38,6 +39,7 @@ class TestArmamentDB:
             select(ArmamentDB).where(ArmamentDB.id == PART_ID)
         ).scalar_one()
 
+        assert part.fandom_page_id == 3606
         assert part.fandom_page_title == "60mm Vulcan Gun"
         assert part.name == "60mm Vulcan Gun"
         assert part.slug == "60mm-vulcan-gun"
@@ -50,17 +52,29 @@ class TestArmamentDB:
 
         test_db_session.flush()
 
+    def test_allows_two_without_a_page(self, test_db_session: Session) -> None:
+        """Most parts have no article, so the page ID is null."""
+        ids = [ArmamentDBFactory().id, ArmamentDBFactory().id]
+        test_db_session.flush()
+
+        page_ids = test_db_session.scalars(
+            select(ArmamentDB.fandom_page_id).where(ArmamentDB.id.in_(ids))
+        ).all()
+
+        assert page_ids == [None, None]
+
 
 class TestArmamentDBConstraints:
     @pytest.mark.parametrize(
         "column, value, constraint",
         [
+            ("fandom_page_id", 3606, "armaments_fandom_page_id_key"),
             ("fandom_page_title", "60mm Vulcan Gun", "armaments_fandom_page_title_key"),
             ("slug", "60mm-vulcan-gun", "armaments_slug_key"),
         ],
     )
     def test_rejects_a_duplicate(
-        self, test_db_session: Session, column: str, value: str, constraint: str
+        self, test_db_session: Session, column: str, value: str | int, constraint: str
     ) -> None:
         ArmamentDBFactory(**{column: value})
         ArmamentDBFactory(**{column: value})
@@ -70,9 +84,16 @@ class TestArmamentDBConstraints:
 
         assert violated_constraint(exc_info.value) == ("23505", constraint)
 
+    def test_accepts_the_smallest_page_id(self, test_db_session: Session) -> None:
+        ArmamentDBFactory(fandom_page_id=1)
+
+        test_db_session.flush()
+
     @pytest.mark.parametrize(
         "overrides, constraint",
         [
+            # one below the smallest accepted page ID
+            ({"fandom_page_id": 0}, "ck_armaments_fandom_page_id_positive"),
             ({"fandom_page_title": ""}, "ck_armaments_fandom_page_title_not_empty"),
             ({"name": ""}, "ck_armaments_name_not_empty"),
             ({"slug": "60mm_Vulcan_Gun"}, "ck_armaments_slug_format"),

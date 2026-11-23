@@ -27,6 +27,7 @@ class TestEquipmentDB:
     ) -> None:
         EquipmentDBFactory(
             id=PART_ID,
+            fandom_page_id=8697,
             fandom_page_title="Core Block System",
             name="Core Block System",
             slug="core-block-system",
@@ -38,6 +39,7 @@ class TestEquipmentDB:
             select(EquipmentDB).where(EquipmentDB.id == PART_ID)
         ).scalar_one()
 
+        assert part.fandom_page_id == 8697
         assert part.fandom_page_title == "Core Block System"
         assert part.name == "Core Block System"
         assert part.slug == "core-block-system"
@@ -50,11 +52,23 @@ class TestEquipmentDB:
 
         test_db_session.flush()
 
+    def test_allows_two_without_a_page(self, test_db_session: Session) -> None:
+        """Most parts have no article, so the page ID is null."""
+        ids = [EquipmentDBFactory().id, EquipmentDBFactory().id]
+        test_db_session.flush()
+
+        page_ids = test_db_session.scalars(
+            select(EquipmentDB.fandom_page_id).where(EquipmentDB.id.in_(ids))
+        ).all()
+
+        assert page_ids == [None, None]
+
 
 class TestEquipmentDBConstraints:
     @pytest.mark.parametrize(
         "column, value, constraint",
         [
+            ("fandom_page_id", 8697, "equipment_fandom_page_id_key"),
             (
                 "fandom_page_title",
                 "Core Block System",
@@ -64,7 +78,7 @@ class TestEquipmentDBConstraints:
         ],
     )
     def test_rejects_a_duplicate(
-        self, test_db_session: Session, column: str, value: str, constraint: str
+        self, test_db_session: Session, column: str, value: str | int, constraint: str
     ) -> None:
         EquipmentDBFactory(**{column: value})
         EquipmentDBFactory(**{column: value})
@@ -74,9 +88,16 @@ class TestEquipmentDBConstraints:
 
         assert violated_constraint(exc_info.value) == ("23505", constraint)
 
+    def test_accepts_the_smallest_page_id(self, test_db_session: Session) -> None:
+        EquipmentDBFactory(fandom_page_id=1)
+
+        test_db_session.flush()
+
     @pytest.mark.parametrize(
         "overrides, constraint",
         [
+            # one below the smallest accepted page ID
+            ({"fandom_page_id": 0}, "ck_equipment_fandom_page_id_positive"),
             ({"fandom_page_title": ""}, "ck_equipment_fandom_page_title_not_empty"),
             ({"name": ""}, "ck_equipment_name_not_empty"),
             ({"slug": "Core_Block_System"}, "ck_equipment_slug_format"),

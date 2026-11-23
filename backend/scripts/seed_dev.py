@@ -3,7 +3,9 @@
 Four suits (RX-78-2, RX-78-02, RX-78F00 and the MS-06F Zaku II), the
 five works they appear in, the Universal Century, the two Amuros who
 pilot the Gundams, three organizations and three designers named in
-the suits' infoboxes, and the Gundam Wiki pages each fact came from.
+the suits' infoboxes, the parts those infoboxes list (a representative
+subset: no sub-items or per-work tags), and the Gundam Wiki pages each
+fact came from.
 Every value was read by hand from the Gundam Wiki's
 ``gundam_pages_current.xml.7z`` dump of 2026-11-15
 (``ingest/data/dumps/``, SHA-256 ``89a91167…``). The frontend's Mirage
@@ -26,7 +28,7 @@ import uuid
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
-from typing import Any, Final, NamedTuple, Protocol, TypedDict
+from typing import TYPE_CHECKING, Any, Final, NamedTuple, Protocol, TypedDict
 from urllib.parse import quote
 
 from sqlalchemy import exists, select
@@ -34,8 +36,11 @@ from sqlalchemy.orm import Session
 
 from config.env_vars import EnvVarManager
 from constants.catalog import (
+    ArmamentMount,
     ContentLicense,
+    EquipmentFit,
     IngestRunStatus,
+    MaterialUse,
     MobileSuitOrganizationRole,
     MobileSuitRelationType,
     SourceKind,
@@ -44,18 +49,29 @@ from constants.catalog import (
     WorkType,
 )
 from db.db_session_manager import DBSessionManager
+from models.armament.facade import ArmamentFacade
 from models.character.facade import CharacterFacade
 from models.continuity.facade import ContinuityFacade
+from models.equipment.facade import EquipmentFacade
 from models.ingest_run.db import IngestRunDB
+from models.material.facade import MaterialFacade
 from models.mechanical_designer.facade import MechanicalDesignerFacade
 from models.mobile_suit.facade import MobileSuitFacade
 from models.mobile_suit_designer.facade import MobileSuitDesignerFacade
 from models.mobile_suit_organization.facade import MobileSuitOrganizationFacade
 from models.mobile_suit_pilot.facade import MobileSuitPilotFacade
 from models.organization.facade import OrganizationFacade
+from models.powerplant.facade import PowerplantFacade
 from models.source.facade import SourceFacade
+from models.spec_sheet_armament.facade import SpecSheetArmamentFacade
+from models.spec_sheet_equipment.facade import SpecSheetEquipmentFacade
+from models.spec_sheet_material.facade import SpecSheetMaterialFacade
+from models.spec_sheet_powerplant.facade import SpecSheetPowerplantFacade
 from models.work.facade import WorkFacade
 from utils.logging.init import init_logging
+
+if TYPE_CHECKING:
+    from models.spec_sheet.entity import SpecSheetPartKind
 
 DESCRIPTION: Final = "Seed a small, real slice of the catalog for development."
 
@@ -113,6 +129,58 @@ class SuitOrganizationRow(NamedTuple):
     organization: str
     role: MobileSuitOrganizationRole
     work: str | None
+
+
+class PartRow(NamedTuple):
+    """A part as the infobox names it.
+
+    ``page_id`` is set only when the name is the title of the part's own
+    article; a title that redirects to a list section is no page of its
+    own, so such a part has neither title nor page ID.
+    """
+
+    name: str
+    slug: str
+    page_id: int | None = None
+
+
+class ArmamentListingRow(NamedTuple):
+    """An armament on a suit's base sheet, with its infobox count."""
+
+    suit: str
+    armament: str
+    mount: ArmamentMount
+    quantity_min: int | None = None
+    quantity_max: int | None = None
+    note: str | None = None
+
+
+class EquipmentListingRow(NamedTuple):
+    """An item of equipment on a suit's base sheet."""
+
+    suit: str
+    equipment: str
+    fit: EquipmentFit
+    note: str | None = None
+
+
+class MaterialListingRow(NamedTuple):
+    """A material on a suit's base sheet."""
+
+    suit: str
+    material: str
+    material_use: MaterialUse
+    note: str | None = None
+
+
+class PowerplantListingRow(NamedTuple):
+    """A powerplant on a suit's base sheet, with its infobox count."""
+
+    suit: str
+    powerplant: str
+    quantity_min: int | None = None
+    quantity_max: int | None = None
+    note: str | None = None
 
 
 @dataclass(frozen=True)
@@ -475,6 +543,107 @@ MECHANICAL_DESIGNER_SLUG_REDIRECTS: Final[dict[str, str]] = {
 """The wiki's ``Katoki Hajime`` redirect page, as an old slug (D2)."""
 
 
+ARMAMENTS: Final[list[PartRow]] = [
+    PartRow("120mm Machine Gun", "120mm-machine-gun"),
+    PartRow("3-tube Missile Pod", "3-tube-missile-pod"),
+    PartRow("60mm Vulcan Gun", "60mm-vulcan-gun"),
+    PartRow(
+        "BLASH-XHB-L-03/N-STD 380mm Hyper Bazooka",
+        "blash-xhb-l-03-n-std-380mm-hyper-bazooka",
+    ),
+    PartRow("BOWA-XBR-M-79-07G Beam Rifle", "bowa-xbr-m-79-07g-beam-rifle"),
+    # NOTE: its wiki title redirects to a list of weapons.
+    PartRow("Beam Rifle", "beam-rifle"),
+    PartRow("Beam Saber", "beam-saber", page_id=2405),
+    PartRow("Heat Hawk", "heat-hawk"),
+    PartRow("MMP-80 90mm Machine Gun", "mmp-80-90mm-machine-gun"),
+    PartRow("Shoulder Cannon", "shoulder-cannon"),
+    PartRow("Shoulder Shield", "shoulder-shield"),
+    PartRow("Vulcan Gun", "vulcan-gun", page_id=3606),
+]
+
+EQUIPMENT: Final[list[PartRow]] = [
+    PartRow("Core Block System", "core-block-system", page_id=8697),
+    PartRow("Magnet Coating", "magnet-coating"),
+]
+
+MATERIALS: Final[list[PartRow]] = [
+    PartRow("Luna Titanium Alloy", "luna-titanium-alloy", page_id=3877),
+    PartRow("Super Hard Steel Alloy", "super-hard-steel-alloy"),
+]
+
+POWERPLANTS: Final[list[PartRow]] = [
+    # NOTE: its wiki title redirects to a section of the technology
+    # page.
+    PartRow(
+        "Minovsky Ultracompact Fusion Reactor", "minovsky-ultracompact-fusion-reactor"
+    ),
+]
+
+SHEET_ARMAMENTS: Final[list[ArmamentListingRow]] = [
+    ArmamentListingRow("rx-78-2-gundam", "60mm-vulcan-gun", ArmamentMount.FIXED, 2, 2),
+    ArmamentListingRow(
+        "rx-78-2-gundam", "bowa-xbr-m-79-07g-beam-rifle", ArmamentMount.HANDHELD
+    ),
+    ArmamentListingRow(
+        "rx-78-2-gundam",
+        "beam-saber",
+        ArmamentMount.HANDHELD,
+        2,
+        2,
+        note="2 x Beam Javelin",
+    ),
+    ArmamentListingRow(
+        "rx-78-2-gundam",
+        "blash-xhb-l-03-n-std-380mm-hyper-bazooka",
+        ArmamentMount.OPTIONAL_HANDHELD,
+        1,
+        2,
+    ),
+    ArmamentListingRow("rx-78-02-gundam", "vulcan-gun", ArmamentMount.FIXED, 2, 2),
+    ArmamentListingRow("rx-78-02-gundam", "beam-saber", ArmamentMount.FIXED, 1, 2),
+    ArmamentListingRow("rx-78-02-gundam", "beam-rifle", ArmamentMount.HANDHELD),
+    ArmamentListingRow(
+        "rx-78-02-gundam", "shoulder-cannon", ArmamentMount.OPTIONAL_FIXED
+    ),
+    ArmamentListingRow("ms-06f-zaku-ii", "shoulder-shield", ArmamentMount.FIXED),
+    ArmamentListingRow("ms-06f-zaku-ii", "120mm-machine-gun", ArmamentMount.HANDHELD),
+    ArmamentListingRow("ms-06f-zaku-ii", "heat-hawk", ArmamentMount.HANDHELD),
+    ArmamentListingRow(
+        "ms-06f-zaku-ii", "3-tube-missile-pod", ArmamentMount.OPTIONAL_FIXED, 2, 2
+    ),
+    ArmamentListingRow(
+        "ms-06f-zaku-ii", "mmp-80-90mm-machine-gun", ArmamentMount.OPTIONAL_HANDHELD
+    ),
+]
+"""A count of two sets both bounds, ``1-2`` a range, none neither."""
+
+SHEET_EQUIPMENT: Final[list[EquipmentListingRow]] = [
+    EquipmentListingRow("rx-78-2-gundam", "core-block-system", EquipmentFit.STANDARD),
+    EquipmentListingRow(
+        "rx-78-2-gundam",
+        "magnet-coating",
+        EquipmentFit.STANDARD,
+        note="field upgrade",
+    ),
+    EquipmentListingRow(
+        "rx-78-02-gundam", "core-block-system", EquipmentFit.STANDARD, note="refit"
+    ),
+]
+
+SHEET_MATERIALS: Final[list[MaterialListingRow]] = [
+    MaterialListingRow("rx-78-2-gundam", "luna-titanium-alloy", MaterialUse.ARMOR),
+    MaterialListingRow("rx-78-02-gundam", "luna-titanium-alloy", MaterialUse.ARMOR),
+    MaterialListingRow("ms-06f-zaku-ii", "super-hard-steel-alloy", MaterialUse.ARMOR),
+]
+
+SHEET_POWERPLANTS: Final[list[PowerplantListingRow]] = [
+    PowerplantListingRow("rx-78-2-gundam", "minovsky-ultracompact-fusion-reactor"),
+    PowerplantListingRow("rx-78-02-gundam", "minovsky-ultracompact-fusion-reactor"),
+]
+"""The Zaku II's infobox names none; the RX-78F00's lists no parts."""
+
+
 def check_environment() -> None:
     """Refuse a database outside dev and test.
 
@@ -580,15 +749,19 @@ def seed(db_session: Session) -> None:
         )
         suit_ids[suit.slug] = suit.id
         suit_sources[suit.slug] = source_ids[row["page"]]
+    base_sheet_ids: dict[str, uuid.UUID] = {}
     for row in SPEC_SHEETS:
         sheet = {key: value for key, value in row.items() if key != "suit"}
-        suits.create_or_update_spec_sheet(
+        spec_sheet = suits.create_or_update_spec_sheet(
             payload={
                 **sheet,
                 "mobile_suit_id": suit_ids[row["suit"]],
                 "source_id": suit_sources[row["suit"]],
             }
         )
+        if spec_sheet.configuration is None:
+            base_sheet_ids[row["suit"]] = spec_sheet.id
+    _seed_parts(db_session, base_sheet_ids=base_sheet_ids)
     for from_slug, relation_type, to_slug in SUIT_RELATIONS:
         suits.create_or_update_relation(
             payload={
@@ -662,12 +835,13 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     logger.info(
         "Seeded suits=%d works=%d characters=%d organizations=%d "
-        "designers=%d sources=%d",
+        "designers=%d parts=%d sources=%d",
         len(SUITS),
         len(WORKS),
         len(CHARACTERS),
         len(ORGANIZATIONS),
         len(MECHANICAL_DESIGNERS),
+        len(ARMAMENTS) + len(EQUIPMENT) + len(MATERIALS) + len(POWERPLANTS),
         len(PAGES),
     )
     return 0
@@ -792,6 +966,112 @@ def _seed_people(db_session: Session, *, ids: SeededIds) -> None:
                 "mechanical_designer_id": designer_ids[designer_slug],
                 "mobile_suit_id": ids.suits[suit_slug],
                 "source_id": ids.suit_sources[suit_slug],
+            }
+        )
+
+
+class _Upserted(Protocol):
+    """An upserted row's entity, read only for its ``id``."""
+
+    @property
+    def id(self) -> uuid.UUID:
+        """The row's primary key."""
+        ...
+
+
+class _PartUpsert(Protocol):
+    """A part facade's ``create_or_update``."""
+
+    def __call__(self, *, payload: Mapping[str, Any]) -> _Upserted:
+        """Upsert one part."""
+        ...
+
+
+def _seed_parts(
+    db_session: Session, *, base_sheet_ids: Mapping[str, uuid.UUID]
+) -> None:
+    """Upsert the parts, then list them on each suit's base sheet.
+
+    The infobox lists parts once, so the named configurations inherit
+    them (``inherited_parts``).
+    """
+    part_upserts: tuple[tuple[SpecSheetPartKind, _PartUpsert, list[PartRow]], ...] = (
+        (
+            "armaments",
+            ArmamentFacade(db_session=db_session).create_or_update,
+            ARMAMENTS,
+        ),
+        (
+            "equipment",
+            EquipmentFacade(db_session=db_session).create_or_update,
+            EQUIPMENT,
+        ),
+        (
+            "materials",
+            MaterialFacade(db_session=db_session).create_or_update,
+            MATERIALS,
+        ),
+        (
+            "powerplants",
+            PowerplantFacade(db_session=db_session).create_or_update,
+            POWERPLANTS,
+        ),
+    )
+    part_ids: dict[SpecSheetPartKind, dict[str, uuid.UUID]] = {}
+    for kind, upsert, rows in part_upserts:
+        part_ids[kind] = {
+            row.slug: upsert(
+                payload={
+                    "fandom_page_id": row.page_id,
+                    "fandom_page_title": None if row.page_id is None else row.name,
+                    "name": row.name,
+                    "slug": row.slug,
+                }
+            ).id
+            for row in rows
+        }
+
+    armaments = SpecSheetArmamentFacade(db_session=db_session)
+    for listing in SHEET_ARMAMENTS:
+        armaments.create_or_update(
+            payload={
+                "armament_id": part_ids["armaments"][listing.armament],
+                "mount": listing.mount,
+                "note": listing.note,
+                "quantity_max": listing.quantity_max,
+                "quantity_min": listing.quantity_min,
+                "spec_sheet_id": base_sheet_ids[listing.suit],
+            }
+        )
+    equipment = SpecSheetEquipmentFacade(db_session=db_session)
+    for listing in SHEET_EQUIPMENT:
+        equipment.create_or_update(
+            payload={
+                "equipment_id": part_ids["equipment"][listing.equipment],
+                "fit": listing.fit,
+                "note": listing.note,
+                "spec_sheet_id": base_sheet_ids[listing.suit],
+            }
+        )
+    materials = SpecSheetMaterialFacade(db_session=db_session)
+    for listing in SHEET_MATERIALS:
+        materials.create_or_update(
+            payload={
+                "material_id": part_ids["materials"][listing.material],
+                "material_use": listing.material_use,
+                "note": listing.note,
+                "spec_sheet_id": base_sheet_ids[listing.suit],
+            }
+        )
+    powerplants = SpecSheetPowerplantFacade(db_session=db_session)
+    for listing in SHEET_POWERPLANTS:
+        powerplants.create_or_update(
+            payload={
+                "note": listing.note,
+                "powerplant_id": part_ids["powerplants"][listing.powerplant],
+                "quantity_max": listing.quantity_max,
+                "quantity_min": listing.quantity_min,
+                "spec_sheet_id": base_sheet_ids[listing.suit],
             }
         )
 
