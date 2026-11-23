@@ -178,3 +178,30 @@ Where the implementation differs from the steps above:
 - **Seeded API check.** Through the proxy: `rx782`, `amuro`, `zeon` and `okawara` find
   their rows. A blank `q` and `大河原` both list the first rows, with totals of 2, 3, 4,
   3 and 5, the same as Mirage's. `limit=21` and a 101-character `q` are 422.
+- **Review fixes (2026-11-23).** The comprehensive review's chosen fixes landed as their own
+  commits:
+  - `BaseFacade._search_clauses(q, columns)` returns a `SearchClauses` filter and rank, or
+    `None` for a blank `q`. The five list facades call it instead of copying the block.
+  - `read_works_list` takes its filters, `q` and paging keyword-only (PY-19).
+  - The search facade's count test reads one, then three, matches of every kind, with
+    continuities and parent organizations loaded (PYTEST-24).
+  - The `/api/search` docstring says why the path is singular (FAPI-5), and the contract
+    was regenerated for it.
+  - Mirage: `searchList` takes named arguments (TS-19) and `Nullable` (TS-12 and TS-25).
+    `searchCatalog` derives its results and totals from one typed table of kinds. A test
+    in `src/constants/index.test.ts` checks the mirrored page and search limits against
+    `openapi.json` (MONO-16).
+  - The Routes table in `catalog-read-api.md` now lists the name-aware `q`, works' `q` and
+    `/api/search`.
+- **Query plans (PG-21).** `scripts/explain_search.py` runs the search as the route does
+  and logs `EXPLAIN (ANALYZE, BUFFERS)` for each of its ten statements, in a read-only
+  transaction that it rolls back. The same command works on any configured database:
+  - local stack: `docker compose run --rm --build backend python -m scripts.explain_search`;
+  - Railway: `railway ssh -s msg-docking-bay-backend -- python -m scripts.explain_search`,
+    once this branch is deployed.
+
+  On the seeded dev database (at most five rows a table), every statement is a sequential
+  scan that finishes in under 0.2 ms, which is expected at that size. D8 keeps "no index"
+  until the suit count grows. After 3a loads the dump (about 3,200 suits), run the Railway
+  command and record the plans here. Add the trigram index from PG-11 if a scan shows up
+  as slow.

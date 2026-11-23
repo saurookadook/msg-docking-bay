@@ -409,22 +409,22 @@ Route names follow FAPI-6. They become the operation IDs, and so the generated c
 | Route | Function | Returns |
 | --- | --- | --- |
 | `GET /api/continuities` | `read_continuities_list` | All continuities, by name (a short list, so unpaginated) |
-| `GET /api/works` | `read_works_list` | Paginated work cards. Filters: `continuity` (slug), `work_type` |
+| `GET /api/works` | `read_works_list` | Paginated work cards. Filters: `continuity` (slug), `work_type`, `q` (slug and title, D8; added by BE-1) |
 | `GET /api/works/{work_slug}` | `read_work` | A work, with its continuity, parent work and related works |
 | `GET /api/works/{work_slug}/mobile-suits` | `read_work_mobile_suits` | Paginated suit cards that appear in the work, with episodes and the debut flag |
-| `GET /api/mobile-suits` | `read_mobile_suits_list` | Paginated suit cards. Filters: `continuity`, `work` (slugs), `unit_type`, `q` (slug and model number, D8) |
+| `GET /api/mobile-suits` | `read_mobile_suits_list` | Paginated suit cards. Filters: `continuity`, `work` (slugs), `unit_type`, `q` (slug, name and model number, D8) |
 | `GET /api/mobile-suits/{mobile_suit_slug}` | `read_mobile_suit` | A suit, with spec sheets, direct relations with their `direction`, appearances, and a source on each (D5) |
 
 **PR C**
 
 | Route | Function | Returns |
 | --- | --- | --- |
-| `GET /api/characters` | `read_characters_list` | Paginated character cards. Filters: `work`, `q` (slug, D8) |
+| `GET /api/characters` | `read_characters_list` | Paginated character cards. Filters: `work`, `q` (slug and name, D8) |
 | `GET /api/characters/{character_slug}` | `read_character` | A character, with appearances and the suits they pilot |
-| `GET /api/organizations` | `read_organizations_list` | Paginated organization cards. Filters: `work`, `q` (slug, D8) |
+| `GET /api/organizations` | `read_organizations_list` | Paginated organization cards. Filters: `work`, `q` (slug and name, D8) |
 | `GET /api/organizations/{organization_slug}` | `read_organization` | An organization, with its parent and child organizations as refs, and its appearances |
 | `GET /api/organizations/{organization_slug}/mobile-suits` | `read_organization_mobile_suits` | Paginated, one item per suit with its `links` (role, work, source). Filter: `role`, on both suits and links |
-| `GET /api/mechanical-designers` | `read_mechanical_designers_list` | Paginated designer cards. Filter: `q` (slug, D8) |
+| `GET /api/mechanical-designers` | `read_mechanical_designers_list` | Paginated designer cards. Filter: `q` (slug and name, D8) |
 | `GET /api/mechanical-designers/{mechanical_designer_slug}` | `read_mechanical_designer` | A designer |
 | `GET /api/mechanical-designers/{mechanical_designer_slug}/mobile-suits` | `read_mechanical_designer_mobile_suits` | Paginated suit cards the designer is credited with, each with its source |
 
@@ -437,8 +437,12 @@ detail: in the 2026-11-15 dump, Kunio Okawara is the designer on 438 infoboxes a
 Earth Federation the operator on 603 (RDB-23). The grilling that settled these routes is
 in [`people-read-routes.md`](people-read-routes.md).
 
-**BE-1** ([`catalog-search.md`](catalog-search.md)) adds `q` to `read_works_list` (slug and
-title) and `GET /api/search` (`read_search`): the top N cards of each kind, with per-kind totals.
+**BE-1** ([`catalog-search.md`](catalog-search.md)) adds `q` to `read_works_list`, and makes
+every list's `q` match the English name or title too (the rows above):
+
+| Route | Function | Returns |
+| --- | --- | --- |
+| `GET /api/search` | `read_search` | The first `limit` cards of each kind (1 to 20, default 5), matched by each list's `q`, with every kind's total in `meta.totals`. A blank `q` lists the first rows of each kind |
 
 **PR D** adds no routes. It adds the four part lists and `inherited_parts` to each spec sheet
 in `read_mobile_suit`, and regenerates the contract.
