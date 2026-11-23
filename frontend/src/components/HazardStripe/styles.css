@@ -16,17 +16,17 @@
     &.thick {
         block-size: 1rem;
     }
+
+    &:hover,
+    &.crawling {
+        @media (prefers-reduced-motion: no-preference) {
+            animation: hazard-crawl 0.8s linear infinite;
+        }
+    }
 }
 
 @keyframes hazard-crawl {
     to {
         background-position: var(--hazard-period) 0;
-    }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-    .hazard-stripe:hover,
-    .hazard-stripe.crawling {
-        animation: hazard-crawl 0.8s linear infinite;
     }
 }

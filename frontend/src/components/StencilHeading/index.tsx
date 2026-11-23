@@ -23,7 +23,10 @@ export function StencilHeading({
 }: StencilHeadingProps) {
   const Heading = `h${level}` as const;
   const heading = (
-    <Heading className={classNames('stencil-heading', className)} {...props}>
+    <Heading
+      className={classNames({ 'stencil-heading': eyebrow == null }, className)}
+      {...props}
+    >
       {children}
     </Heading>
   );
@@ -31,7 +34,7 @@ export function StencilHeading({
   if (eyebrow == null) return heading;
 
   return (
-    <hgroup className="stencil-heading-group">
+    <hgroup className="stencil-heading">
       <p className="stencil-heading-eyebrow">{eyebrow}</p>
       {heading}
     </hgroup>

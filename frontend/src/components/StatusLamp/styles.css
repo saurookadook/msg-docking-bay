@@ -33,6 +33,13 @@
     &.offline .status-lamp-light {
         box-shadow: none;
     }
+
+    &.busy .status-lamp-light {
+        @media (prefers-reduced-motion: no-preference) {
+            animation: status-lamp-beacon 1.2s linear infinite;
+            background: conic-gradient(var(--lamp-color) 0 25%, transparent 25% 100%);
+        }
+    }
 }
 
 @keyframes status-lamp-beacon {
@@ -42,12 +49,5 @@
 
     to {
         transform: rotate(360deg);
-    }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-    .status-lamp.busy .status-lamp-light {
-        animation: status-lamp-beacon 1.2s linear infinite;
-        background: conic-gradient(var(--lamp-color) 0 25%, transparent 25% 100%);
     }
 }

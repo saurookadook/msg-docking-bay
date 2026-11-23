@@ -9,6 +9,11 @@
         gap: var(--space-3);
         grid-template-columns: minmax(8rem, 1fr) 2fr;
         padding: var(--space-2) var(--space-3);
+
+        @media (max-width: 40rem) {
+            gap: var(--space-1);
+            grid-template-columns: 1fr;
+        }
     }
 
     & .spec-plate-row + .spec-plate-row {
@@ -36,12 +41,5 @@
         font-size: 0.75rem;
         letter-spacing: 0.1em;
         text-transform: uppercase;
-    }
-}
-
-@media (max-width: 40rem) {
-    .spec-plate .spec-plate-row {
-        gap: var(--space-1);
-        grid-template-columns: 1fr;
     }
 }

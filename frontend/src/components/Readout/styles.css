@@ -20,6 +20,11 @@
     &.types-on .readout-text {
         display: inline-block;
         white-space: nowrap;
+
+        @media (prefers-reduced-motion: no-preference) {
+            animation: readout-type-on calc(var(--readout-chars) * 40ms)
+                steps(var(--readout-chars)) both;
+        }
     }
 }
 
@@ -30,12 +35,5 @@
 
     to {
         clip-path: inset(0 0 0 0);
-    }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-    .readout.types-on .readout-text {
-        animation: readout-type-on calc(var(--readout-chars) * 40ms)
-            steps(var(--readout-chars)) both;
     }
 }

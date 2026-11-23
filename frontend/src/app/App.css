@@ -81,14 +81,36 @@ App shell
         gap: var(--space-2);
         padding: var(--space-4);
     }
-}
 
-@media (max-width: 40rem) {
-    #app-shell .deck-status-bar,
-    #app-shell .bay-signs ul,
-    #app-shell main,
-    #app-shell .deck-footer {
-        padding-inline: var(--space-3);
+    & .deck-status-bar,
+    & .bay-signs ul,
+    & main,
+    & .deck-footer {
+        @media (max-width: 40rem) {
+            padding-inline: var(--space-3);
+        }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        & > * {
+            animation: deck-lights-on 0.12s steps(2) both;
+        }
+
+        & > :nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        & > :nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        & > :nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        & > :nth-child(5) {
+            animation-delay: 0.4s;
+        }
     }
 }
 
@@ -100,27 +122,5 @@ App shell
 
     to {
         opacity: 1;
-    }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-    #app-shell > * {
-        animation: deck-lights-on 0.12s steps(2) both;
-    }
-
-    #app-shell > :nth-child(2) {
-        animation-delay: 0.1s;
-    }
-
-    #app-shell > :nth-child(3) {
-        animation-delay: 0.2s;
-    }
-
-    #app-shell > :nth-child(4) {
-        animation-delay: 0.3s;
-    }
-
-    #app-shell > :nth-child(5) {
-        animation-delay: 0.4s;
     }
 }
