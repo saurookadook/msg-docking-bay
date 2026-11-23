@@ -224,3 +224,5 @@ F1–F6 deliver a complete wiki mode; F7–F9 layer hangar mode on top without c
 - Ingest fields for the ⏳ sections (character bio fields, org HQ/leaders, work staff, suit
   history/trivia), each needing schema + routes.
 - Optional: ambient deck audio (intercom, crane hum) behind an explicit "sound on" toggle.
+- Amend CSS-13 (`docs/standards/css.md`) to allow `light-dark()` tokens picked by
+  `color-scheme`, as F1 built them ([`design-system.md`](design-system.md) As built).

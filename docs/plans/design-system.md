@@ -198,3 +198,53 @@ Run in `frontend/` (moon not on PATH):
   reduced-motion emulation stops all motion; keyboard-only nav reaches every link/radio with a
   visible focus ring and skips offline signs; unknown path shows "Cage empty"; phone/tablet
   widths.
+
+## As built (2026-11-23)
+
+Where the implementation differs from the steps above:
+
+- **A tooling commit before step 2.** The pre-commit hook's `oxfmt --check` exits 2 when every
+  staged file is one it can't format, so the fonts-only commit failed.
+  `build(repo): let the format hook pass a commit of assets alone` adds
+  `--no-error-on-unmatched-pattern` to the format task in `.moon/tasks/javascript.yml`, as the
+  lint task already had (user's choice).
+- **Tokens use `light-dark()`, not a duplicated Night block (D2).** A selector list can't span
+  `:root[data-shift="night"]` and a `prefers-color-scheme` block, so each color token is
+  written once as `light-dark(<day>, <night>)`, and the shift sets only `color-scheme`
+  (`light dark`, `light` or `dark`). postcss-preset-env lowers it for older browsers and still
+  honours the attribute. This departs from CSS-13's wording (tokens redefined in a media
+  block) but keeps its intent; amending CSS-13 is a follow-up (user's choice).
+- **The Q2 default for loading the shift is overturned.** REACT-14 forbids `localStorage` in
+  initial-state builders, so `AppStoreProvider` is unchanged. Instead:
+  - `index.html`'s script paints the stored shift before first render (Q10);
+  - `Root` dispatches `hydrateShift` on mount, which reads storage and records the shift;
+  - `setShift` owns the side effects: it applies `<html data-shift>` and writes storage.
+  There is no effect in `Root` that syncs the attribute from the store.
+- **New tokens:** `--color-link` (hazard yellow fails AA as text on Day steel),
+  `--color-scanline` and `--color-hologram-faint`, the last two from a browser check
+  (`fix(frontend): give scanlines and the blueprint grid their own tokens`). `index.css` also
+  gains a `.visually-hidden` utility.
+- **The drift test (Q10)** imports `index.html?raw` and runs its script with `new Function`
+  (one named `typescript/no-implied-eval` suppression), for every value in `SHIFTS`, junk, and
+  a throwing `localStorage`.
+- **Test setup** (`utils/testing/setupTests.ts`) now clears `localStorage` and
+  `<html data-shift>` and restores spies after each test.
+- **Home has no bay links (Q7).** Every bay is offline in F1, so Home keeps its health check
+  link and says the bays come online as their pages land.
+- **`VisualSlot` is named by `aria-label`** ("No visual on file for …"), with the caption
+  `aria-hidden`: jsdom's name computation joins a figcaption's spans without spaces.
+- **`Pagination`'s arithmetic** lives in `components/Pagination/pageOffsets.ts`, tested on its
+  own. A stale offset past the end shows "None of T" and steps back to the last real page.
+- **A refactor commit after step 12.** `BaySign` (`layouts/Root/components/BaySign`) renders
+  one sign, so the commissioned-link branch that F2 first uses is tested now.
+  `BAY_SIGNS` lives in `layouts/Root/baySigns.ts`; F2–F4 flip `isCommissioned`.
+- **Fixture:** `mockWikidataSource` in `__mocks__/catalogMocks.ts`, not in the seed, covers the
+  non-wiki citation kinds.
+- **Commit message slip.** The body of `feat(frontend): add the cage empty page` says the
+  offline signs land on the 404 page; they are not links, so only typed or stale URLs do.
+- **Browser check** ran in Storybook, not in the app with `MOCK_API=true` (the Compose stack
+  was not started). Checked: Night (Auto on a dark OS) and Day, the stored shift returning on
+  reload, keyboard focus skipping offline signs, arrow keys switching shifts, both vendored
+  fonts loading, and a 390 px viewport with no horizontal scroll. Not checked in a browser:
+  Auto following a live OS change, and reduced-motion emulation; every animation was confirmed
+  by reading to sit inside `prefers-reduced-motion: no-preference`.
