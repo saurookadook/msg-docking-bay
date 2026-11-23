@@ -183,7 +183,7 @@ Backend:
 Frontend:
 
 - [x] **F0** `build(frontend): regenerate the API contract for suit parts` — done in PR D (#32).
-- [ ] **F1** `feat(frontend): add the docking bay design system and shell` — tokens, fonts, shared
+- [x] **F1** `feat(frontend): add the docking bay design system and shell` — tokens, fonts, shared
   components, Root layout, shift toggle, breakpoints, `AppParams`, Storybook stories for each component.
   Plan: [`design-system.md`](design-system.md).
 - [ ] **F2** `feat(frontend): browse the catalog` — store slices, list pages with filters/pagination
