@@ -212,8 +212,8 @@ Where the implementation differs from the steps above:
   `:root[data-shift="night"]` and a `prefers-color-scheme` block, so each color token is
   written once as `light-dark(<day>, <night>)`, and the shift sets only `color-scheme`
   (`light dark`, `light` or `dark`). postcss-preset-env lowers it for older browsers and still
-  honours the attribute. This departs from CSS-13's wording (tokens redefined in a media
-  block) but keeps its intent; amending CSS-13 is a follow-up (user's choice).
+  honours the attribute. CSS-13 said to redefine tokens in a media block, so the review fixes
+  amend it in this PR (`docs(standards): write scheme tokens with light-dark() in CSS-13`).
 - **The Q2 default for loading the shift is overturned.** REACT-14 forbids `localStorage` in
   initial-state builders, so `AppStoreProvider` is unchanged. Instead:
   - `index.html`'s script paints the stored shift before first render (Q10);
@@ -223,7 +223,8 @@ Where the implementation differs from the steps above:
 - **New tokens:** `--color-link` (hazard yellow fails AA as text on Day steel),
   `--color-scanline` and `--color-hologram-faint`, the last two from a browser check
   (`fix(frontend): give scanlines and the blueprint grid their own tokens`). `index.css` also
-  gains a `.visually-hidden` utility.
+  gains a `.visually-hidden` utility (used by Pagination's "(unavailable)") and a shared
+  `.stencil-label` utility.
 - **The drift test (Q10)** imports `index.html?raw` and runs its script with `new Function`
   (one named `typescript/no-implied-eval` suppression), for every value in `SHIFTS`, junk, and
   a throwing `localStorage`.
@@ -236,8 +237,8 @@ Where the implementation differs from the steps above:
 - **`Pagination`'s arithmetic** lives in `components/Pagination/pageOffsets.ts`, tested on its
   own. A stale offset past the end shows "None of T" and steps back to the last real page.
 - **A refactor commit after step 12.** `BaySign` (`layouts/Root/components/BaySign`) renders
-  one sign, so the commissioned-link branch that F2 first uses is tested now.
-  `BAY_SIGNS` lives in `layouts/Root/baySigns.ts`; F2–F4 flip `isCommissioned`.
+  one sign, so the commissioned-link branch that F2 first uses is tested now. After review it
+  has its own `styles.css` and stories.
 - **Fixture:** `mockWikidataSource` in `__mocks__/catalogMocks.ts`, not in the seed, covers the
   non-wiki citation kinds.
 - **Commit message slip.** The body of `feat(frontend): add the cage empty page` says the
@@ -248,3 +249,43 @@ Where the implementation differs from the steps above:
   fonts loading, and a 390 px viewport with no horizontal scroll. Not checked in a browser:
   Auto following a live OS change, and reduced-motion emulation; every animation was confirmed
   by reading to sit inside `prefers-reduced-motion: no-preference`.
+
+### Review fixes (2026-11-23)
+
+The comprehensive review (`reviews/comprehensive-review-main-0cf2e962/`) kept 41 findings. The
+user chose which to fix; each fix is its own commit after `docs(docs): record the design system
+as built`. What they change against the plan above:
+
+- **Entity kinds live in one table.** `ENTITY_KINDS` in `constants/index.ts` holds each kind's
+  list path, nav label, `isCommissioned` flag and icon, in deck order. `EntityKind` is its keys
+  and `AppParams` is mapped from `EntityKind` (`${kind}Slug`). `layouts/Root/baySigns.ts` is
+  gone: **F2–F4 flip `isCommissioned` in `ENTITY_KINDS`**, not in a nav config (Q4 named
+  `{ label, to, commissioned }`).
+- **No `aria-disabled` (Q4, risks).** On a role-less `<span>` it reaches no assistive
+  technology. Offline signs say "Offline" in text; an unavailable page link reads
+  "(unavailable)" through `.visually-hidden`.
+- **Names follow the standards, not the plan's sketches.** Booleans read as predicates
+  (`isCommissioned`, `isThick`, `isCrawling`, `isTypingOn`; TS-7), and `entityPath` takes
+  `{ kind, slug }` (TS-19), where D6 wrote `entityPath(kind, slug?)`.
+- **Kept although unasked for** (user's choice): `HazardStripe`'s `isCrawling` (continuous
+  crawl, for later loading states), the status bar's bay name linking home (the nav has no
+  Home sign), and the 404 page's "Error 404" eyebrow and readout echoing the path.
+- **`pageOffsets` fix.** An offset just past the end (`total <= offset < total + limit`) sent
+  Previous to a partial middle page; it now steps back to the last real page, with tests.
+- **Storage helpers moved** to `utils/shiftStorage.ts` (REACT-12 keeps a slice to three files).
+- **CSS:** `@media` blocks nested under each root (CSS-4) and `StencilHeading` has one root
+  class, which also sets its eyebrow to weight 400; tokens alphabetized (CSS-14); a note on
+  `em` units (CSS-15); one-column stacks are flex columns, including the existing Home and
+  HealthCheck pages (CSS-16).
+- **Smaller fixes:** a NOTE on why `index.html` parses JSON itself (REACT-30), the caught
+  storage error normalized (LOG-12), named arguments for two helpers (TS-19), a typed custom
+  property in `Readout` (TS-18), return types on the preference actions (TS-16), `Nullable`
+  for SpecPlate's pending value (TS-12), and notes on the three tests that build their own
+  router (TEST-17).
+- **Commit messages.** Nine commit bodies have a line over 72 characters, and
+  `build(repo): let the format hook pass a commit of assets alone` has no body. History is not
+  rewritten; the squash commit's body (the PR body) is wrapped at 72 and gives that commit's
+  reason. The body of `refactor(frontend): nest every component's rules under its root` says
+  the built CSS is unchanged; the StencilHeading eyebrow weight did change.
+- **Browser check after the fixes** (Storybook): Home, SpecPlate, SourceCitations, VisualSlot
+  and the Root shell render as before with the flex columns and the shared label.
