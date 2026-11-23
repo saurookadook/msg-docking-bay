@@ -11,6 +11,9 @@ export type ReadoutProps = React.HTMLAttributes<HTMLParagraphElement> & {
   typesOn?: boolean;
 };
 
+/** @description Inline styles plus the character count the type-on animation steps through. */
+type ReadoutTextStyle = React.CSSProperties & { '--readout-chars': number };
+
 /**
  * @description A line of deck-terminal text with scanlines.
  * @note Type-on only clips the text, so assistive technology always reads the whole
@@ -23,7 +26,7 @@ export function Readout({
   typesOn = false,
   ...props
 }: ReadoutProps) {
-  const textStyle = { '--readout-chars': children.length } as React.CSSProperties;
+  const textStyle: ReadoutTextStyle = { '--readout-chars': children.length };
 
   return (
     <p
