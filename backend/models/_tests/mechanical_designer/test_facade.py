@@ -104,6 +104,17 @@ class TestMechanicalDesignerFacadeGetPage:
             "masaki-kawahara",
         ]
 
+    def test_get_page_searches_names(self, test_db_session: Session) -> None:
+        """A name the slug doesn't spell still matches (D8)."""
+        MechanicalDesignerDBFactory(name="Yutaka Izubuchi", slug="izubuchi")
+        test_db_session.commit()
+
+        page = MechanicalDesignerFacade(db_session=test_db_session).get_page(
+            q="yutaka", limit=50, offset=0
+        )
+
+        assert slugs(page.items) == ["izubuchi"]
+
 
 @pytest.mark.usefixtures("designers")
 class TestMechanicalDesignerFacadeGetOneBySlug:

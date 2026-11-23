@@ -143,6 +143,58 @@ class TestWorkFacadeGetPage:
         assert slugs(page.items) == expected
         assert page.total == len(expected)
 
+    @pytest.mark.parametrize(
+        ("q", "expected"),
+        [
+            ("ZETA", ["mobile-suit-zeta-gundam"]),
+            ("gundam i", ["mobile-suit-gundam-i"]),
+            ("z%gundam", []),
+        ],
+    )
+    def test_get_page_q_matches_normalized_slug_and_title(
+        self, test_db_session: Session, q: str, expected: list[str]
+    ) -> None:
+        """``%`` and ``_`` are dropped, never read as wildcards (D8)."""
+        page = WorkFacade(db_session=test_db_session).get_page(q=q, limit=50, offset=0)
+
+        assert slugs(page.items) == expected
+        assert page.total == len(expected)
+
+    def test_get_page_q_matches_a_title_the_slug_lacks(
+        self, test_db_session: Session
+    ) -> None:
+        WorkDBFactory(slug="gundam-0080", title="War in the Pocket")
+        test_db_session.commit()
+
+        page = WorkFacade(db_session=test_db_session).get_page(
+            q="pocket", limit=50, offset=0
+        )
+
+        assert slugs(page.items) == ["gundam-0080"]
+
+    def test_get_page_q_ranks_prefix_matches_first(
+        self, test_db_session: Session
+    ) -> None:
+        """``gundam`` starts the undated work's slug, so it leads."""
+        page = WorkFacade(db_session=test_db_session).get_page(
+            q="gundam", limit=50, offset=0
+        )
+
+        assert slugs(page.items) == [
+            "gundam-untitled",
+            "mobile-suit-gundam",
+            "mobile-suit-gundam-i",
+            "mobile-suit-zeta-gundam",
+        ]
+
+    @pytest.mark.parametrize("q", [" -- ", "%_", "機動戦士"])
+    def test_get_page_blank_q_is_no_filter(
+        self, test_db_session: Session, q: str
+    ) -> None:
+        page = WorkFacade(db_session=test_db_session).get_page(q=q, limit=50, offset=0)
+
+        assert page.total == 4
+
 
 class TestWorkFacadeGetPageOrder:
     def test_get_page_breaks_ties_by_id(self, test_db_session: Session) -> None:

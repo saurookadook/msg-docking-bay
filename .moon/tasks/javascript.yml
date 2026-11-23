@@ -19,7 +19,9 @@ tasks:
       affectedFiles: true
   lint:
     command: 'oxlint'
-    args: ['--type-aware', '--deny-warnings']
+    # NOTE: a staged file that `.oxlintrc.json` ignores (src/api/generated/) still passes
+    # the filter below, and oxlint exits 1 when it is left with nothing to lint.
+    args: ['--type-aware', '--deny-warnings', '--no-error-on-unmatched-pattern']
     deps: ['^:build']
     inputs: ['@group(sources)', '@group(configs)', '.oxlintrc.json']
     options:

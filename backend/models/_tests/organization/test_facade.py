@@ -193,6 +193,17 @@ class TestOrganizationFacadeGetPage:
 
         assert slugs(page.items) == ["titans", "earth-federation"]
 
+    def test_get_page_searches_names(self, test_db_session: Session) -> None:
+        """A name the slug doesn't spell still matches (D8)."""
+        OrganizationDBFactory(name="Principality of Zeon", slug="zeon")
+        test_db_session.commit()
+
+        page = OrganizationFacade(db_session=test_db_session).get_page(
+            q="principality", limit=50, offset=0
+        )
+
+        assert slugs(page.items) == ["zeon"]
+
 
 @pytest.mark.usefixtures("organizations")
 class TestOrganizationFacadeSlugs:

@@ -8,7 +8,7 @@ from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.orm import contains_eager, joinedload
 
 from constants.catalog import MobileSuitOrganizationRole
-from models.base.facade import BaseFacade, SlugColumns, normalize_search
+from models.base.facade import BaseFacade, SlugColumns
 from models.base.page import Page
 from models.mobile_suit.db import MobileSuitDB
 from models.mobile_suit.entity import (
@@ -56,7 +56,8 @@ class OrganizationFacade(BaseFacade):
     ) -> Page[OrganizationCardEntity]:
         """Return one page of organizations, by name (D3).
 
-        ``q`` matches the normalized slug, prefix matches first (D8).
+        ``q`` matches the normalized slug and name, prefix matches
+        first (D8).
         ``work_slug`` matches current slugs only: an unknown work gives
         an empty page.
         """
@@ -70,10 +71,10 @@ class OrganizationFacade(BaseFacade):
                 )
             )
         order: list[ColumnElement[Any]] = []
-        needle = normalize_search(q)
-        if needle is not None:
-            filters.append(self._search_filter((OrganizationDB.slug,), needle))
-            order.append(self._prefix_rank((OrganizationDB.slug,), needle))
+        search = self._search_clauses(q, (OrganizationDB.slug, OrganizationDB.name))
+        if search is not None:
+            filters.append(search.filter)
+            order.append(search.rank)
 
         organizations = self.db_session.scalars(
             select(OrganizationDB)

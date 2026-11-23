@@ -8,7 +8,7 @@ from sqlalchemy import ColumnElement, case, func, or_, select
 from sqlalchemy.orm import aliased, contains_eager, joinedload
 
 from constants.catalog import UnitType
-from models.base.facade import BaseFacade, SlugColumns, normalize_search
+from models.base.facade import BaseFacade, SlugColumns
 from models.base.page import Page
 from models.continuity.db import ContinuityDB
 from models.mobile_suit.db import MobileSuitDB
@@ -92,10 +92,11 @@ class MobileSuitFacade(BaseFacade):
     ) -> Page[MobileSuitCardEntity]:
         """Return one page of suits, by name (D3).
 
-        ``q`` matches the slug and model number after normalization
-        (D8), and ranks prefix matches first; a ``q`` with nothing left
-        after normalization is no filter. Filters match current slugs
-        only: an unknown continuity or work gives an empty page.
+        ``q`` matches the slug, name and model number after
+        normalization (D8), and ranks prefix matches first; a ``q``
+        with nothing left after normalization is no filter. Filters
+        match current slugs only: an unknown continuity or work gives
+        an empty page.
         """
         filters: list[ColumnElement[bool]] = []
         if continuity_slug is not None:
@@ -115,11 +116,12 @@ class MobileSuitFacade(BaseFacade):
         if unit_type is not None:
             filters.append(MobileSuitDB.unit_type == unit_type)
         order: list[ColumnElement[Any]] = []
-        needle = normalize_search(q)
-        if needle is not None:
-            columns = (MobileSuitDB.slug, MobileSuitDB.model_number)
-            filters.append(self._search_filter(columns, needle))
-            order.append(self._prefix_rank(columns, needle))
+        search = self._search_clauses(
+            q, (MobileSuitDB.slug, MobileSuitDB.name, MobileSuitDB.model_number)
+        )
+        if search is not None:
+            filters.append(search.filter)
+            order.append(search.rank)
 
         suits = self.db_session.scalars(
             select(MobileSuitDB)

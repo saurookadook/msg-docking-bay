@@ -13,3 +13,12 @@ The frontend's Mirage ``paginate()`` mirrors both values.
 
 MAX_SEARCH_LENGTH: Final = 100
 """The longest ``q`` a list accepts; a longer one is a 422 (D8)."""
+
+SEARCH_DEFAULT_LIMIT: Final = 5
+"""The per-kind ``limit`` the catalog search uses when given none."""
+
+SEARCH_MAX_LIMIT: Final = 20
+"""The largest per-kind ``limit`` the search accepts; more is a 422.
+
+Deeper results page through each kind's own list, with the same ``q``.
+"""

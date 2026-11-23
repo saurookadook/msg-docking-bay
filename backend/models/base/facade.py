@@ -35,6 +35,15 @@ class SlugColumns(NamedTuple):
     redirect_target: SQLColumnExpression[uuid.UUID]
 
 
+class SearchClauses(NamedTuple):
+    """A ``q``'s filter and prefix rank (D8)."""
+
+    filter: ColumnElement[bool]
+    """Rows where any searched column contains the needle."""
+    rank: ColumnElement[int]
+    """``0`` for a prefix match, else ``1``: order by it first."""
+
+
 def normalize_search(q: str | None) -> str | None:
     """Lowercase ``q`` and keep only ``a-z0-9`` (D8).
 
@@ -66,6 +75,27 @@ class BaseFacade:
             db_session
             if db_session is not None
             else DBSessionManager().scoped_session()
+        )
+
+    @classmethod
+    def _search_clauses(
+        cls, q: str | None, columns: Sequence[SQLColumnExpression[str | None]]
+    ) -> SearchClauses | None:
+        """Build a list's ``q`` filter and rank over ``columns`` (D8).
+
+        Every list matches ``q`` this way, so the catalog search finds
+        what each list finds.
+
+        Returns:
+            The clauses, or ``None`` when ``q`` is blank after
+            normalization, which is no filter.
+        """
+        needle = normalize_search(q)
+        if needle is None:
+            return None
+        return SearchClauses(
+            filter=cls._search_filter(columns, needle),
+            rank=cls._prefix_rank(columns, needle),
         )
 
     @staticmethod
