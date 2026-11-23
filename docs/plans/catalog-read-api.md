@@ -368,6 +368,10 @@ a normalized substring match.
    - D2 makes each slug an ASCII-folded copy of the title, through the symbol map, so `∀ Gundam`
      becomes `turn-a-gundam` and `turn a` finds it.
    - Characters and organizations match on `slug` only, since they have no model number.
+   - **Amended by BE-1** ([`catalog-search.md`](catalog-search.md) Q6, 2026-11-23): every `q`
+     also matches the English display name (`name`, or a work's `title`). Japanese names don't
+     survive normalization, so they're deferred to
+     [#34](https://github.com/saurookadook/msg-docking-bay/issues/34).
    - Nothing that survives normalization is a `LIKE` wildcard, so no escaping is needed. The value is
      still bound (RDB-25).
    - Known false positive: a collision suffix such as `-48213` can match a digits-only `q` such as
@@ -386,7 +390,7 @@ a normalized substring match.
 6. **Deferred.**
    - No index. Revisit if the suit count grows tenfold or a query shows up as slow.
    - No cross-entity `/api/search`. A global search box gets its own decision when the frontend needs
-     one.
+     one. **Resolved by BE-1:** `GET /api/search` ([`catalog-search.md`](catalog-search.md)).
 
 **Tests** (PR B steps 1, 4 and 5):
 - `rx782` finds `RX-78-2`, and `turn a` finds `∀ Gundam`.
@@ -432,6 +436,9 @@ An organization's and a designer's suits are paged sub-resources, not lists in t
 detail: in the 2026-11-15 dump, Kunio Okawara is the designer on 438 infoboxes and the
 Earth Federation the operator on 603 (RDB-23). The grilling that settled these routes is
 in [`people-read-routes.md`](people-read-routes.md).
+
+**BE-1** ([`catalog-search.md`](catalog-search.md)) adds `q` to `read_works_list` (slug and
+title) and `GET /api/search` (`read_search`): the top N cards of each kind, with per-kind totals.
 
 **PR D** adds no routes. It adds the four part lists and `inherited_parts` to each spec sheet
 in `read_mobile_suit`, and regenerates the contract.

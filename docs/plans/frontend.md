@@ -158,18 +158,22 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
   the URL when the returned slug differs from the requested one.
 - `continuities` is unpaginated and has no detail route, so its slice holds only
   `{items, requestInProgress, error}`, fetched once and reused by filters and decks.
-- Mirage: extend `endpoints.ts` handlers to apply `q` and filters, add `/api/search` and enough
-  fixtures (several continuities, a suit with full parts and relations) to make both modes demo-able
-  with `MOCK_API=true`.
+- Mirage: extend `endpoints.ts` handlers to apply `q` and filters, and add enough fixtures
+  (several continuities, a suit with full parts and relations) to make both modes demo-able with
+  `MOCK_API=true`. BE-1 already adds `/api/search` and the TypeScript `normalizeSearch` that the
+  list handlers reuse.
 
 ## PRs (in order)
 
 Backend:
 
 - [ ] **BE-1** `feat(backend): search across the catalog` — `GET /api/search?q=&limit=` returning
-  `{data:{mobile_suits, characters, organizations, mechanical_designers, works}, meta}` (top N each,
-  reusing each facade's `q` matching); add `q` to `/api/works`; extend `q` to match display `name` /
-  `name_ja` (not only slugs) if cheap with the existing normalization. Regenerate contract.
+  `{data:{mobile_suits, characters, organizations, mechanical_designers, works}, meta:{limit,
+  totals}}` (top N each, `limit` 1–20, default 5; a blank `q` lists the first N), reusing each
+  facade's `q` matching; add `q` to `/api/works`; every `q` also matches the English `name` /
+  `title`. Japanese names are deferred to
+  [#34](https://github.com/saurookadook/msg-docking-bay/issues/34). Regenerate contract.
+  Plan: [`catalog-search.md`](catalog-search.md).
 - (Images — ingest, storage, CDN, credit fields — are a **separate plan**, tracked as a follow-up.)
 
 Frontend:
@@ -209,6 +213,8 @@ F1–F6 deliver a complete wiki mode; F7–F9 layer hangar mode on top without c
 ## Follow-ups (not in this plan)
 
 - Images plan (self-hosted copies, credits, takedown process) — fills `VisualSlot`.
+- Japanese search on `name_ja` / `title_ja` ([#34](https://github.com/saurookadook/msg-docking-bay/issues/34)),
+  and works matching their series tags (`work_short_names`) once 3a ingests them.
 - Ingest fields for the ⏳ sections (character bio fields, org HQ/leaders, work staff, suit
   history/trivia), each needing schema + routes.
 - Optional: ambient deck audio (intercom, crane hum) behind an explicit "sound on" toggle.
