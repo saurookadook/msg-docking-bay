@@ -391,6 +391,50 @@ export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
     /**
+     * ArmamentListingEntity
+     * @description An armament as one spec sheet lists it.
+     *
+     *     Deliberately not the ``spec_sheet_armaments`` row: the sheet's page
+     *     needs the weapon's name and slug, not the listing's foreign keys
+     *     (D5). There is no source: the sheet's covers the parts it lists
+     *     (D6). ``created_at`` is the listing's, not the weapon's.
+     */
+    ArmamentListingEntity: {
+      armament: components['schemas']['ArmamentRefEntity'];
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      mount: components['schemas']['ArmamentMount'];
+      /** Note */
+      note: string | null;
+      /** Quantity Max */
+      quantity_max: number | null;
+      /** Quantity Min */
+      quantity_min: number | null;
+    };
+    /**
+     * ArmamentMount
+     * @description How a spec sheet carries an armament, from the infobox field.
+     * @enum {string}
+     */
+    ArmamentMount: 'fixed' | 'handheld' | 'optional_fixed' | 'optional_handheld';
+    /**
+     * ArmamentRefEntity
+     * @description Just enough of an armament to name and link it.
+     *
+     *     Leaves out ``id``, the wiki page keys and the row's timestamps: none
+     *     is public or rendered on a sheet (D5). A card waits for a part list
+     *     route.
+     */
+    ArmamentRefEntity: {
+      /** Name */
+      name: string;
+      /** Slug */
+      slug: string;
+    };
+    /**
      * CharacterCardEntity
      * @description One character in a list.
      *
@@ -570,6 +614,46 @@ export interface components {
       mechanical_designer: components['schemas']['MechanicalDesignerRefEntity'];
       source: components['schemas']['SourceCitationEntity'];
     };
+    /**
+     * EquipmentFit
+     * @description Whether a spec sheet's equipment is standard or optional.
+     * @enum {string}
+     */
+    EquipmentFit: 'standard' | 'optional';
+    /**
+     * EquipmentListingEntity
+     * @description An item of equipment as one spec sheet lists it.
+     *
+     *     Deliberately not the ``spec_sheet_equipment`` row: the sheet's page
+     *     needs the item's name and slug, not the listing's foreign keys (D5).
+     *     There is no source: the sheet's covers the parts it lists (D6).
+     *     ``created_at`` is the listing's, not the item's.
+     */
+    EquipmentListingEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      equipment: components['schemas']['EquipmentRefEntity'];
+      fit: components['schemas']['EquipmentFit'];
+      /** Note */
+      note: string | null;
+    };
+    /**
+     * EquipmentRefEntity
+     * @description Just enough of an item of equipment to name and link it.
+     *
+     *     Leaves out ``id``, the wiki page keys and the row's timestamps: none
+     *     is public or rendered on a sheet (D5). A card waits for a part list
+     *     route.
+     */
+    EquipmentRefEntity: {
+      /** Name */
+      name: string;
+      /** Slug */
+      slug: string;
+    };
     /** HTTPValidationError */
     HTTPValidationError: {
       /** Detail */
@@ -610,6 +694,46 @@ export interface components {
     HomeResponse: {
       data: components['schemas']['HomeInfo'];
     };
+    /**
+     * MaterialListingEntity
+     * @description A material as one spec sheet lists it.
+     *
+     *     Deliberately not the ``spec_sheet_materials`` row: the sheet's page
+     *     needs the material's name and slug, not the listing's foreign keys
+     *     (D5). There is no source: the sheet's covers the parts it lists
+     *     (D6). ``created_at`` is the listing's, not the material's.
+     */
+    MaterialListingEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      material: components['schemas']['MaterialRefEntity'];
+      material_use: components['schemas']['MaterialUse'];
+      /** Note */
+      note: string | null;
+    };
+    /**
+     * MaterialRefEntity
+     * @description Just enough of a material to name and link it.
+     *
+     *     Leaves out ``id``, the wiki page keys and the row's timestamps: none
+     *     is public or rendered on a sheet (D5). A card waits for a part list
+     *     route.
+     */
+    MaterialRefEntity: {
+      /** Name */
+      name: string;
+      /** Slug */
+      slug: string;
+    };
+    /**
+     * MaterialUse
+     * @description What a spec sheet's material is used for.
+     * @enum {string}
+     */
+    MaterialUse: 'armor' | 'frame';
     /**
      * MechanicalDesignerCardEntity
      * @description One mechanical designer in a list.
@@ -838,9 +962,14 @@ export interface components {
      *
      *     A named configuration's gaps are filled from the base sheet of the
      *     same source; ``inherited_fields`` names the columns that were, so a
-     *     page can tell "same as base" from a value the source states.
+     *     page can tell "same as base" from a value the source states. Its
+     *     empty part lists are filled the same way, and ``inherited_parts``
+     *     names them, so ``inherited_fields`` stays measurements only. A
+     *     configuration cannot say it drops every part of a kind.
      */
     MobileSuitSpecSheetEntity: {
+      /** Armaments */
+      armaments: components['schemas']['ArmamentListingEntity'][];
       /** Configuration */
       configuration: string | null;
       /**
@@ -850,6 +979,8 @@ export interface components {
       created_at: string;
       /** Empty Weight Kg */
       empty_weight_kg: number | null;
+      /** Equipment */
+      equipment: components['schemas']['EquipmentListingEntity'][];
       /** Generator Output Kw */
       generator_output_kw: number | null;
       /** Gross Weight Kg */
@@ -869,12 +1000,18 @@ export interface components {
         | 'total_thrust_kg'
         | 'turn_time_s'
       )[];
+      /** Inherited Parts */
+      inherited_parts: ('armaments' | 'equipment' | 'materials' | 'powerplants')[];
+      /** Materials */
+      materials: components['schemas']['MaterialListingEntity'][];
       /** Max Acceleration G */
       max_acceleration_g: number | null;
       /** Max Speed Kmh */
       max_speed_kmh: number | null;
       /** Overall Height M */
       overall_height_m: number | null;
+      /** Powerplants */
+      powerplants: components['schemas']['PowerplantListingEntity'][];
       /** Sensor Range M */
       sensor_range_m: number | null;
       source: components['schemas']['SourceCitationEntity'];
@@ -1086,6 +1223,43 @@ export interface components {
       mobile_suit: components['schemas']['MobileSuitCardEntity'];
       source: components['schemas']['SourceCitationEntity'];
       work: components['schemas']['WorkRefEntity'] | null;
+    };
+    /**
+     * PowerplantListingEntity
+     * @description A powerplant as one spec sheet lists it.
+     *
+     *     Deliberately not the ``spec_sheet_powerplants`` row: the sheet's
+     *     page needs the powerplant's name and slug, not the listing's foreign
+     *     keys (D5). There is no source: the sheet's covers the parts it lists
+     *     (D6). ``created_at`` is the listing's, not the powerplant's.
+     */
+    PowerplantListingEntity: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Note */
+      note: string | null;
+      powerplant: components['schemas']['PowerplantRefEntity'];
+      /** Quantity Max */
+      quantity_max: number | null;
+      /** Quantity Min */
+      quantity_min: number | null;
+    };
+    /**
+     * PowerplantRefEntity
+     * @description Just enough of a powerplant to name and link it.
+     *
+     *     Leaves out ``id``, the wiki page keys and the row's timestamps: none
+     *     is public or rendered on a sheet (D5). A card waits for a part list
+     *     route.
+     */
+    PowerplantRefEntity: {
+      /** Name */
+      name: string;
+      /** Slug */
+      slug: string;
     };
     /**
      * RelatedMobileSuitEntity

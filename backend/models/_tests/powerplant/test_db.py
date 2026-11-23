@@ -27,6 +27,7 @@ class TestPowerplantDB:
     ) -> None:
         PowerplantDBFactory(
             id=PART_ID,
+            fandom_page_id=23082,
             fandom_page_title="Minovsky Ultracompact Fusion Reactor",
             name="Minovsky Ultracompact Fusion Reactor",
             slug="minovsky-ultracompact-fusion-reactor",
@@ -38,6 +39,7 @@ class TestPowerplantDB:
             select(PowerplantDB).where(PowerplantDB.id == PART_ID)
         ).scalar_one()
 
+        assert part.fandom_page_id == 23082
         assert part.fandom_page_title == "Minovsky Ultracompact Fusion Reactor"
         assert part.name == "Minovsky Ultracompact Fusion Reactor"
         assert part.slug == "minovsky-ultracompact-fusion-reactor"
@@ -50,11 +52,23 @@ class TestPowerplantDB:
 
         test_db_session.flush()
 
+    def test_allows_two_without_a_page(self, test_db_session: Session) -> None:
+        """Most parts have no article, so the page ID is null."""
+        ids = [PowerplantDBFactory().id, PowerplantDBFactory().id]
+        test_db_session.flush()
+
+        page_ids = test_db_session.scalars(
+            select(PowerplantDB.fandom_page_id).where(PowerplantDB.id.in_(ids))
+        ).all()
+
+        assert page_ids == [None, None]
+
 
 class TestPowerplantDBConstraints:
     @pytest.mark.parametrize(
         "column, value, constraint",
         [
+            ("fandom_page_id", 23082, "powerplants_fandom_page_id_key"),
             (
                 "fandom_page_title",
                 "Minovsky Ultracompact Fusion Reactor",
@@ -64,7 +78,7 @@ class TestPowerplantDBConstraints:
         ],
     )
     def test_rejects_a_duplicate(
-        self, test_db_session: Session, column: str, value: str, constraint: str
+        self, test_db_session: Session, column: str, value: str | int, constraint: str
     ) -> None:
         PowerplantDBFactory(**{column: value})
         PowerplantDBFactory(**{column: value})
@@ -74,9 +88,16 @@ class TestPowerplantDBConstraints:
 
         assert violated_constraint(exc_info.value) == ("23505", constraint)
 
+    def test_accepts_the_smallest_page_id(self, test_db_session: Session) -> None:
+        PowerplantDBFactory(fandom_page_id=1)
+
+        test_db_session.flush()
+
     @pytest.mark.parametrize(
         "overrides, constraint",
         [
+            # one below the smallest accepted page ID
+            ({"fandom_page_id": 0}, "ck_powerplants_fandom_page_id_positive"),
             ({"fandom_page_title": ""}, "ck_powerplants_fandom_page_title_not_empty"),
             ({"name": ""}, "ck_powerplants_name_not_empty"),
             (
