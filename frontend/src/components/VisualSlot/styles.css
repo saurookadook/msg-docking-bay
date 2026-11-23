@@ -1,0 +1,29 @@
+.visual-slot {
+    align-items: center;
+    aspect-ratio: 3 / 4;
+    background:
+        linear-gradient(var(--color-glow) 1px, transparent 1px) 0 0 / 1rem 1rem,
+        linear-gradient(90deg, var(--color-glow) 1px, transparent 1px) 0 0 / 1rem 1rem,
+        var(--color-surface-sunken);
+    border: 1px dashed var(--color-hologram);
+    display: grid;
+    gap: var(--space-2);
+    justify-items: center;
+    margin: 0;
+    padding: var(--space-3);
+
+    & .visual-slot-blueprint {
+        block-size: 60%;
+        fill: none;
+        stroke: var(--color-hologram);
+        stroke-width: 1;
+    }
+
+    & figcaption {
+        color: var(--color-hologram);
+        font-family: var(--font-family-mono);
+        font-size: 0.75rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+    }
+}

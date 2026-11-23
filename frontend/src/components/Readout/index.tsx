@@ -1,0 +1,42 @@
+import classNames from 'classnames';
+
+import './styles.css';
+
+export type ReadoutProps = React.HTMLAttributes<HTMLParagraphElement> & {
+  /** @description One line of terminal text. */
+  children: string;
+  /** @description Amber phosphor instead of green. */
+  isAmber?: boolean;
+  /** @description Type the line on, one character at a time, when motion is allowed. */
+  typesOn?: boolean;
+};
+
+/**
+ * @description A line of deck-terminal text with scanlines.
+ * @note Type-on only clips the text, so assistive technology always reads the whole
+ * line, and it shows whole when motion is reduced.
+ */
+export function Readout({
+  children,
+  className,
+  isAmber = false,
+  typesOn = false,
+  ...props
+}: ReadoutProps) {
+  const textStyle = { '--readout-chars': children.length } as React.CSSProperties;
+
+  return (
+    <p
+      className={classNames(
+        'readout',
+        { amber: isAmber, 'types-on': typesOn },
+        className,
+      )}
+      {...props}
+    >
+      <span className="readout-text" style={textStyle}>
+        {children}
+      </span>
+    </p>
+  );
+}
