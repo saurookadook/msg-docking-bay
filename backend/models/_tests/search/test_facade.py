@@ -12,6 +12,14 @@ from models._tests.query_count import CountStatements
 from models.search.entity import CatalogSearch
 from models.search.facade import CatalogSearchFacade
 
+NO_MATCHES: Final[dict[str, list[str]]] = {
+    "characters": [],
+    "mechanical_designers": [],
+    "mobile_suits": [],
+    "organizations": [],
+    "works": [],
+}
+
 
 @pytest.fixture
 def catalog(test_db_session: Session) -> None:
@@ -35,15 +43,6 @@ def slugs(search: CatalogSearch) -> dict[str, list[str]]:
         kind: [card["slug"] for card in cards]
         for kind, cards in search.results.model_dump().items()
     }
-
-
-NO_MATCHES: Final[dict[str, list[str]]] = {
-    "characters": [],
-    "mechanical_designers": [],
-    "mobile_suits": [],
-    "organizations": [],
-    "works": [],
-}
 
 
 @pytest.mark.usefixtures("catalog")
