@@ -230,13 +230,17 @@ class TestMobileSuitFacadeGetPage:
             ("RX-78-2", ["rx-78-2-gundam"]),
             ("turn a", ["turn-a-gundam"]),
             ("ms06", ["zaku-ii"]),
+            ("the origin", ["rx-78-02-gundam"]),
             ("rx%02", []),
         ],
     )
-    def test_get_page_q_matches_normalized_slug_and_model_number(
+    def test_get_page_q_matches_normalized_slug_name_and_model_number(
         self, test_db_session: Session, q: str, expected: list[str]
     ) -> None:
-        """``%`` and ``_`` are dropped, never read as wildcards (D8)."""
+        """``the origin`` is only in a name (D8).
+
+        ``%`` and ``_`` are dropped, never read as wildcards.
+        """
         assert page(test_db_session, q=q) == expected
 
     def test_get_page_q_ranks_prefix_matches_first(

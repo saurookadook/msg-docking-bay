@@ -56,7 +56,8 @@ class OrganizationFacade(BaseFacade):
     ) -> Page[OrganizationCardEntity]:
         """Return one page of organizations, by name (D3).
 
-        ``q`` matches the normalized slug, prefix matches first (D8).
+        ``q`` matches the normalized slug and name, prefix matches
+        first (D8).
         ``work_slug`` matches current slugs only: an unknown work gives
         an empty page.
         """
@@ -72,8 +73,9 @@ class OrganizationFacade(BaseFacade):
         order: list[ColumnElement[Any]] = []
         needle = normalize_search(q)
         if needle is not None:
-            filters.append(self._search_filter((OrganizationDB.slug,), needle))
-            order.append(self._prefix_rank((OrganizationDB.slug,), needle))
+            columns = (OrganizationDB.slug, OrganizationDB.name)
+            filters.append(self._search_filter(columns, needle))
+            order.append(self._prefix_rank(columns, needle))
 
         organizations = self.db_session.scalars(
             select(OrganizationDB)

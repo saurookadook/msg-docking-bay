@@ -45,14 +45,16 @@ class MechanicalDesignerFacade(BaseFacade):
     ) -> Page[MechanicalDesignerCardEntity]:
         """Return one page of designers, by name (D3).
 
-        ``q`` matches the normalized slug, prefix matches first (D8).
+        ``q`` matches the normalized slug and name, prefix matches
+        first (D8).
         """
         filters: list[ColumnElement[bool]] = []
         order: list[ColumnElement[Any]] = []
         needle = normalize_search(q)
         if needle is not None:
-            filters.append(self._search_filter((MechanicalDesignerDB.slug,), needle))
-            order.append(self._prefix_rank((MechanicalDesignerDB.slug,), needle))
+            columns = (MechanicalDesignerDB.slug, MechanicalDesignerDB.name)
+            filters.append(self._search_filter(columns, needle))
+            order.append(self._prefix_rank(columns, needle))
 
         designers = self.db_session.scalars(
             select(MechanicalDesignerDB)

@@ -45,7 +45,8 @@ class CharacterFacade(BaseFacade):
     ) -> Page[CharacterCardEntity]:
         """Return one page of characters, by name (D3).
 
-        ``q`` matches the normalized slug, prefix matches first (D8).
+        ``q`` matches the normalized slug and name, prefix matches
+        first (D8).
         ``work_slug`` matches current slugs only: an unknown work gives
         an empty page.
         """
@@ -61,8 +62,9 @@ class CharacterFacade(BaseFacade):
         order: list[ColumnElement[Any]] = []
         needle = normalize_search(q)
         if needle is not None:
-            filters.append(self._search_filter((CharacterDB.slug,), needle))
-            order.append(self._prefix_rank((CharacterDB.slug,), needle))
+            columns = (CharacterDB.slug, CharacterDB.name)
+            filters.append(self._search_filter(columns, needle))
+            order.append(self._prefix_rank(columns, needle))
 
         characters = self.db_session.scalars(
             select(CharacterDB)

@@ -92,10 +92,11 @@ class MobileSuitFacade(BaseFacade):
     ) -> Page[MobileSuitCardEntity]:
         """Return one page of suits, by name (D3).
 
-        ``q`` matches the slug and model number after normalization
-        (D8), and ranks prefix matches first; a ``q`` with nothing left
-        after normalization is no filter. Filters match current slugs
-        only: an unknown continuity or work gives an empty page.
+        ``q`` matches the slug, name and model number after
+        normalization (D8), and ranks prefix matches first; a ``q``
+        with nothing left after normalization is no filter. Filters
+        match current slugs only: an unknown continuity or work gives
+        an empty page.
         """
         filters: list[ColumnElement[bool]] = []
         if continuity_slug is not None:
@@ -117,7 +118,7 @@ class MobileSuitFacade(BaseFacade):
         order: list[ColumnElement[Any]] = []
         needle = normalize_search(q)
         if needle is not None:
-            columns = (MobileSuitDB.slug, MobileSuitDB.model_number)
+            columns = (MobileSuitDB.slug, MobileSuitDB.name, MobileSuitDB.model_number)
             filters.append(self._search_filter(columns, needle))
             order.append(self._prefix_rank(columns, needle))
 
