@@ -8,6 +8,7 @@ import {
   SEARCH_DEFAULT_LIMIT,
   SEARCH_MAX_LIMIT,
 } from '@/constants';
+import type { Nullable } from '@/types';
 
 import { findCharacterMock } from './characterMocks';
 import { mockContinuitiesListResponse } from './continuityMocks';
@@ -141,6 +142,47 @@ export function paginate<T>(
   };
 }
 
+type SearchResults = OkBody<'/api/search'>['data'];
+type SearchKind = keyof SearchResults;
+type SearchCard<K extends SearchKind> = SearchResults[K][number];
+
+/**
+ * @description Each kind's fixture list, and the columns its list route's `q` matches
+ * (`docs/plans/catalog-search.md` Q6).
+ */
+const searchKinds: {
+  [K in SearchKind]: {
+    columns: (card: SearchCard<K>) => readonly (Nullable<string> | undefined)[];
+    items: readonly SearchCard<K>[];
+  };
+} = {
+  characters: { columns: ({ name, slug }) => [slug, name], items: mockCharacters },
+  mechanical_designers: {
+    columns: ({ name, slug }) => [slug, name],
+    items: mockMechanicalDesigners,
+  },
+  mobile_suits: {
+    columns: ({ model_number, name, slug }) => [slug, name, model_number],
+    items: mockMobileSuits,
+  },
+  organizations: {
+    columns: ({ name, slug }) => [slug, name],
+    items: mockOrganizations,
+  },
+  works: { columns: ({ slug, title }) => [slug, title], items: mockWorks },
+};
+
+const SEARCH_KINDS = Object.keys(searchKinds) as SearchKind[];
+
+/** @description One kind's matches for `q`, prefix matches first, in its list order. */
+function searchKind<K extends SearchKind>(
+  kind: K,
+  q: string | undefined,
+): readonly SearchCard<K>[] {
+  const { columns, items } = searchKinds[kind];
+  return searchList({ columns, items, q });
+}
+
 /**
  * @description Answers `/api/search` as the API does (`docs/plans/catalog-search.md`):
  * the first `limit` matches of each kind, by `searchList`, with every kind's total. A
@@ -171,48 +213,18 @@ export function searchCatalog({
     return new MirageResponse(422, {}, { detail: errors });
   }
 
-  const characters = searchList({
-    columns: ({ name, slug }) => [slug, name],
-    items: mockCharacters,
-    q,
-  });
-  const mechanicalDesigners = searchList({
-    columns: ({ name, slug }) => [slug, name],
-    items: mockMechanicalDesigners,
-    q,
-  });
-  const mobileSuits = searchList({
-    columns: ({ model_number, name, slug }) => [slug, name, model_number],
-    items: mockMobileSuits,
-    q,
-  });
-  const organizations = searchList({
-    columns: ({ name, slug }) => [slug, name],
-    items: mockOrganizations,
-    q,
-  });
-  const works = searchList({
-    columns: ({ slug, title }) => [slug, title],
-    items: mockWorks,
-    q,
-  });
+  const matches = SEARCH_KINDS.map((kind) => [kind, searchKind(kind, q)] as const);
+  // NOTE: `Object.fromEntries` types its keys as `string`, so each result is asserted back
+  // to its kinds. `SEARCH_KINDS` lists every kind, so no key is missing.
   return {
-    data: {
-      characters: characters.slice(0, limit),
-      mechanical_designers: mechanicalDesigners.slice(0, limit),
-      mobile_suits: mobileSuits.slice(0, limit),
-      organizations: organizations.slice(0, limit),
-      works: works.slice(0, limit),
-    },
+    data: Object.fromEntries(
+      matches.map(([kind, cards]) => [kind, cards.slice(0, limit)]),
+    ) as SearchResults,
     meta: {
       limit,
-      totals: {
-        characters: characters.length,
-        mechanical_designers: mechanicalDesigners.length,
-        mobile_suits: mobileSuits.length,
-        organizations: organizations.length,
-        works: works.length,
-      },
+      totals: Object.fromEntries(
+        matches.map(([kind, cards]) => [kind, cards.length]),
+      ) as Record<SearchKind, number>,
     },
   };
 }
