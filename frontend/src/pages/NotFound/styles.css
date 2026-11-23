@@ -1,0 +1,8 @@
+#not-found {
+    display: grid;
+    gap: var(--space-4);
+
+    & .readout {
+        overflow-wrap: anywhere;
+    }
+}
