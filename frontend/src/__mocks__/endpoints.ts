@@ -201,7 +201,7 @@ export function searchCatalog({
   const rawQ = queryParams['q'];
   const q = typeof rawQ === 'string' ? rawQ : undefined;
   const errors: ValidationError[] = typeof limit === 'number' ? [] : [limit];
-  // FastAPI counts code points, not UTF-16 units.
+  // NOTE: FastAPI counts code points, not UTF-16 units.
   if (q !== undefined && Array.from(q).length > MAX_SEARCH_LENGTH) {
     errors.push({
       loc: ['query', 'q'],
