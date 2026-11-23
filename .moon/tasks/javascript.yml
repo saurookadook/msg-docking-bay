@@ -13,7 +13,9 @@ fileGroups:
 tasks:
   format:
     command: 'oxfmt'
-    args: ['--check']
+    # NOTE: given only files oxfmt can't format (fonts, images, .txt), it finds no target
+    # and exits 2, so a commit of assets alone would fail the pre-commit hook.
+    args: ['--check', '--no-error-on-unmatched-pattern']
     inputs: ['@group(sources)', '@group(configs)', '.oxfmtrc.json']
     options:
       affectedFiles: true
