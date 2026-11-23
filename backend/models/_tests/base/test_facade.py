@@ -16,13 +16,16 @@ from models.continuity.db import ContinuityDB
 class ContinuityProbeFacade(BaseFacade):
     """Reach the protected helpers the way a real facade does."""
 
-    def search_names(self, needle: str) -> list[str]:
-        columns = [ContinuityDB.slug]
+    def search_names(self, q: str) -> list[str] | None:
+        """Names matching ``q``, or ``None`` when ``q`` is no filter."""
+        search = self._search_clauses(q, [ContinuityDB.slug])
+        if search is None:
+            return None
         return list(
             self.db_session.scalars(
                 select(ContinuityDB.name)
-                .where(self._search_filter(columns, needle))
-                .order_by(self._prefix_rank(columns, needle), ContinuityDB.name)
+                .where(search.filter)
+                .order_by(search.rank, ContinuityDB.name)
             ).all()
         )
 
@@ -61,7 +64,7 @@ class TestBaseFacade:
 
         assert BaseFacade().db_session is scoped_session
 
-    def test_search_filter_and_prefix_rank_match_normalized_columns(
+    def test_search_clauses_match_normalized_columns_prefix_first(
         self, test_db_session: Session
     ) -> None:
         ContinuityDBFactory(name="After Colony", slug="after-colony")
@@ -70,9 +73,17 @@ class TestBaseFacade:
         test_db_session.commit()
         facade = ContinuityProbeFacade(db_session=test_db_session)
 
-        names = facade.search_names("era")
+        names = facade.search_names("ERA")
 
         assert names == ["Era of Sail", "Cosmic Era"]
+
+    @pytest.mark.parametrize("q", [" -- ", "%_", "∀"])
+    def test_search_clauses_blank_q_is_no_filter(
+        self, test_db_session: Session, q: str
+    ) -> None:
+        facade = ContinuityProbeFacade(db_session=test_db_session)
+
+        assert facade.search_names(q) is None
 
 
 class TestUpsert:

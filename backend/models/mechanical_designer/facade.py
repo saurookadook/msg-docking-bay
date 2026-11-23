@@ -7,7 +7,7 @@ from typing import Any, Final
 from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.orm import joinedload
 
-from models.base.facade import BaseFacade, SlugColumns, normalize_search
+from models.base.facade import BaseFacade, SlugColumns
 from models.base.page import Page
 from models.mechanical_designer.db import MechanicalDesignerDB
 from models.mechanical_designer.entity import (
@@ -50,11 +50,12 @@ class MechanicalDesignerFacade(BaseFacade):
         """
         filters: list[ColumnElement[bool]] = []
         order: list[ColumnElement[Any]] = []
-        needle = normalize_search(q)
-        if needle is not None:
-            columns = (MechanicalDesignerDB.slug, MechanicalDesignerDB.name)
-            filters.append(self._search_filter(columns, needle))
-            order.append(self._prefix_rank(columns, needle))
+        search = self._search_clauses(
+            q, (MechanicalDesignerDB.slug, MechanicalDesignerDB.name)
+        )
+        if search is not None:
+            filters.append(search.filter)
+            order.append(search.rank)
 
         designers = self.db_session.scalars(
             select(MechanicalDesignerDB)

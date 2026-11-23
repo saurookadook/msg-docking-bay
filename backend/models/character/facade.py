@@ -7,7 +7,7 @@ from typing import Any, Final
 from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.orm import contains_eager, joinedload
 
-from models.base.facade import BaseFacade, SlugColumns, normalize_search
+from models.base.facade import BaseFacade, SlugColumns
 from models.base.page import Page
 from models.character.db import CharacterDB
 from models.character.detail import CharacterDetailEntity
@@ -60,11 +60,10 @@ class CharacterFacade(BaseFacade):
                 )
             )
         order: list[ColumnElement[Any]] = []
-        needle = normalize_search(q)
-        if needle is not None:
-            columns = (CharacterDB.slug, CharacterDB.name)
-            filters.append(self._search_filter(columns, needle))
-            order.append(self._prefix_rank(columns, needle))
+        search = self._search_clauses(q, (CharacterDB.slug, CharacterDB.name))
+        if search is not None:
+            filters.append(search.filter)
+            order.append(search.rank)
 
         characters = self.db_session.scalars(
             select(CharacterDB)

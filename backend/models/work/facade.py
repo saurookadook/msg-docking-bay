@@ -8,7 +8,7 @@ from sqlalchemy import ColumnElement, SQLColumnExpression, case, func, or_, sele
 from sqlalchemy.orm import aliased, joinedload
 
 from constants.catalog import WorkType
-from models.base.facade import BaseFacade, SlugColumns, normalize_search
+from models.base.facade import BaseFacade, SlugColumns
 from models.base.page import Page
 from models.continuity.db import ContinuityDB
 from models.source.entity import SourceCitationEntity
@@ -62,11 +62,10 @@ class WorkFacade(BaseFacade):
         if work_type is not None:
             filters.append(WorkDB.work_type == work_type)
         order: list[ColumnElement[Any]] = []
-        needle = normalize_search(q)
-        if needle is not None:
-            columns = (WorkDB.slug, WorkDB.title)
-            filters.append(self._search_filter(columns, needle))
-            order.append(self._prefix_rank(columns, needle))
+        search = self._search_clauses(q, (WorkDB.slug, WorkDB.title))
+        if search is not None:
+            filters.append(search.filter)
+            order.append(search.rank)
 
         works = self.db_session.scalars(
             select(WorkDB)
