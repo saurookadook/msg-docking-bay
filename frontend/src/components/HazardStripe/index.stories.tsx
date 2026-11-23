@@ -14,6 +14,6 @@ type Story = StoryObj<typeof meta>;
 /** @description Hover to make the stripe crawl (when motion is allowed). */
 export const Thin: Story = {};
 
-export const Thick: Story = { args: { thick: true } };
+export const Thick: Story = { args: { isThick: true } };
 
-export const Crawling: Story = { args: { crawling: true, thick: true } };
+export const Crawling: Story = { args: { isCrawling: true, isThick: true } };

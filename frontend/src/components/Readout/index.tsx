@@ -8,7 +8,7 @@ export type ReadoutProps = React.HTMLAttributes<HTMLParagraphElement> & {
   /** @description Amber phosphor instead of green. */
   isAmber?: boolean;
   /** @description Type the line on, one character at a time, when motion is allowed. */
-  typesOn?: boolean;
+  isTypingOn?: boolean;
 };
 
 /** @description Inline styles plus the character count the type-on animation steps through. */
@@ -23,7 +23,7 @@ export function Readout({
   children,
   className,
   isAmber = false,
-  typesOn = false,
+  isTypingOn = false,
   ...props
 }: ReadoutProps) {
   const textStyle: ReadoutTextStyle = { '--readout-chars': children.length };
@@ -32,7 +32,7 @@ export function Readout({
     <p
       className={classNames(
         'readout',
-        { amber: isAmber, 'types-on': typesOn },
+        { amber: isAmber, 'types-on': isTypingOn },
         className,
       )}
       {...props}

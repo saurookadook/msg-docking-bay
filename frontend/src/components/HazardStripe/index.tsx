@@ -4,22 +4,26 @@ import './styles.css';
 
 export type HazardStripeProps = React.HTMLAttributes<HTMLDivElement> & {
   /** @description Crawl continuously, as on a loading state; otherwise only on hover. */
-  crawling?: boolean;
+  isCrawling?: boolean;
   /** @description A thick band for page edges; thin by default. */
-  thick?: boolean;
+  isThick?: boolean;
 };
 
 /** @description A yellow-black hazard band. Decoration only, so it is hidden from AT. */
 export function HazardStripe({
   className,
-  crawling = false,
-  thick = false,
+  isCrawling = false,
+  isThick = false,
   ...props
 }: HazardStripeProps) {
   return (
     <div
       aria-hidden="true"
-      className={classNames('hazard-stripe', { crawling, thick }, className)}
+      className={classNames(
+        'hazard-stripe',
+        { crawling: isCrawling, thick: isThick },
+        className,
+      )}
       {...props}
     />
   );

@@ -19,4 +19,4 @@ export const Amber: Story = {
 };
 
 /** @description Types on when motion is allowed; reload the story to replay it. */
-export const TypesOn: Story = { args: { typesOn: true } };
+export const TypingOn: Story = { args: { isTypingOn: true } };

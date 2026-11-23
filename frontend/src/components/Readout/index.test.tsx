@@ -5,7 +5,7 @@ import { Readout } from '.';
 
 describe('Readout', () => {
   it('keeps the whole line in the document while it types on', () => {
-    render(<Readout typesOn>MS DECK 01 · STANDING BY</Readout>);
+    render(<Readout isTypingOn>MS DECK 01 · STANDING BY</Readout>);
 
     const readoutText = screen.getByText('MS DECK 01 · STANDING BY');
     expect(readoutText).toBeVisible();

@@ -11,7 +11,7 @@ export function Home() {
         Welcome aboard
       </StencilHeading>
       <DeckPanel>
-        <Readout typesOn>MS DECK 01 · STANDING BY</Readout>
+        <Readout isTypingOn>MS DECK 01 · STANDING BY</Readout>
         <p>
           MSG Docking Bay is under construction: its bays come online one by one as the
           catalog's pages land.

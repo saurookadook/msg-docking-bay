@@ -10,7 +10,7 @@ export function NotFound() {
 
   return (
     <section aria-labelledby="not-found-title" id="not-found">
-      <HazardStripe thick />
+      <HazardStripe isThick />
       <StencilHeading eyebrow="Error 404" id="not-found-title" level={2}>
         Cage empty
       </StencilHeading>
