@@ -1,5 +1,6 @@
-/* NOTE: the root is the heading, or the <hgroup> around it when there is an eyebrow;
-the heading inherits the stencil lettering from the group. */
+/* NOTE: the heading always carries .stencil-heading, and with an eyebrow the <hgroup>
+around it does too, for the group layout. The heading needs the class itself: the global
+h1-h3 rule in index.css would beat letter-spacing inherited from the group. */
 .stencil-heading {
     font-family: var(--font-family-display);
     font-weight: 700;

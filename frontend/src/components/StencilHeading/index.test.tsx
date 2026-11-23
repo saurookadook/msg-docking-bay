@@ -28,4 +28,17 @@ describe('StencilHeading', () => {
       screen.getByRole('heading', { level: 3, name: 'Cage roster' }),
     ).toBeVisible();
   });
+
+  it.each([
+    ['without', undefined],
+    ['with', 'MS DECK 02'],
+  ])('gives the heading its stencil lettering %s an eyebrow', (_variant, eyebrow) => {
+    render(
+      <StencilHeading eyebrow={eyebrow} level={2}>
+        Cage roster
+      </StencilHeading>,
+    );
+
+    expect(screen.getByRole('heading', { level: 2 })).toHaveClass('stencil-heading');
+  });
 });
