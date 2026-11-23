@@ -50,3 +50,19 @@ export const mockSources = {
     693655,
   ),
 } satisfies Record<string, SourceCitationEntity>;
+
+/**
+ * @description A Wikidata citation, which has no revision link and a CC0 licence.
+ * @note Not in the seed: no fixture entity cites Wikidata yet. Components that render
+ * citations use it to cover the non-wiki kinds.
+ */
+export const mockWikidataSource: SourceCitationEntity = {
+  content_license: 'cc0_1_0',
+  kind: 'wikidata_item',
+  license_name: 'CC0 1.0',
+  license_url: 'https://creativecommons.org/publicdomain/zero/1.0/',
+  retrieved_at: mockRetrievedAt,
+  revision_id: null,
+  revision_url: null,
+  url: 'https://www.wikidata.org/wiki/Q1',
+};
