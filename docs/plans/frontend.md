@@ -13,21 +13,22 @@ Goal: one React app where a user searches and browses mobile suits, characters, 
 and mechanical designers, and feels like they're walking an MS deck. Two **modes over the same routes
 and data** (agreed):
 
-1. **Wiki mode** — a fast, accessible, wiki-style site, dressed as hangar signage and terminals. It is
-   also the fallback when WebGL is unavailable or the user prefers reduced motion.
+1. **Wiki mode** — a fast, accessible, wiki-style site, dressed as hangar signage and terminals. It
+   is also the fallback when WebGL is unavailable or the user prefers reduced motion.
 2. **Hangar mode** — a three.js scene of the same entity: maintenance cages, catwalks, cranes,
    holograms. In the cages stand **original, procedurally generated mech frames** plus a holographic
    panel with the suit's data (agreed; no Gundam 3D assets exist that we may use).
 
 The plan includes the small backend PRs the frontend needs (agreed).
 
-**Facts checked in the repo**
+### Facts checked in the repo
 
 - All list routes: `limit`/`offset`, envelope `{data, meta:{limit,offset,total}}`; details `{data}`;
-  old slugs resolve and return the current `slug` (frontend must `replace` the URL when they differ —
-  D2). `q` exists on mobile suits, characters, organizations, designers (slug/model-number match,
-  prefix first); **not** on works; **no cross-entity search**. Filters: suits `continuity`, `work`,
-  `unit_type`; works `continuity`, `work_type`; characters/orgs `work`; org suits `role`.
+  old slugs resolve and return the current `slug` (frontend must `replace` the URL when they
+  differ — D2). `q` exists on mobile suits, characters, organizations, designers
+  (slug/model-number match, prefix first); **not** on works; **no cross-entity search**. Filters:
+  suits `continuity`, `work`, `unit_type`; works `continuity`, `work_type`; characters/orgs `work`;
+  org suits `role`.
 - **No image fields anywhere** in models or contract. Image rights research
   (`docs/research/image-rights.md`) requires self-hosted copies, credit, link-back and an
   "unofficial" disclaimer — so images are a separate ingest/storage plan; this plan only reserves slots.
@@ -51,8 +52,8 @@ and the wiki's standard page layouts. Verify against a live page in a browser be
 A carrier's mobile suit deck, as in the classic shows: a long, dim bay; mechs standing in numbered
 **maintenance cages** with fold-out **gantries and catwalks**; **yellow-black hazard stripes** on
 edges; **amber sodium lamps** and rotating **warning beacons**; **overhead cranes** on rails;
-stenciled signage (`MS DECK 02 · CAGE 07`); intercom chatter; a **catapult** at the far end opening to
-space. Everything else is a deck terminal: monospace readouts, scanlines, green/amber phosphor.
+stenciled signage (`MS DECK 02 · CAGE 07`); intercom chatter; a **catapult** at the far end opening
+to space. Everything else is a deck terminal: monospace readouts, scanlines, green/amber phosphor.
 
 Design system (PR F1):
 
@@ -68,8 +69,8 @@ Design system (PR F1):
   entity; icon per kind), `SourceCitations` (CC BY-SA attribution per `SourceCitation`),
   `VisualSlot` (image placeholder: blueprint silhouette + "NO VISUAL ON FILE").
 - **Shell** (`layouts/Root`): top **deck status bar** (bay name, shift toggle, mode toggle
-  Wiki ⇄ Hangar, search key hint), nav as hanging bay signs (Mobile Suits · Personnel · Organizations ·
-  Works · Designers), footer with the unofficial-fan-project disclaimer and source credits.
+  Wiki ⇄ Hangar, search key hint), nav as hanging bay signs (Mobile Suits · Personnel ·
+  Organizations · Works · Designers), footer with the unofficial-fan-project disclaimer and source credits.
 - **Motion** (behind `prefers-reduced-motion: no-preference`): lights clunk on row by row at load,
   hazard stripes crawl on hover, beacon spin on loading states, readouts type on.
 
@@ -125,8 +126,8 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
   ("Hangar lights offline").
 - **Scene kit** (`src/hangar/`): deck floor/walls with hazard decals, instanced cages and catwalks,
   overhead crane on a rail, sodium point lights + baked-feel ambient, volumetric-ish beams via cheap
-  cone sprites, rotating beacons, floating dust. Postprocessing bloom for holograms (optional, behind a
-  quality setting).
+  cone sprites, rotating beacons, floating dust. Postprocessing bloom for holograms (optional, behind
+  a quality setting).
 - **Procedural mech** (`src/hangar/mech/`): an original frame assembled from primitives (head, torso,
   backpack, arms, legs). Parameters come from data: `unit_type` picks the body plan (suit humanoid,
   armor bulky, fighter jet-form, pod ball, worker utility), `overall_height_m` sets scale, slug seeds
@@ -158,6 +159,7 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
 ## PRs (in order)
 
 Backend:
+
 - [ ] **BE-1** `feat(backend): search across the catalog` — `GET /api/search?q=&limit=` returning
   `{data:{mobile_suits, characters, organizations, mechanical_designers, works}, meta}` (top N each,
   reusing each facade's `q` matching); add `q` to `/api/works`; extend `q` to match display `name` /
@@ -165,6 +167,7 @@ Backend:
 - (Images — ingest, storage, CDN, credit fields — are a **separate plan**, tracked as a follow-up.)
 
 Frontend:
+
 - [ ] **F0** `build(frontend): regenerate the API contract for suit parts` (after PR D merges).
 - [ ] **F1** `feat(frontend): add the docking bay design system and shell` — tokens, fonts, shared
   components, Root layout, shift toggle, breakpoints, `AppParams`, Storybook stories for each component.
