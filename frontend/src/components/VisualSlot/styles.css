@@ -2,8 +2,10 @@
     align-items: center;
     aspect-ratio: 3 / 4;
     background:
-        linear-gradient(var(--color-glow) 1px, transparent 1px) 0 0 / 1rem 1rem,
-        linear-gradient(90deg, var(--color-glow) 1px, transparent 1px) 0 0 / 1rem 1rem,
+        linear-gradient(var(--color-hologram-faint) 1px, transparent 1px) 0 0 / 1rem
+            1rem,
+        linear-gradient(90deg, var(--color-hologram-faint) 1px, transparent 1px) 0 0 /
+            1rem 1rem,
         var(--color-surface-sunken);
     border: 1px dashed var(--color-hologram);
     display: grid;

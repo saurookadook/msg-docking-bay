@@ -3,7 +3,7 @@
         repeating-linear-gradient(
             to bottom,
             transparent 0 2px,
-            var(--color-glow) 2px 3px
+            var(--color-scanline) 2px 3px
         ),
         var(--color-surface-sunken);
     border: 1px solid var(--color-border);
