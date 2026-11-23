@@ -2,6 +2,7 @@ export * from './CageNumber';
 export * from './DeckPanel';
 export * from './EntityLink';
 export * from './HazardStripe';
+export * from './Pagination';
 export * from './Readout';
 export * from './ShiftToggle';
 export * from './SourceCitations';
