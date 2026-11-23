@@ -1,8 +1,7 @@
 import { SET_SHIFT } from '@/store/actionTypes';
 import type { BaseAction } from '@/store/types';
 import type { Shift } from '@/types';
-
-import { applyShift, readStoredShift, storeShift } from './storage';
+import { applyShift, readStoredShift, storeShift } from '@/utils';
 
 /** @description Switches the deck to `shift`: applies it, stores it, and records it. */
 export function setShift({ dispatch, shift }: BaseAction & { shift: Shift }): void {

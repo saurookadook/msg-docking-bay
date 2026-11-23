@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { SHIFT_LS_KEY } from '@/constants';
 
-import { applyShift, readStoredShift, storeShift } from './storage';
+import { applyShift, readStoredShift, storeShift } from './shiftStorage';
 
-describe('preferences storage', () => {
+describe('shiftStorage', () => {
   describe('readStoredShift', () => {
     it('reads the stored shift', () => {
       localStorage.setItem(SHIFT_LS_KEY, JSON.stringify('day'));

@@ -1,8 +1,9 @@
 import { SHIFT_LS_KEY, SHIFTS } from '@/constants';
 import type { Shift } from '@/types';
-import { safeParseJSON, sharedLog } from '@/utils';
+import { sharedLog } from './logger';
+import { safeParseJSON } from './safeParseJSON';
 
-const logger = sharedLog.getLogger('preferencesStorage');
+const logger = sharedLog.getLogger('shiftStorage');
 
 /** @description Narrows a stored value to a `Shift`. */
 function isShift(value: unknown): value is Shift {
