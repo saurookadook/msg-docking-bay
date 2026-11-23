@@ -315,6 +315,31 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/search': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read Search
+     * @description Return the first matches of each kind, with every kind's total.
+     *
+     *     The kinds are mobile suits, characters, organizations, mechanical
+     *     designers and works. ``meta.totals`` counts every match, so the
+     *     frontend can link to the kind's list with the same ``q`` for the
+     *     rest. Reads only, and calls no external API.
+     */
+    get: operations['read_search'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/works': {
     parameters: {
       query?: never;
@@ -433,6 +458,62 @@ export interface components {
       name: string;
       /** Slug */
       slug: string;
+    };
+    /**
+     * CatalogSearchMeta
+     * @description The per-kind limit, and each kind's total (catalog-search.md Q1).
+     *
+     *     A plain model, like ``PageMeta``, so its fields stay ``snake_case``.
+     */
+    CatalogSearchMeta: {
+      /** Limit */
+      limit: number;
+      totals: components['schemas']['CatalogSearchTotals'];
+    };
+    /**
+     * CatalogSearchResponse
+     * @description The first matches of each kind, with every kind's total.
+     */
+    CatalogSearchResponse: {
+      data: components['schemas']['CatalogSearchResultsEntity'];
+      meta: components['schemas']['CatalogSearchMeta'];
+    };
+    /**
+     * CatalogSearchResultsEntity
+     * @description The top cards of each kind that match a search.
+     *
+     *     Each list holds the kind's own cards, in its list order behind the
+     *     prefix rank (D8), so a result renders as it would in its list.
+     */
+    CatalogSearchResultsEntity: {
+      /** Characters */
+      characters: components['schemas']['CharacterCardEntity'][];
+      /** Mechanical Designers */
+      mechanical_designers: components['schemas']['MechanicalDesignerCardEntity'][];
+      /** Mobile Suits */
+      mobile_suits: components['schemas']['MobileSuitCardEntity'][];
+      /** Organizations */
+      organizations: components['schemas']['OrganizationCardEntity'][];
+      /** Works */
+      works: components['schemas']['WorkCardEntity'][];
+    };
+    /**
+     * CatalogSearchTotals
+     * @description How many rows of each kind match, across every page.
+     *
+     *     A plain model, like ``PageMeta``, so its fields stay ``snake_case``.
+     */
+    CatalogSearchTotals: {
+      /** Characters */
+      characters: number;
+      /** Mechanical Designers */
+      mechanical_designers: number;
+      /** Mobile Suits */
+      mobile_suits: number;
+      /** Organizations */
+      organizations: number;
+      /** Works */
+      works: number;
     };
     /**
      * CharacterCardEntity
@@ -1557,7 +1638,7 @@ export interface operations {
       query?: {
         /** @description Only characters in this work (its slug). */
         work?: string | null;
-        /** @description Search slugs, ignoring case, spaces and punctuation: `amuro` finds Amuro Ray. Prefix matches come first. */
+        /** @description Search slugs and names, ignoring case, spaces and punctuation: `amuro` finds Amuro Ray. Prefix matches come first. */
         q?: string | null;
         /** @description Rows per page, at most 100. */
         limit?: number;
@@ -1665,7 +1746,7 @@ export interface operations {
   read_mechanical_designers_list: {
     parameters: {
       query?: {
-        /** @description Search slugs, ignoring case, spaces and punctuation: `okawara` finds Kunio Okawara. Prefix matches come first. */
+        /** @description Search slugs and names, ignoring case, spaces and punctuation: `okawara` finds Kunio Okawara. Prefix matches come first. */
         q?: string | null;
         /** @description Rows per page, at most 100. */
         limit?: number;
@@ -1776,7 +1857,7 @@ export interface operations {
         work?: string | null;
         /** @description Only suits of this unit type. */
         unit_type?: components['schemas']['UnitType'] | null;
-        /** @description Search slugs and model numbers, ignoring case, spaces and punctuation: `rx782` finds RX-78-2. Prefix matches come first. */
+        /** @description Search slugs, names and model numbers, ignoring case, spaces and punctuation: `rx782` finds RX-78-2. Prefix matches come first. */
         q?: string | null;
         /** @description Rows per page, at most 100. */
         limit?: number;
@@ -1846,7 +1927,7 @@ export interface operations {
       query?: {
         /** @description Only organizations in this work (its slug). */
         work?: string | null;
-        /** @description Search slugs, ignoring case, spaces and punctuation: `zeon` finds the Principality of Zeon. Prefix matches come first. */
+        /** @description Search slugs and names, ignoring case, spaces and punctuation: `zeon` finds the Principality of Zeon. Prefix matches come first. */
         q?: string | null;
         /** @description Rows per page, at most 100. */
         limit?: number;
@@ -1950,6 +2031,40 @@ export interface operations {
       };
     };
   };
+  read_search: {
+    parameters: {
+      query?: {
+        /** @description Search every kind as its own list's `q` does: slugs, names and model numbers, ignoring case, spaces and punctuation. Prefix matches come first. A blank `q` lists the first rows of each. */
+        q?: string | null;
+        /** @description Results per kind, at most 20. */
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CatalogSearchResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
   read_works_list: {
     parameters: {
       query?: {
@@ -1957,6 +2072,8 @@ export interface operations {
         continuity?: string | null;
         /** @description Only works of this type. */
         work_type?: components['schemas']['WorkType'] | null;
+        /** @description Search slugs and titles, ignoring case, spaces and punctuation: `zeta` finds Mobile Suit Zeta Gundam. Prefix matches come first. */
+        q?: string | null;
         /** @description Rows per page, at most 100. */
         limit?: number;
         /** @description Rows to skip. */

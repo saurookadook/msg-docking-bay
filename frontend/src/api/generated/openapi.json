@@ -82,6 +82,118 @@
                 "title": "ArmamentRefEntity",
                 "type": "object"
             },
+            "CatalogSearchMeta": {
+                "description": "The per-kind limit, and each kind's total (catalog-search.md Q1).\n\nA plain model, like ``PageMeta``, so its fields stay ``snake_case``.",
+                "properties": {
+                    "limit": {
+                        "title": "Limit",
+                        "type": "integer"
+                    },
+                    "totals": {
+                        "$ref": "#/components/schemas/CatalogSearchTotals"
+                    }
+                },
+                "required": ["limit", "totals"],
+                "title": "CatalogSearchMeta",
+                "type": "object"
+            },
+            "CatalogSearchResponse": {
+                "description": "The first matches of each kind, with every kind's total.",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/CatalogSearchResultsEntity"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/CatalogSearchMeta"
+                    }
+                },
+                "required": ["data", "meta"],
+                "title": "CatalogSearchResponse",
+                "type": "object"
+            },
+            "CatalogSearchResultsEntity": {
+                "description": "The top cards of each kind that match a search.\n\nEach list holds the kind's own cards, in its list order behind the\nprefix rank (D8), so a result renders as it would in its list.",
+                "properties": {
+                    "characters": {
+                        "items": {
+                            "$ref": "#/components/schemas/CharacterCardEntity"
+                        },
+                        "title": "Characters",
+                        "type": "array"
+                    },
+                    "mechanical_designers": {
+                        "items": {
+                            "$ref": "#/components/schemas/MechanicalDesignerCardEntity"
+                        },
+                        "title": "Mechanical Designers",
+                        "type": "array"
+                    },
+                    "mobile_suits": {
+                        "items": {
+                            "$ref": "#/components/schemas/MobileSuitCardEntity"
+                        },
+                        "title": "Mobile Suits",
+                        "type": "array"
+                    },
+                    "organizations": {
+                        "items": {
+                            "$ref": "#/components/schemas/OrganizationCardEntity"
+                        },
+                        "title": "Organizations",
+                        "type": "array"
+                    },
+                    "works": {
+                        "items": {
+                            "$ref": "#/components/schemas/WorkCardEntity"
+                        },
+                        "title": "Works",
+                        "type": "array"
+                    }
+                },
+                "required": [
+                    "characters",
+                    "mechanical_designers",
+                    "mobile_suits",
+                    "organizations",
+                    "works"
+                ],
+                "title": "CatalogSearchResultsEntity",
+                "type": "object"
+            },
+            "CatalogSearchTotals": {
+                "description": "How many rows of each kind match, across every page.\n\nA plain model, like ``PageMeta``, so its fields stay ``snake_case``.",
+                "properties": {
+                    "characters": {
+                        "title": "Characters",
+                        "type": "integer"
+                    },
+                    "mechanical_designers": {
+                        "title": "Mechanical Designers",
+                        "type": "integer"
+                    },
+                    "mobile_suits": {
+                        "title": "Mobile Suits",
+                        "type": "integer"
+                    },
+                    "organizations": {
+                        "title": "Organizations",
+                        "type": "integer"
+                    },
+                    "works": {
+                        "title": "Works",
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "characters",
+                    "mechanical_designers",
+                    "mobile_suits",
+                    "organizations",
+                    "works"
+                ],
+                "title": "CatalogSearchTotals",
+                "type": "object"
+            },
             "CharacterCardEntity": {
                 "description": "One character in a list.\n\nDeliberately not ``CharacterEntity``: ``id`` and the wiki page keys\nare not public (D5). Appearances and piloted suits are on the\ndetail only (``models.character.detail``).",
                 "properties": {
@@ -2186,7 +2298,7 @@
                         }
                     },
                     {
-                        "description": "Search slugs, ignoring case, spaces and punctuation: `amuro` finds Amuro Ray. Prefix matches come first.",
+                        "description": "Search slugs and names, ignoring case, spaces and punctuation: `amuro` finds Amuro Ray. Prefix matches come first.",
                         "in": "query",
                         "name": "q",
                         "required": false,
@@ -2200,7 +2312,7 @@
                                     "type": "null"
                                 }
                             ],
-                            "description": "Search slugs, ignoring case, spaces and punctuation: `amuro` finds Amuro Ray. Prefix matches come first.",
+                            "description": "Search slugs and names, ignoring case, spaces and punctuation: `amuro` finds Amuro Ray. Prefix matches come first.",
                             "title": "Q"
                         }
                     },
@@ -2344,7 +2456,7 @@
                 "operationId": "read_mechanical_designers_list",
                 "parameters": [
                     {
-                        "description": "Search slugs, ignoring case, spaces and punctuation: `okawara` finds Kunio Okawara. Prefix matches come first.",
+                        "description": "Search slugs and names, ignoring case, spaces and punctuation: `okawara` finds Kunio Okawara. Prefix matches come first.",
                         "in": "query",
                         "name": "q",
                         "required": false,
@@ -2358,7 +2470,7 @@
                                     "type": "null"
                                 }
                             ],
-                            "description": "Search slugs, ignoring case, spaces and punctuation: `okawara` finds Kunio Okawara. Prefix matches come first.",
+                            "description": "Search slugs and names, ignoring case, spaces and punctuation: `okawara` finds Kunio Okawara. Prefix matches come first.",
                             "title": "Q"
                         }
                     },
@@ -2588,7 +2700,7 @@
                         }
                     },
                     {
-                        "description": "Search slugs and model numbers, ignoring case, spaces and punctuation: `rx782` finds RX-78-2. Prefix matches come first.",
+                        "description": "Search slugs, names and model numbers, ignoring case, spaces and punctuation: `rx782` finds RX-78-2. Prefix matches come first.",
                         "in": "query",
                         "name": "q",
                         "required": false,
@@ -2602,7 +2714,7 @@
                                     "type": "null"
                                 }
                             ],
-                            "description": "Search slugs and model numbers, ignoring case, spaces and punctuation: `rx782` finds RX-78-2. Prefix matches come first.",
+                            "description": "Search slugs, names and model numbers, ignoring case, spaces and punctuation: `rx782` finds RX-78-2. Prefix matches come first.",
                             "title": "Q"
                         }
                     },
@@ -2726,7 +2838,7 @@
                         }
                     },
                     {
-                        "description": "Search slugs, ignoring case, spaces and punctuation: `zeon` finds the Principality of Zeon. Prefix matches come first.",
+                        "description": "Search slugs and names, ignoring case, spaces and punctuation: `zeon` finds the Principality of Zeon. Prefix matches come first.",
                         "in": "query",
                         "name": "q",
                         "required": false,
@@ -2740,7 +2852,7 @@
                                     "type": "null"
                                 }
                             ],
-                            "description": "Search slugs, ignoring case, spaces and punctuation: `zeon` finds the Principality of Zeon. Prefix matches come first.",
+                            "description": "Search slugs and names, ignoring case, spaces and punctuation: `zeon` finds the Principality of Zeon. Prefix matches come first.",
                             "title": "Q"
                         }
                     },
@@ -2928,6 +3040,70 @@
                 "summary": "Read Organization Mobile Suits"
             }
         },
+        "/api/search": {
+            "get": {
+                "description": "Return the first matches of each kind, with every kind's total.\n\nThe kinds are mobile suits, characters, organizations, mechanical\ndesigners and works. ``meta.totals`` counts every match, so the\nfrontend can link to the kind's list with the same ``q`` for the\nrest. Reads only, and calls no external API.",
+                "operationId": "read_search",
+                "parameters": [
+                    {
+                        "description": "Search every kind as its own list's `q` does: slugs, names and model numbers, ignoring case, spaces and punctuation. Prefix matches come first. A blank `q` lists the first rows of each.",
+                        "in": "query",
+                        "name": "q",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "maxLength": 100,
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Search every kind as its own list's `q` does: slugs, names and model numbers, ignoring case, spaces and punctuation. Prefix matches come first. A blank `q` lists the first rows of each.",
+                            "title": "Q"
+                        }
+                    },
+                    {
+                        "description": "Results per kind, at most 20.",
+                        "in": "query",
+                        "name": "limit",
+                        "required": false,
+                        "schema": {
+                            "default": 5,
+                            "description": "Results per kind, at most 20.",
+                            "maximum": 20,
+                            "minimum": 1,
+                            "title": "Limit",
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CatalogSearchResponse"
+                                }
+                            }
+                        },
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        },
+                        "description": "Validation Error"
+                    }
+                },
+                "summary": "Read Search"
+            }
+        },
         "/api/works": {
             "get": {
                 "description": "Return one page of works, first released first.\n\nWorks with no known date come last. A page past the end is 200 with\nan empty ``data`` and the real ``total`` (D3). Reads only, and calls\nno external API.",
@@ -2967,6 +3143,25 @@
                             ],
                             "description": "Only works of this type.",
                             "title": "Work Type"
+                        }
+                    },
+                    {
+                        "description": "Search slugs and titles, ignoring case, spaces and punctuation: `zeta` finds Mobile Suit Zeta Gundam. Prefix matches come first.",
+                        "in": "query",
+                        "name": "q",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "maxLength": 100,
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Search slugs and titles, ignoring case, spaces and punctuation: `zeta` finds Mobile Suit Zeta Gundam. Prefix matches come first.",
+                            "title": "Q"
                         }
                     },
                     {

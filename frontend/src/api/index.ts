@@ -69,6 +69,12 @@ export type MechanicalDesignerResponse = Schemas['MechanicalDesignerResponse'];
 export type MechanicalDesignersListResponse =
   Schemas['MechanicalDesignersListResponse'];
 
+// Catalog search.
+export type CatalogSearchMeta = Schemas['CatalogSearchMeta'];
+export type CatalogSearchResponse = Schemas['CatalogSearchResponse'];
+export type CatalogSearchResultsEntity = Schemas['CatalogSearchResultsEntity'];
+export type CatalogSearchTotals = Schemas['CatalogSearchTotals'];
+
 // Mobile suits.
 export type DesignerCreditEntity = Schemas['DesignerCreditEntity'];
 export type OrganizationCreditEntity = Schemas['OrganizationCreditEntity'];
