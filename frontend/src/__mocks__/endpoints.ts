@@ -1,7 +1,14 @@
 import { Response as MirageResponse, type Request } from 'miragejs';
 
 import type { PageMeta, paths, ValidationError } from '@/api';
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/constants';
+import {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  MAX_SEARCH_LENGTH,
+  SEARCH_DEFAULT_LIMIT,
+  SEARCH_MAX_LIMIT,
+} from '@/constants';
+import type { Nullable } from '@/types';
 
 import { findCharacterMock } from './characterMocks';
 import { mockContinuitiesListResponse } from './continuityMocks';
@@ -24,6 +31,7 @@ import {
   mockMechanicalDesigners,
   mockOrganizations,
 } from './peopleMocks';
+import { searchList } from './search';
 import { findWorkMock, mockWorks } from './workMocks';
 
 /** @description The API's paths that have a `GET` operation. */
@@ -131,6 +139,93 @@ export function paginate<T>(
   return {
     data: items.slice(offset, offset + limit),
     meta: { limit, offset, total: items.length },
+  };
+}
+
+type SearchResults = OkBody<'/api/search'>['data'];
+type SearchKind = keyof SearchResults;
+type SearchCard<K extends SearchKind> = SearchResults[K][number];
+
+/**
+ * @description Each kind's fixture list, and the columns its list route's `q` matches
+ * (`docs/plans/catalog-search.md` Q6).
+ */
+const searchKinds: {
+  [K in SearchKind]: {
+    columns: (card: SearchCard<K>) => readonly (Nullable<string> | undefined)[];
+    items: readonly SearchCard<K>[];
+  };
+} = {
+  characters: { columns: ({ name, slug }) => [slug, name], items: mockCharacters },
+  mechanical_designers: {
+    columns: ({ name, slug }) => [slug, name],
+    items: mockMechanicalDesigners,
+  },
+  mobile_suits: {
+    columns: ({ model_number, name, slug }) => [slug, name, model_number],
+    items: mockMobileSuits,
+  },
+  organizations: {
+    columns: ({ name, slug }) => [slug, name],
+    items: mockOrganizations,
+  },
+  works: { columns: ({ slug, title }) => [slug, title], items: mockWorks },
+};
+
+const SEARCH_KINDS = Object.keys(searchKinds) as SearchKind[];
+
+/** @description One kind's matches for `q`, prefix matches first, in its list order. */
+function searchKind<K extends SearchKind>(
+  kind: K,
+  q: string | undefined,
+): readonly SearchCard<K>[] {
+  const { columns, items } = searchKinds[kind];
+  return searchList({ columns, items, q });
+}
+
+/**
+ * @description Answers `/api/search` as the API does (`docs/plans/catalog-search.md`):
+ * the first `limit` matches of each kind, by `searchList`, with every kind's total. A
+ * missing or blank `q` lists the first rows of each kind.
+ * @returns A 422 `MirageResponse`, with the API's body, for a `limit` outside
+ * `1..SEARCH_MAX_LIMIT` or a `q` longer than `MAX_SEARCH_LENGTH`.
+ */
+export function searchCatalog({
+  queryParams,
+}: Pick<Request, 'queryParams'>): OkBody<'/api/search'> | MirageResponse {
+  const limit = readPageParam('limit', queryParams['limit'], {
+    fallback: SEARCH_DEFAULT_LIMIT,
+    max: SEARCH_MAX_LIMIT,
+    min: 1,
+  });
+  const rawQ = queryParams['q'];
+  const q = typeof rawQ === 'string' ? rawQ : undefined;
+  const errors: ValidationError[] = typeof limit === 'number' ? [] : [limit];
+  // NOTE: FastAPI counts code points, not UTF-16 units.
+  if (q !== undefined && Array.from(q).length > MAX_SEARCH_LENGTH) {
+    errors.push({
+      loc: ['query', 'q'],
+      msg: `String should have at most ${MAX_SEARCH_LENGTH} characters`,
+      type: 'string_too_long',
+    });
+  }
+  if (typeof limit !== 'number' || errors.length > 0) {
+    return new MirageResponse(422, {}, { detail: errors });
+  }
+
+  const matches = SEARCH_KINDS.map((kind) => [kind, searchKind(kind, q)] as const);
+  // NOTE: `Object.fromEntries` types its keys as `string`, so each result is asserted back
+  // to its kinds. `SEARCH_KINDS` lists every kind, so no key is missing.
+  return {
+    data: Object.fromEntries(
+      matches.map(([kind, cards]) => [kind, cards.slice(0, limit)]),
+    ) as SearchResults,
+    meta: {
+      limit,
+      totals: Object.fromEntries(
+        matches.map(([kind, cards]) => [kind, cards.length]),
+      ) as Record<SearchKind, number>,
+    },
   };
 }
 
@@ -252,6 +347,7 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
       param: 'organization_slug',
     }),
   },
+  { path: '/api/search', handler: searchCatalog },
   { path: '/api/works', handler: (request) => paginate(mockWorks, request) },
   {
     path: '/api/works/{work_slug}',

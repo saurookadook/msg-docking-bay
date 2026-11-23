@@ -41,13 +41,16 @@ class WorkFacade(BaseFacade):
         *,
         continuity_slug: str | None = None,
         work_type: WorkType | None = None,
+        q: str | None = None,
         limit: int,
         offset: int,
     ) -> Page[WorkCardEntity]:
         """Return one page of works, first released first (D3).
 
-        Works with no known date come last. Filters match current slugs
-        only: an unknown continuity gives an empty page, not an error.
+        Works with no known date come last. ``q`` matches the normalized
+        slug and title, prefix matches first (D8). Filters match current
+        slugs only: an unknown continuity gives an empty page, not an
+        error.
         """
         filters: list[ColumnElement[bool]] = []
         if continuity_slug is not None:
@@ -58,12 +61,22 @@ class WorkFacade(BaseFacade):
             )
         if work_type is not None:
             filters.append(WorkDB.work_type == work_type)
+        order: list[ColumnElement[Any]] = []
+        search = self._search_clauses(q, (WorkDB.slug, WorkDB.title))
+        if search is not None:
+            filters.append(search.filter)
+            order.append(search.rank)
 
         works = self.db_session.scalars(
             select(WorkDB)
             .options(joinedload(WorkDB.continuity))
             .where(*filters)
-            .order_by(WorkDB.start_date.asc().nulls_last(), WorkDB.title, WorkDB.id)
+            .order_by(
+                *order,
+                WorkDB.start_date.asc().nulls_last(),
+                WorkDB.title,
+                WorkDB.id,
+            )
             .limit(limit)
             .offset(offset)
         ).all()

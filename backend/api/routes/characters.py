@@ -35,7 +35,7 @@ def read_characters_list(
         Query(
             max_length=MAX_SEARCH_LENGTH,
             description=(
-                "Search slugs, ignoring case, spaces and punctuation: "
+                "Search slugs and names, ignoring case, spaces and punctuation: "
                 "`amuro` finds Amuro Ray. Prefix matches come first."
             ),
         ),

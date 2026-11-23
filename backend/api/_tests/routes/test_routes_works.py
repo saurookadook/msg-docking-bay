@@ -89,6 +89,8 @@ class TestReadWorksList:
             ("?continuity=cosmic-era", [], 0),
             ("?limit=1&offset=1", ["mobile-suit-gundam-i"], 2),
             ("?offset=10", [], 2),
+            ("?q=Gundam I", ["mobile-suit-gundam-i"], 1),
+            ("?q=%20--%20", ["mobile-suit-gundam", "mobile-suit-gundam-i"], 2),
         ],
     )
     def test_filters_and_pages(
@@ -100,8 +102,20 @@ class TestReadWorksList:
         assert [work["slug"] for work in response.json()["data"]] == slugs
         assert response.json()["meta"]["total"] == total
 
+    def test_accepts_the_longest_q(self, test_app_client: TestClient) -> None:
+        response = test_app_client.get(f"/api/works?q={'a' * 100}")
+
+        assert response.status_code == status.HTTP_200_OK
+
     @pytest.mark.parametrize(
-        "query", ["?limit=0", "?limit=101", "?offset=-1", "?work_type=anime"]
+        "query",
+        [
+            "?limit=0",
+            "?limit=101",
+            "?offset=-1",
+            "?work_type=anime",
+            f"?q={'a' * 101}",
+        ],
     )
     def test_rejects_bad_parameters(
         self, test_app_client: TestClient, query: str

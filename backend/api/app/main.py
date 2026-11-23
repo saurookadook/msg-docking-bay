@@ -15,6 +15,7 @@ from api.routes.home import home_router
 from api.routes.mechanical_designers import mechanical_designers_router
 from api.routes.mobile_suits import mobile_suits_router
 from api.routes.organizations import organizations_router
+from api.routes.search import search_router
 from api.routes.works import works_router
 from utils.logging.init import init_logging
 
@@ -82,4 +83,5 @@ app.include_router(home_router)
 app.include_router(mechanical_designers_router)
 app.include_router(mobile_suits_router)
 app.include_router(organizations_router)
+app.include_router(search_router)
 app.include_router(works_router)

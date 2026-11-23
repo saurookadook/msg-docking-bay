@@ -37,8 +37,8 @@ def read_mobile_suits_list(
         Query(
             max_length=MAX_SEARCH_LENGTH,
             description=(
-                "Search slugs and model numbers, ignoring case, spaces and "
-                "punctuation: `rx782` finds RX-78-2. Prefix matches come first."
+                "Search slugs, names and model numbers, ignoring case, spaces "
+                "and punctuation: `rx782` finds RX-78-2. Prefix matches come first."
             ),
         ),
     ] = None,

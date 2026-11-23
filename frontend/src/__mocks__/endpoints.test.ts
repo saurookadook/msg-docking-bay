@@ -1,13 +1,20 @@
 import { Response as MirageResponse, type Request } from 'miragejs';
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/constants';
+import {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  MAX_SEARCH_LENGTH,
+  SEARCH_DEFAULT_LIMIT,
+  SEARCH_MAX_LIMIT,
+} from '@/constants';
 
 import { findCharacterMock } from './characterMocks';
 import {
   buildRoutePath,
   endpointConfigs,
   paginate,
+  searchCatalog,
   type AnyEndpointConfig,
   type ApiGetPath,
 } from './endpoints';
@@ -120,6 +127,7 @@ describe('endpointConfigs', () => {
       '/api/organizations',
       '/api/organizations/{organization_slug}',
       '/api/organizations/{organization_slug}/mobile-suits',
+      '/api/search',
       '/api/works',
       '/api/works/{work_slug}',
       '/api/works/{work_slug}/mobile-suits',
@@ -324,5 +332,94 @@ describe('findBySlugOrRedirect', () => {
     expect(
       findBySlugOrRedirect({ byCurrentSlug, redirects: {}, slug: 'missing' }),
     ).toBeUndefined();
+  });
+});
+
+describe('searchCatalog', () => {
+  function slugs(queryParams: Record<string, string>): Record<string, string[]> {
+    const result = searchCatalog({ queryParams });
+    if (result instanceof MirageResponse) throw new Error('Expected a 200 body');
+    return Object.fromEntries(
+      Object.entries(result.data).map(([kind, cards]) => [
+        kind,
+        cards.map(({ slug }) => slug),
+      ]),
+    );
+  }
+
+  it('matches each kind as the API does, prefix matches first', () => {
+    expect(slugs({ q: 'RX 78-2' })).toEqual({
+      characters: [],
+      mechanical_designers: [],
+      mobile_suits: ['rx-78-2-gundam'],
+      organizations: [],
+      works: [],
+    });
+    expect(slugs({ q: 'zeon' }).organizations).toEqual([
+      'zeonic',
+      'principality-of-zeon',
+    ]);
+    expect(slugs({ q: 'okawara' }).mechanical_designers).toEqual(['kunio-okawara']);
+    expect(slugs({ q: 'red comet' }).works).toEqual([
+      'mobile-suit-gundam-the-origin-advent-of-the-red-comet',
+    ]);
+  });
+
+  it('limits each kind, and totals every match', () => {
+    const result = searchCatalog({ queryParams: { q: 'gundam', limit: '1' } });
+
+    expect(result).toMatchObject({
+      data: {
+        mobile_suits: [{ slug: 'rx-78-2-gundam' }],
+        works: [{ slug: 'mobile-suit-gundam' }],
+      },
+      meta: {
+        limit: 1,
+        totals: {
+          characters: 0,
+          mechanical_designers: 0,
+          mobile_suits: 3,
+          organizations: 0,
+          works: 5,
+        },
+      },
+    });
+  });
+
+  it.each([{}, { q: '' }, { q: ' -- ' }, { q: '大河原' }])(
+    'lists the first rows of each kind for a blank q: %o',
+    (queryParams) => {
+      expect(searchCatalog({ queryParams })).toMatchObject({
+        meta: {
+          limit: SEARCH_DEFAULT_LIMIT,
+          totals: {
+            characters: 2,
+            mechanical_designers: 3,
+            mobile_suits: 4,
+            organizations: 3,
+            works: 5,
+          },
+        },
+      });
+    },
+  );
+
+  it.each([
+    [{ limit: '0' }, ['query', 'limit'], 'greater_than_equal'],
+    [{ limit: String(SEARCH_MAX_LIMIT + 1) }, ['query', 'limit'], 'less_than_equal'],
+    [{ q: 'a'.repeat(MAX_SEARCH_LENGTH + 1) }, ['query', 'q'], 'string_too_long'],
+  ])('rejects %o with a 422 like the API', (queryParams, loc, type) => {
+    const result = searchCatalog({ queryParams });
+
+    expect(result).toBeInstanceOf(MirageResponse);
+    const [code, , body] = (result as MirageResponse).toRackResponse();
+    expect(code).toBe(422);
+    expect(body).toEqual({ detail: [{ loc, msg: expect.any(String), type }] });
+  });
+
+  it('accepts the longest q, counted in characters', () => {
+    expect(
+      searchCatalog({ queryParams: { q: '大'.repeat(MAX_SEARCH_LENGTH) } }),
+    ).not.toBeInstanceOf(MirageResponse);
   });
 });

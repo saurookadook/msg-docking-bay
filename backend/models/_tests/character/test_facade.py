@@ -158,6 +158,17 @@ class TestCharacterFacadeGetPage:
             "kai-shiden",
         ]
 
+    def test_get_page_searches_names(self, test_db_session: Session) -> None:
+        """A name the slug doesn't spell still matches (D8)."""
+        CharacterDBFactory(name="Sayla Mass", slug="artesia-som-deikun")
+        test_db_session.commit()
+
+        page = CharacterFacade(db_session=test_db_session).get_page(
+            q="sayla", limit=50, offset=0
+        )
+
+        assert slugs(page.items) == ["artesia-som-deikun"]
+
 
 @pytest.mark.usefixtures("characters")
 class TestCharacterFacadeSlugs:

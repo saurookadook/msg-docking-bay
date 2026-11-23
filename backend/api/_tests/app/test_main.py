@@ -69,6 +69,7 @@ class TestOperationIds:
             "/api/organizations/{organization_slug}/mobile-suits": [
                 "read_organization_mobile_suits"
             ],
+            "/api/search": ["read_search"],
             "/api/works": ["read_works_list"],
             "/api/works/{work_slug}": ["read_work"],
             "/api/works/{work_slug}/mobile-suits": ["read_work_mobile_suits"],

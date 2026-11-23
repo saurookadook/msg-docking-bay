@@ -42,7 +42,7 @@ def read_organizations_list(
         Query(
             max_length=MAX_SEARCH_LENGTH,
             description=(
-                "Search slugs, ignoring case, spaces and punctuation: "
+                "Search slugs and names, ignoring case, spaces and punctuation: "
                 "`zeon` finds the Principality of Zeon. Prefix matches come first."
             ),
         ),
