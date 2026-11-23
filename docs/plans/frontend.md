@@ -160,8 +160,9 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
   `{items, requestInProgress, error}`, fetched once and reused by filters and decks.
 - Mirage: extend `endpoints.ts` handlers to apply `q` and filters, and add enough fixtures
   (several continuities, a suit with full parts and relations) to make both modes demo-able with
-  `MOCK_API=true`. BE-1 already adds `/api/search` and the TypeScript `normalizeSearch` that the
-  list handlers reuse.
+  `MOCK_API=true`. BE-1 adds `/api/search` and the TypeScript `normalizeSearch` and
+  `searchList` (`src/__mocks__/search.ts`), which F2's list handlers will reuse. Until F2, the
+  mock list routes ignore `q` (`catalog-search.md` Q9).
 
 ## PRs (in order)
 
