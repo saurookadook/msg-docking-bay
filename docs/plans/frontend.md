@@ -140,12 +140,12 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
 - **Hologram panel** beside the cage: the `VisualSlot` image (later), model number, top stats, pilot
   cards — rendered as an HTML overlay (drei `Html`) so text stays crisp and selectable.
 - **Navigation:**
-  - Home deck = rows of cages for the current page of suits; continuity = which deck/bay.
-  - Search terminal on a console; picking a result **flies the camera along the crane rail** to that
+  + Home deck = rows of cages for the current page of suits; continuity = which deck/bay.
+  + Search terminal on a console; picking a result **flies the camera along the crane rail** to that
   cage (or loads the cage on demand).
-  - Suit detail = close-up orbit of that cage; Personnel/Organizations/Works pages = in-world terminal
+  + Suit detail = close-up orbit of that cage; Personnel/Organizations/Works pages = in-world terminal
   screens on the catwalk showing the same wiki content.
-  - **Launch sequence** ("Sortie"): mech walks to the catapult, Condition Red lights, catapult fires,
+  + **Launch sequence** ("Sortie"): mech walks to the catapult, Condition Red lights, catapult fires,
   then navigates to a random suit. `[Pilot name], launching!` uses the suit's first pilot from data.
 - **Performance:** instancing, one draw-call-light material set, `frameloop="demand"` when idle, DPR
   cap, dispose on unmount; budget ~60 fps on an integrated GPU with 24 cages.
@@ -168,7 +168,7 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
 
 Backend:
 
-- [ ] **BE-1** `feat(backend): search across the catalog` — `GET /api/search?q=&limit=` returning
+- [x] **BE-1** `feat(backend): search across the catalog` — `GET /api/search?q=&limit=` returning
   `{data:{mobile_suits, characters, organizations, mechanical_designers, works}, meta:{limit,
   totals}}` (top N each, `limit` 1–20, default 5; a blank `q` lists the first N), reusing each
   facade's `q` matching; add `q` to `/api/works`; every `q` also matches the English `name` /
