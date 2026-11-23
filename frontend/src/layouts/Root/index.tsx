@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
-import { Link, NavLink, Outlet } from 'react-router';
+import { Link, Outlet } from 'react-router';
 
 import { HazardStripe, ShiftToggle, StatusLamp } from '@/components';
 import { hydrateShift, useAppStore } from '@/store';
-import { entityPath } from '@/utils';
 
 import { BAY_SIGNS } from './baySigns';
+import { BaySign } from './components';
 
 /**
  * @description The app shell, dressed as the MS deck: a status bar, the bay signs, the
@@ -30,17 +30,9 @@ export function Root() {
       <HazardStripe />
       <nav aria-label="Bays" className="bay-signs">
         <ul>
-          {BAY_SIGNS.map(({ isCommissioned, kind, label }) => (
-            <li key={kind}>
-              {isCommissioned ? (
-                <NavLink className="bay-sign" to={entityPath({ kind })}>
-                  {label}
-                </NavLink>
-              ) : (
-                <span aria-disabled="true" className="bay-sign offline">
-                  {label} <span className="bay-sign-status">Offline</span>
-                </span>
-              )}
+          {BAY_SIGNS.map((baySign) => (
+            <li key={baySign.kind}>
+              <BaySign {...baySign} />
             </li>
           ))}
         </ul>
