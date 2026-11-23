@@ -4,6 +4,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from _factories.character.db import CharacterDBFactory
+from _factories.continuity.db import ContinuityDBFactory
 from _factories.mechanical_designer.db import MechanicalDesignerDBFactory
 from _factories.mobile_suit.db import MobileSuitDBFactory
 from _factories.organization.db import OrganizationDBFactory
@@ -114,13 +115,46 @@ class TestCatalogSearchFacadeSearch:
             "works": 1,
         }
 
-    @pytest.mark.parametrize("q", [None, "zeon", "nothing-matches-this"])
-    def test_search_sends_ten_statements(
-        self, test_db_session: Session, count_statements: CountStatements, q: str | None
-    ) -> None:
-        """A page and a count per kind, for any ``q`` (PYTEST-24)."""
-        facade = CatalogSearchFacade(db_session=test_db_session)
-        with count_statements() as count:
-            facade.search(q=q, limit=5)
 
-        assert count.value == 10
+@pytest.fixture
+def related_catalog(test_db_session: Session) -> None:
+    """One ``solo`` and three ``trio`` rows of every kind.
+
+    Each suit and work has a continuity, and each organization a
+    parent, so the cards' joined rows load while counting.
+    """
+    uc = ContinuityDBFactory(name="Universal Century", slug="universal-century")
+    parent = OrganizationDBFactory(name="Parent", slug="parent")
+    test_db_session.flush()
+    for term, count in (("solo", 1), ("trio", 3)):
+        for n in range(count):
+            slug = f"{term}-{n}"
+            MobileSuitDBFactory(continuity_id=uc.id, name=slug, slug=slug)
+            CharacterDBFactory(name=slug, slug=slug)
+            OrganizationDBFactory(
+                name=slug, parent_organization_id=parent.id, slug=slug
+            )
+            MechanicalDesignerDBFactory(name=slug, slug=slug)
+            WorkDBFactory(continuity_id=uc.id, slug=slug, title=slug)
+    test_db_session.commit()
+
+
+@pytest.mark.usefixtures("related_catalog")
+class TestCatalogSearchFacadeStatementCount:
+    def test_search_sends_ten_statements_however_many_rows_match(
+        self, test_db_session: Session, count_statements: CountStatements
+    ) -> None:
+        """A page and a count per kind, at one row or three."""
+        facade = CatalogSearchFacade(db_session=test_db_session)
+        with count_statements() as one_each:
+            solo = facade.search(q="solo", limit=5)
+        with count_statements() as three_each:
+            trio = facade.search(q="trio", limit=5)
+        with count_statements() as blank:
+            facade.search(q=None, limit=5)
+
+        assert set(solo.totals.model_dump().values()) == {1}
+        assert set(trio.totals.model_dump().values()) == {3}
+        assert trio.results.mobile_suits[0].continuity is not None
+        assert trio.results.organizations[0].parent_organization is not None
+        assert one_each.value == three_each.value == blank.value == 10
