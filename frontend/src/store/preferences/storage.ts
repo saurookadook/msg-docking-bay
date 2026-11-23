@@ -32,7 +32,8 @@ export function storeShift(shift: Shift): void {
   try {
     localStorage.setItem(SHIFT_LS_KEY, JSON.stringify(shift));
   } catch (error) {
-    logger.error('[storeShift] : Could not store the shift', shift, error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error('[storeShift] : Could not store the shift', shift, err);
   }
 }
 
