@@ -10,7 +10,7 @@ from api.models.pagination import PageLimit, PageMeta, PageOffset
 from api.models.work import WorkMobileSuitsListResponse, WorkResponse, WorksListResponse
 from api.routes.handlers.reads import run_read
 from constants.catalog import WorkType
-from constants.pagination import DEFAULT_PAGE_SIZE
+from constants.pagination import DEFAULT_PAGE_SIZE, MAX_SEARCH_LENGTH
 from models.mixins.checks import SLUG_PATTERN
 from models.mobile_suit.facade import MobileSuitFacade
 from models.work.facade import WorkFacade
@@ -34,6 +34,16 @@ def read_works_list(
     work_type: Annotated[
         WorkType | None, Query(description="Only works of this type.")
     ] = None,
+    q: Annotated[
+        str | None,
+        Query(
+            max_length=MAX_SEARCH_LENGTH,
+            description=(
+                "Search slugs and titles, ignoring case, spaces and punctuation: "
+                "`zeta` finds Mobile Suit Zeta Gundam. Prefix matches come first."
+            ),
+        ),
+    ] = None,
     limit: PageLimit = DEFAULT_PAGE_SIZE,
     offset: PageOffset = 0,
 ) -> WorksListResponse:
@@ -45,7 +55,11 @@ def read_works_list(
     """
     page = run_read(
         lambda: WorkFacade(db_session=api_db_session).get_page(
-            continuity_slug=continuity, work_type=work_type, limit=limit, offset=offset
+            continuity_slug=continuity,
+            work_type=work_type,
+            q=q,
+            limit=limit,
+            offset=offset,
         ),
         error_detail="Error fetching works",
         logger=logger,

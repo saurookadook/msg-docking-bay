@@ -8,7 +8,7 @@ from sqlalchemy import ColumnElement, SQLColumnExpression, case, func, or_, sele
 from sqlalchemy.orm import aliased, joinedload
 
 from constants.catalog import WorkType
-from models.base.facade import BaseFacade, SlugColumns
+from models.base.facade import BaseFacade, SlugColumns, normalize_search
 from models.base.page import Page
 from models.continuity.db import ContinuityDB
 from models.source.entity import SourceCitationEntity
@@ -41,13 +41,16 @@ class WorkFacade(BaseFacade):
         *,
         continuity_slug: str | None = None,
         work_type: WorkType | None = None,
+        q: str | None = None,
         limit: int,
         offset: int,
     ) -> Page[WorkCardEntity]:
         """Return one page of works, first released first (D3).
 
-        Works with no known date come last. Filters match current slugs
-        only: an unknown continuity gives an empty page, not an error.
+        Works with no known date come last. ``q`` matches the normalized
+        slug and title, prefix matches first (D8). Filters match current
+        slugs only: an unknown continuity gives an empty page, not an
+        error.
         """
         filters: list[ColumnElement[bool]] = []
         if continuity_slug is not None:
@@ -58,12 +61,23 @@ class WorkFacade(BaseFacade):
             )
         if work_type is not None:
             filters.append(WorkDB.work_type == work_type)
+        order: list[ColumnElement[Any]] = []
+        needle = normalize_search(q)
+        if needle is not None:
+            columns = (WorkDB.slug, WorkDB.title)
+            filters.append(self._search_filter(columns, needle))
+            order.append(self._prefix_rank(columns, needle))
 
         works = self.db_session.scalars(
             select(WorkDB)
             .options(joinedload(WorkDB.continuity))
             .where(*filters)
-            .order_by(WorkDB.start_date.asc().nulls_last(), WorkDB.title, WorkDB.id)
+            .order_by(
+                *order,
+                WorkDB.start_date.asc().nulls_last(),
+                WorkDB.title,
+                WorkDB.id,
+            )
             .limit(limit)
             .offset(offset)
         ).all()
