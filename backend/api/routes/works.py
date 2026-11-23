@@ -28,6 +28,7 @@ type WorkSlug = Annotated[
 @works_router.get("/works")
 def read_works_list(
     api_db_session: DBSessionDep,
+    *,
     continuity: Annotated[
         str | None, Query(description="Only works in this continuity (its slug).")
     ] = None,
