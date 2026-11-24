@@ -1,4 +1,5 @@
 export * from './CageNumber';
+export * from './CatalogRoster';
 export * from './DeckPanel';
 export * from './EntityLink';
 export * from './FilterBar';
