@@ -1,10 +1,12 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Server } from 'miragejs';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockItMoves, mockMobileSuitGundam } from '@/__mocks__/workMocks';
+import type { ContinuitiesListResponse } from '@/api';
+import { safeFetch } from '@/utils';
 import { renderWithProviders } from '@/utils/testing';
 
 async function findRowTitles(): Promise<string[]> {
@@ -46,6 +48,27 @@ describe('WorkList', () => {
     await user.selectOptions(screen.getByRole('combobox', { name: 'Type' }), 'Film');
 
     await waitFor(async () => expect(await findRowTitles()).toHaveLength(1));
+  });
+
+  it('asks for the continuities once, even when there are none', async () => {
+    server = makeMirageServer({
+      environment: 'test',
+      overrides: (mirage) => {
+        mirage.get('/continuities', (): ContinuitiesListResponse => ({ data: [] }));
+      },
+    });
+    const fetchSpy = vi.spyOn(safeFetch, 'call');
+    renderWithProviders({ initialEntries: ['/works'] });
+
+    const continuityCallIndexes = () =>
+      fetchSpy.mock.calls.flatMap(([, { requestPathname }], index) =>
+        requestPathname === '/api/continuities' ? [index] : [],
+      );
+    await waitFor(() => expect(continuityCallIndexes()).toHaveLength(1));
+    await fetchSpy.mock.results[continuityCallIndexes()[0]!]?.value;
+    await findRowTitles();
+
+    expect(continuityCallIndexes()).toHaveLength(1);
   });
 
   it('marks a work with no dates, and one released on a single day', async () => {

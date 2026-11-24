@@ -165,6 +165,7 @@ describe('catalog slices', () => {
     expect((await run(fetchContinuities)).continuities).toEqual({
       continuities: [expect.objectContaining({ slug: 'universal-century' })],
       continuitiesErrorMessage: null,
+      continuitiesLoaded: true,
       continuitiesRequestInProgress: false,
     });
     server.shutdown();
@@ -181,6 +182,7 @@ describe('catalog slices', () => {
     expect((await run(fetchContinuities)).continuities).toMatchObject({
       continuities: [],
       continuitiesErrorMessage: 'Down',
+      continuitiesLoaded: false,
     });
   });
 });

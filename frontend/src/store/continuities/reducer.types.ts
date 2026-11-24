@@ -12,6 +12,8 @@ import type { Nullable } from '@/types';
 export type ContinuitiesStateSlice = {
   continuities: ContinuityCardEntity[];
   continuitiesErrorMessage: Nullable<string>;
+  /** @note True once a request has answered, even with an empty list. */
+  continuitiesLoaded: boolean;
   continuitiesRequestInProgress: boolean;
 };
 

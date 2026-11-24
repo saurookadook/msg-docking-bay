@@ -14,6 +14,7 @@ import type {
 export const initialContinuitiesStateSlice: ContinuitiesStateSlice = {
   continuities: [],
   continuitiesErrorMessage: null,
+  continuitiesLoaded: false,
   continuitiesRequestInProgress: false,
 };
 
@@ -45,6 +46,18 @@ const continuitiesErrorMessage: CombinedContinuitiesStateSlice['continuitiesErro
     initialContinuitiesStateSlice.continuitiesErrorMessage,
   ];
 
+const continuitiesLoaded: CombinedContinuitiesStateSlice['continuitiesLoaded'] = [
+  (stateSlice, action) => {
+    switch (action.type) {
+      case SET_CONTINUITIES:
+        return true;
+      default:
+        return stateSlice;
+    }
+  },
+  initialContinuitiesStateSlice.continuitiesLoaded,
+];
+
 const continuitiesRequestInProgress: CombinedContinuitiesStateSlice['continuitiesRequestInProgress'] =
   [
     (stateSlice, action) => {
@@ -64,5 +77,6 @@ const continuitiesRequestInProgress: CombinedContinuitiesStateSlice['continuitie
 export default combineReducers<ContinuitiesStateSlice, AppAction>({
   continuities,
   continuitiesErrorMessage,
+  continuitiesLoaded,
   continuitiesRequestInProgress,
 });

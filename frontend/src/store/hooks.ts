@@ -74,7 +74,7 @@ export function useContinuities(): ContinuitiesStateSlice {
   const { appDispatch, appState } = useAppStore();
   const { continuities } = appState;
   const shouldFetch =
-    continuities.continuities.length === 0 &&
+    !continuities.continuitiesLoaded &&
     !continuities.continuitiesRequestInProgress &&
     continuities.continuitiesErrorMessage == null;
 
