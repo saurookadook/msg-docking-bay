@@ -48,7 +48,7 @@ export function numberCitations(
     numberOf: (citation) => {
       const number = numbers.get(citationKey(citation));
       if (number === undefined) {
-        throw new Error(`[numberCitations] : no number for ${citation.url}`);
+        throw new Error(`[numberCitations] : no number for '${citation.url}'`);
       }
       return number;
     },

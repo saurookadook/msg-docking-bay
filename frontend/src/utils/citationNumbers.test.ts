@@ -34,7 +34,7 @@ describe('citationNumbers', () => {
       const { numberOf } = numberCitations([mockSources.rx782Gundam]);
 
       expect(() => numberOf(mockWikidataSource)).toThrow(
-        '[numberCitations] : no number for https://www.wikidata.org/wiki/Q1',
+        "[numberCitations] : no number for 'https://www.wikidata.org/wiki/Q1'",
       );
     });
   });
