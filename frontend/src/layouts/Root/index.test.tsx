@@ -29,23 +29,20 @@ describe('Root', () => {
     expect(within(statusBar).getByRole('group', { name: 'Shift' })).toBeVisible();
   });
 
-  it.each([
-    ['Mobile Suits', 'Mobile Suits'],
-    ['Personnel', 'Personnel'],
-    ['Organizations', 'Organizations'],
-    ['Works', 'Works'],
-    ['Designers', 'Designers'],
-  ])('opens the %s roster from its bay sign', async (label, heading) => {
-    const user = userEvent.setup();
-    renderWithProviders({ initialEntries: ['/'] });
+  it.each(['Mobile Suits', 'Personnel', 'Organizations', 'Works', 'Designers'])(
+    'opens the %s roster from its bay sign',
+    async (label) => {
+      const user = userEvent.setup();
+      renderWithProviders({ initialEntries: ['/'] });
 
-    const bays = await screen.findByRole('navigation', { name: 'Bays' });
-    await user.click(within(bays).getByRole('link', { name: label }));
+      const bays = await screen.findByRole('navigation', { name: 'Bays' });
+      await user.click(within(bays).getByRole('link', { name: label }));
 
-    expect(
-      await screen.findByRole('heading', { level: 2, name: new RegExp(heading) }),
-    ).toBeVisible();
-  });
+      expect(
+        await screen.findByRole('heading', { level: 2, name: new RegExp(label) }),
+      ).toBeVisible();
+    },
+  );
 
   it('starts the shift toggle on the stored shift', async () => {
     localStorage.setItem(SHIFT_LS_KEY, JSON.stringify('night'));
