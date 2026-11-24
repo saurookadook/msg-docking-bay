@@ -112,16 +112,14 @@ function readPageParam(
 }
 
 /**
- * @description Pages a list fixture the way the API does (D3 in
- * `docs/plans/catalog-read-api.md`): it reads `limit` and `offset` from the query, and
- * returns that page with its `meta`. An offset past the end gives an empty `data`.
- * @returns A 422 `MirageResponse`, with the API's body, for a `limit` outside
- * `1..MAX_PAGE_SIZE` or an `offset` that is negative or not an integer.
+ * @description Reads a list route's `limit` and `offset` as FastAPI validates them.
+ * @returns The page, or every error FastAPI would report for it.
  */
-export function paginate<T>(
-  items: readonly T[],
-  { queryParams }: Pick<Request, 'queryParams'>,
-): { data: T[]; meta: PageMeta } | MirageResponse {
+function readPageParams({
+  queryParams,
+}: Pick<Request, 'queryParams'>):
+  | { limit: number; offset: number }
+  | ValidationError[] {
   const limit = readPageParam('limit', queryParams['limit'], {
     fallback: DEFAULT_PAGE_SIZE,
     max: MAX_PAGE_SIZE,
@@ -132,9 +130,48 @@ export function paginate<T>(
     min: 0,
   });
   if (typeof limit !== 'number' || typeof offset !== 'number') {
-    const errors = [limit, offset].filter((value) => typeof value !== 'number');
-    return new MirageResponse(422, {}, { detail: errors });
+    return [limit, offset].filter((value) => typeof value !== 'number');
   }
+  return { limit, offset };
+}
+
+/**
+ * @description Reads a `q` as FastAPI validates it: at most `MAX_SEARCH_LENGTH`
+ * characters.
+ * @returns The `q` (or `undefined` when the query has none), or FastAPI's error.
+ */
+function readSearchQuery(value: QueryValue): string | undefined | ValidationError {
+  const q = typeof value === 'string' ? value : undefined;
+  // NOTE: FastAPI counts code points, not UTF-16 units.
+  if (q !== undefined && Array.from(q).length > MAX_SEARCH_LENGTH) {
+    return {
+      loc: ['query', 'q'],
+      msg: `String should have at most ${MAX_SEARCH_LENGTH} characters`,
+      type: 'string_too_long',
+    };
+  }
+  return q;
+}
+
+/** @description The API's 422 for a request whose query fails validation. */
+function invalidQuery(errors: readonly ValidationError[]): MirageResponse {
+  return new MirageResponse(422, {}, { detail: errors });
+}
+
+/**
+ * @description Pages a list fixture the way the API does (D3 in
+ * `docs/plans/catalog-read-api.md`): it reads `limit` and `offset` from the query, and
+ * returns that page with its `meta`. An offset past the end gives an empty `data`.
+ * @returns A 422 `MirageResponse`, with the API's body, for a `limit` outside
+ * `1..MAX_PAGE_SIZE` or an `offset` that is negative or not an integer.
+ */
+export function paginate<T>(
+  items: readonly T[],
+  request: Pick<Request, 'queryParams'>,
+): { data: T[]; meta: PageMeta } | MirageResponse {
+  const page = readPageParams(request);
+  if (Array.isArray(page)) return invalidQuery(page);
+  const { limit, offset } = page;
 
   return {
     data: items.slice(offset, offset + limit),
@@ -198,19 +235,11 @@ export function searchCatalog({
     max: SEARCH_MAX_LIMIT,
     min: 1,
   });
-  const rawQ = queryParams['q'];
-  const q = typeof rawQ === 'string' ? rawQ : undefined;
-  const errors: ValidationError[] = typeof limit === 'number' ? [] : [limit];
-  // NOTE: FastAPI counts code points, not UTF-16 units.
-  if (q !== undefined && Array.from(q).length > MAX_SEARCH_LENGTH) {
-    errors.push({
-      loc: ['query', 'q'],
-      msg: `String should have at most ${MAX_SEARCH_LENGTH} characters`,
-      type: 'string_too_long',
-    });
-  }
-  if (typeof limit !== 'number' || errors.length > 0) {
-    return new MirageResponse(422, {}, { detail: errors });
+  const q = readSearchQuery(queryParams['q']);
+  if (typeof limit !== 'number' || typeof q === 'object') {
+    return invalidQuery(
+      [limit, q].filter((value): value is ValidationError => typeof value === 'object'),
+    );
   }
 
   const matches = SEARCH_KINDS.map((kind) => [kind, searchKind(kind, q)] as const);
