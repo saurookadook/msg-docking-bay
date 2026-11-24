@@ -423,3 +423,131 @@ describe('searchCatalog', () => {
     ).not.toBeInstanceOf(MirageResponse);
   });
 });
+
+describe('list route filters', () => {
+  function slugs(
+    path: ApiGetPath,
+    queryParams: Record<string, string>,
+  ): { slugs: string[]; total: number } {
+    const result = handle(path, {}, queryParams);
+    if (result instanceof MirageResponse) throw new Error('Expected a 200 body');
+    const { data, meta } = result as {
+      data: { slug: string }[];
+      meta: { total: number };
+    };
+    return { slugs: data.map(({ slug }) => slug), total: meta.total };
+  }
+
+  it.each([
+    [
+      '/api/mobile-suits',
+      { continuity: 'universal-century' },
+      ['rx-78-2-gundam', 'rx-78-02-gundam', 'ms-06f-zaku-ii'],
+    ],
+    [
+      '/api/mobile-suits',
+      { work: 'mobile-suit-gundam-the-origin' },
+      ['rx-78-02-gundam'],
+    ],
+    [
+      '/api/mobile-suits',
+      { unit_type: 'suit', work: 'mobile-suit-gundam' },
+      ['rx-78-2-gundam', 'ms-06f-zaku-ii'],
+    ],
+    ['/api/mobile-suits', { unit_type: 'armor' }, []],
+    [
+      '/api/works',
+      { work_type: 'tv_series' },
+      ['mobile-suit-gundam', 'mobile-suit-gundam-the-origin-advent-of-the-red-comet'],
+    ],
+    [
+      '/api/works',
+      { continuity: 'universal-century', q: 'origin' },
+      [
+        'mobile-suit-gundam-the-origin',
+        'mobile-suit-gundam-the-origin-advent-of-the-red-comet',
+      ],
+    ],
+    [
+      '/api/characters',
+      { work: 'mobile-suit-gundam-the-origin' },
+      ['amuro-ray-origin'],
+    ],
+    [
+      '/api/organizations',
+      { work: 'mobile-suit-gundam' },
+      ['earth-federation', 'principality-of-zeon'],
+    ],
+  ] as const)('filters %s by %o', (path, queryParams, expected) => {
+    expect(slugs(path, queryParams)).toEqual({
+      slugs: expected,
+      total: expected.length,
+    });
+  });
+
+  it('applies q to every list route, prefix matches first', () => {
+    expect(slugs('/api/organizations', { q: 'zeon' }).slugs).toEqual([
+      'zeonic',
+      'principality-of-zeon',
+    ]);
+    expect(slugs('/api/mechanical-designers', { q: 'okawara' }).slugs).toEqual([
+      'kunio-okawara',
+    ]);
+    expect(slugs('/api/mobile-suits', { q: 'RX 78-2' }).slugs).toEqual([
+      'rx-78-2-gundam',
+    ]);
+  });
+
+  it('filters before paging, so the total counts the matches', () => {
+    expect(
+      slugs('/api/mobile-suits', {
+        continuity: 'universal-century',
+        limit: '1',
+        offset: '1',
+      }),
+    ).toEqual({ slugs: ['rx-78-02-gundam'], total: 3 });
+  });
+
+  it.each([
+    ['/api/mobile-suits', { continuity: 'cosmic-era' }],
+    ['/api/characters', { work: 'msg' }],
+  ] as const)(
+    'gives an empty page for an unknown or old slug on %s: %o',
+    (path, query) => {
+      expect(slugs(path, query)).toEqual({ slugs: [], total: 0 });
+    },
+  );
+
+  it('rejects every bad param in one 422, like the API', () => {
+    const result = handle(
+      '/api/mobile-suits',
+      {},
+      { limit: '0', q: 'a'.repeat(MAX_SEARCH_LENGTH + 1), unit_type: 'tank' },
+    );
+
+    expect(result).toBeInstanceOf(MirageResponse);
+    const [code, , body] = (result as MirageResponse).toRackResponse();
+    expect(code).toBe(422);
+    expect(body).toEqual({
+      detail: [
+        {
+          loc: ['query', 'unit_type'],
+          msg: "Input should be 'suit', 'armor', 'fighter', 'man_machine', 'worker', 'pod' or 'doll'",
+          type: 'enum',
+        },
+        { loc: ['query', 'q'], msg: expect.any(String), type: 'string_too_long' },
+        {
+          loc: ['query', 'limit'],
+          msg: expect.any(String),
+          type: 'greater_than_equal',
+        },
+      ],
+    });
+  });
+
+  it('rejects an unknown work type', () => {
+    const result = handle('/api/works', {}, { work_type: 'anime' });
+
+    expect((result as MirageResponse).toRackResponse()[0]).toBe(422);
+  });
+});

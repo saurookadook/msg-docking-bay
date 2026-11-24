@@ -1,3 +1,5 @@
+import type { UnitType, WorkType } from '@/api';
+
 /**
  * @description Base URL that `safeFetch` resolves `/api/...` paths against.
  * @note Empty on purpose: the browser calls the API on its own origin, and the reverse
@@ -91,3 +93,35 @@ export const ENTITY_KINDS = {
   string,
   { listPath: string; navLabel: string; isCommissioned: boolean; iconPath: string }
 >;
+
+/**
+ * @description Each unit type the API knows, in its order, with the label the rosters
+ * and filters show.
+ * @note Its keys are also the values `unit_type` accepts; mock mode answers any other
+ * with the API's 422.
+ */
+export const UNIT_TYPE_LABELS = {
+  suit: 'Mobile Suit',
+  armor: 'Mobile Armor',
+  fighter: 'Fighter',
+  man_machine: 'Man Machine',
+  worker: 'Mobile Worker',
+  pod: 'Mobile Pod',
+  doll: 'Mobile Doll',
+} as const satisfies Record<UnitType, string>;
+
+/**
+ * @description Each work type the API knows, in its order, with the label the rosters
+ * and filters show.
+ * @note Its keys are also the values `work_type` accepts.
+ */
+export const WORK_TYPE_LABELS = {
+  tv_series: 'TV series',
+  film: 'Film',
+  ova: 'OVA',
+  ona: 'ONA',
+  manga: 'Manga',
+  novel: 'Novel',
+  video_game: 'Video game',
+  other: 'Other',
+} as const satisfies Record<WorkType, string>;
