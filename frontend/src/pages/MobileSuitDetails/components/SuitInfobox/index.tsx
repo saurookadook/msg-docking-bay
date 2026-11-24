@@ -103,7 +103,8 @@ function sheetItems(sheet: Nullable<MobileSuitSpecSheetEntity>): SpecPlateItem[]
       label: 'Frame',
       value: materials('frame'),
     },
-  ];
+    // NOTE: a part kind is inherited whole, so a row with nothing of its own use stays pending.
+  ].map((item) => ({ ...item, isInherited: item.isInherited && item.value != null }));
 }
 
 export type SuitInfoboxProps = {

@@ -26,6 +26,11 @@ export const NamedConfiguration: Story = {
   parameters: { route: `/mobile-suits/${mockRx782Gundam.slug}?spec=magnet-coating` },
 };
 
+/** @description The Zaku II: one sheet (no tabs), no powerplant on file. */
+export const SingleSheet: Story = {
+  parameters: { route: '/mobile-suits/ms-06f-zaku-ii' },
+};
+
 /** @description An old slug: the page swaps it for the current one. */
 export const OldSlug: Story = { parameters: { route: '/mobile-suits/rx-78-2' } };
 

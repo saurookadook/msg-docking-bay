@@ -15,7 +15,13 @@ import { fetchMobileSuit, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
 import { entityPath } from '@/utils';
 
-import { SuitAppearances, SuitHeader, SuitInfobox, SuitStrip } from './components';
+import {
+  SpecSheetTabs,
+  SuitAppearances,
+  SuitHeader,
+  SuitInfobox,
+  SuitStrip,
+} from './components';
 import { collectCitations, SOURCE_ID_PREFIX } from './utils/citations';
 import { useSelectedSpecSheet } from './utils/hooks';
 
@@ -53,7 +59,8 @@ function PendingSection({ title }: { title: string }) {
 
 /** @description The dossier for a loaded suit. */
 function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
-  const { index, labels, sheet } = useSelectedSpecSheet(suit.spec_sheets);
+  const selected = useSelectedSpecSheet(suit.spec_sheets);
+  const { index, labels, sheet } = selected;
   const { citations, numberOf } = useMemo(
     () => numberCitations(collectCitations(suit)),
     [suit],
@@ -78,6 +85,7 @@ function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
           className="registry-plate"
           items={REGISTRY_ITEMS}
         />
+        <SpecSheetTabs cite={cite} selected={selected} sheets={suit.spec_sheets} />
         <SuitAppearances appearances={suit.appearances} cite={cite} />
         {PENDING_SECTIONS.map((title) => (
           <PendingSection key={title} title={title} />
