@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 
-import { citationID } from '@/components/SourceCitations/citationNumbers';
+import { citationID } from '@/utils';
 
 import './styles.css';
 

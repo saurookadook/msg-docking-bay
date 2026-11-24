@@ -11,7 +11,6 @@ export * from './RosterTable';
 export * from './RosterTable/rosterColumns';
 export * from './ShiftToggle';
 export * from './SourceCitations';
-export * from './SourceCitations/citationNumbers';
 export * from './SpecPlate';
 export * from './StatusLamp';
 export * from './StencilHeading';

@@ -3,8 +3,8 @@ import { useId } from 'react';
 
 import type { SourceCitationEntity } from '@/api';
 import { SOURCE_KIND_LABELS } from '@/constants';
+import { citationID, citationKey } from '@/utils';
 
-import { citationID, citationKey } from './citationNumbers';
 import './styles.css';
 
 export type SourceCitationsProps = React.HTMLAttributes<HTMLElement> & {

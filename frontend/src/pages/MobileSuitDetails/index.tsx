@@ -5,7 +5,6 @@ import type { MobileSuitDetailEntity, SourceCitationEntity } from '@/api';
 import {
   CitationMark,
   DeckPanel,
-  numberCitations,
   SourceCitations,
   SpecPlate,
   StatusLamp,
@@ -13,7 +12,7 @@ import {
 import { NotFound } from '@/pages/NotFound';
 import { fetchMobileSuit, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
-import { entityPath } from '@/utils';
+import { entityPath, numberCitations } from '@/utils';
 
 import {
   SpecSheetTabs,
