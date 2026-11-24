@@ -17,7 +17,7 @@ export type SuitStripProps = {
 export function SuitStrip({ suit }: SuitStripProps) {
   return (
     <div aria-hidden="true" className="suit-strip">
-      <VisualSlot className="suit-strip-visual" subject={suit.name} />
+      <VisualSlot className="suit-strip-visual" shape="thumbnail" subject={suit.name} />
       <p className="stencil-label">
         <ModelNumber className="suit-strip-model" modelNumber={suit.model_number} />
         {suit.name}

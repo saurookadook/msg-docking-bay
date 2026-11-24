@@ -25,6 +25,11 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
+/** @description A narrow label column, as in the dossier's side panel. */
+export const Compact: Story = {
+  args: { isCompact: true, style: { maxInlineSize: '20rem' } },
+};
+
 /** @description Every value missing, as on a suit the catalog barely knows. */
 export const AllPending: Story = {
   args: {

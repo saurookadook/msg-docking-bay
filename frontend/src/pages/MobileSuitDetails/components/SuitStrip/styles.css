@@ -14,18 +14,7 @@
     }
 
     & .suit-strip-visual {
-        aspect-ratio: 1;
-        block-size: 3rem;
         flex-shrink: 0;
-        padding: var(--space-1);
-
-        & .visual-slot-blueprint {
-            block-size: 2rem;
-        }
-
-        & figcaption {
-            display: none;
-        }
     }
 
     & p {

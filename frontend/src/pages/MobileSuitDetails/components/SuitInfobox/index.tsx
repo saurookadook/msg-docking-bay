@@ -23,7 +23,7 @@ export type SuitInfoboxProps = {
 export function SuitInfobox({ cite, selected, suit }: SuitInfoboxProps) {
   return (
     <aside aria-labelledby="suit-infobox-title" className="suit-infobox">
-      <VisualSlot subject={suit.name} />
+      <VisualSlot shape="landscape" subject={suit.name} />
       <h3 className="visually-hidden" id="suit-infobox-title">
         Unit data
       </h3>

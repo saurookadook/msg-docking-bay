@@ -13,3 +13,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+/** @description A side panel's image, wider than it is tall. */
+export const Landscape: Story = { args: { shape: 'landscape' } };
+
+/** @description A small square with no caption, as in a pinned header strip. */
+export const Thumbnail: Story = { args: { shape: 'thumbnail' } };

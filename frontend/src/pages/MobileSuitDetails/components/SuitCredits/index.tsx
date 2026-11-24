@@ -133,5 +133,5 @@ export function SuitCredits({ cite, suit }: SuitCreditsProps) {
     },
   ];
 
-  return <SpecPlate aria-label="Credits" items={items} />;
+  return <SpecPlate aria-label="Credits" isCompact items={items} />;
 }

@@ -66,6 +66,7 @@ export function SheetSummary({ cite, selected }: SheetSummaryProps) {
       )}
       <SpecPlate
         aria-label="Spec summary"
+        isCompact
         items={summaryItems(selected?.sheet ?? null)}
       />
     </>
