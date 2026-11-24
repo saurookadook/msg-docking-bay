@@ -41,6 +41,29 @@ describe('RosterTable', () => {
     expect(screen.getAllByRole('rowheader')[0]).toHaveAttribute('data-label', 'Name');
   });
 
+  it('states its table roles, which the phone layout would otherwise strip', () => {
+    const { container } = render(
+      <RosterTable caption="Cage roster" columns={columns} rows={mockUnits} />,
+    );
+
+    expect(
+      [...container.querySelectorAll('table, tr, th, td')].map((element) =>
+        element.getAttribute('role'),
+      ),
+    ).toEqual([
+      'table',
+      'row',
+      'columnheader',
+      'columnheader',
+      'row',
+      'rowheader',
+      'cell',
+      'row',
+      'rowheader',
+      'cell',
+    ]);
+  });
+
   it('leaves a cell unlabelled when its header is not plain text', () => {
     const columnsWithNodeHeader = helper.columns([
       helper.accessor('name', {

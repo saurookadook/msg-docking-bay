@@ -36,8 +36,14 @@
     }
 
     @media (max-width: 40rem) {
+        /* NOTE: hidden visually, not with display: none, so screen readers keep the headers. */
         & thead {
-            display: none;
+            block-size: 1px;
+            clip-path: inset(50%);
+            inline-size: 1px;
+            overflow: hidden;
+            position: absolute;
+            white-space: nowrap;
         }
 
         & tbody tr {

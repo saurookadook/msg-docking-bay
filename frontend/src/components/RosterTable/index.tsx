@@ -18,6 +18,8 @@ export type RosterTableProps<Row extends { slug: string }> = Omit<
  * @description A catalog roster: one table row per entity, keyed by its slug, in the
  * order the API sent them.
  * @note On a phone each row stacks, and each cell shows its column's header as a label.
+ * The explicit roles keep the table's semantics where the phone layout's flex display
+ * would otherwise strip them (Safari).
  */
 export function RosterTable<Row extends { slug: string }>({
   caption,
@@ -34,13 +36,13 @@ export function RosterTable<Row extends { slug: string }>({
   });
 
   return (
-    <table className={classNames('roster-table', className)} {...props}>
+    <table className={classNames('roster-table', className)} role="table" {...props}>
       <caption className="stencil-label">{caption}</caption>
       <thead>
         {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id}>
+          <tr key={headerGroup.id} role="row">
             {headerGroup.headers.map((header) => (
-              <th key={header.id} scope="col">
+              <th key={header.id} role="columnheader" scope="col">
                 <table.FlexRender header={header} />
               </th>
             ))}
@@ -49,17 +51,17 @@ export function RosterTable<Row extends { slug: string }>({
       </thead>
       <tbody>
         {table.getRowModel().rows.map((row) => (
-          <tr key={row.id}>
+          <tr key={row.id} role="row">
             {row.getAllCells().map((cell) => {
               const { header } = cell.column.columnDef;
               const label = typeof header === 'string' ? header : undefined;
               const content = <table.FlexRender cell={cell} />;
               return cell.column.columnDef.meta?.isRowHeader === true ? (
-                <th data-label={label} key={cell.id} scope="row">
+                <th data-label={label} key={cell.id} role="rowheader" scope="row">
                   {content}
                 </th>
               ) : (
-                <td data-label={label} key={cell.id}>
+                <td data-label={label} key={cell.id} role="cell">
                   {content}
                 </td>
               );
