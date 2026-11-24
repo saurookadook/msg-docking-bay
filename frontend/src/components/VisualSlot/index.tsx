@@ -1,5 +1,6 @@
 import classNames from 'classnames';
 
+import { BLUEPRINT_GRID, BLUEPRINT_PATH } from './blueprint';
 import './styles.css';
 
 export type VisualSlotProps = React.HTMLAttributes<HTMLElement> & {
@@ -18,8 +19,12 @@ export function VisualSlot({ className, subject, ...props }: VisualSlotProps) {
       className={classNames('visual-slot', className)}
       {...props}
     >
-      <svg aria-hidden="true" className="visual-slot-blueprint" viewBox="0 0 60 100">
-        <path d="M24 6h12l2 8h-16zM18 16h24l4 22-6 4v14h-20v-14l-6-4zM8 18h8l-2 26h-6zM44 18h8l0 26h-6zM20 58h8l-1 36h-9zM32 58h8l1 36h-9z" />
+      <svg
+        aria-hidden="true"
+        className="visual-slot-blueprint"
+        viewBox={`0 0 ${BLUEPRINT_GRID.width} ${BLUEPRINT_GRID.height}`}
+      >
+        <path d={BLUEPRINT_PATH} />
       </svg>
       <figcaption aria-hidden="true" className="stencil-label">
         No visual on file

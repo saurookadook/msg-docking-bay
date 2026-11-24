@@ -16,3 +16,4 @@ export * from './SpecPlate';
 export * from './StatusLamp';
 export * from './StencilHeading';
 export * from './VisualSlot';
+export * from './VisualSlot/blueprint';
