@@ -16,7 +16,7 @@ import { safeFetch } from '@/utils';
 import { renderWithProviders } from '@/utils/testing';
 
 async function findDossier(name: string | RegExp = 'Gundam') {
-  return screen.findByRole('article', { name });
+  return screen.findByRole('region', { name });
 }
 
 function plateValue(plate: HTMLElement, label: string) {
@@ -200,7 +200,8 @@ describe('MobileSuitDetails', () => {
     });
     renderWithProviders({ initialEntries: ['/mobile-suits/rx-78-2-gundam'] });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
+    const page = await findDossier('Mobile suit dossier');
+    expect(await within(page).findByRole('alert')).toHaveTextContent(
       'The mobile suit request failed.',
     );
   });
@@ -220,7 +221,8 @@ describe('MobileSuitDetails', () => {
     });
     renderWithProviders({ initialEntries: ['/mobile-suits/rx-78-2-gundam'] });
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Opening the dossier');
+    const page = await findDossier('Mobile suit dossier');
+    expect(within(page).getByRole('status')).toHaveTextContent('Opening the dossier');
     expect(await findDossier()).toBeVisible();
   });
 

@@ -70,7 +70,7 @@ function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
   );
 
   return (
-    <article aria-labelledby={HEADING_ID} id="mobile-suit-details">
+    <section aria-labelledby={HEADING_ID} id="mobile-suit-details">
       <SuitStrip suit={suit} />
       <SuitHeader headingID={HEADING_ID} suit={suit} />
       <SuitInfobox
@@ -98,7 +98,7 @@ function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
         ))}
         <SourceCitations citations={citations} idPrefix={SOURCE_ID_PREFIX} />
       </div>
-    </article>
+    </section>
   );
 }
 
@@ -130,7 +130,10 @@ export function MobileSuitDetails() {
   if (suit != null) return <Dossier suit={suit} />;
 
   return (
-    <section aria-label="Mobile suit dossier" id="mobile-suit-details">
+    <section aria-labelledby={HEADING_ID} id="mobile-suit-details">
+      <h2 className="visually-hidden" id={HEADING_ID}>
+        Mobile suit dossier
+      </h2>
       <p role="status">
         {detailState?.errorMessage == null && (
           <StatusLamp status="busy">Opening the dossier</StatusLamp>
