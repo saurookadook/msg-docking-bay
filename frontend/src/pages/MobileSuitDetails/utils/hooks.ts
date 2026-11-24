@@ -6,24 +6,24 @@ import type { Nullable } from '@/types';
 import {
   selectSpecSheetIndex,
   SPEC_PARAM,
-  specSheetKeys,
-  specSheetLabels,
+  specSheetEntries,
+  type SpecSheetEntry,
 } from './specSheets';
 
-export type SelectedSpecSheet = {
+export type SpecSheetSelection = {
+  entries: SpecSheetEntry[];
+  /** @description The selected entry's place in `entries`. */
   index: number;
-  keys: string[];
-  labels: string[];
-  /** @description The selected sheet, or `null` for a suit with none. */
-  sheet: Nullable<MobileSuitSpecSheetEntity>;
+  /** @description The selected entry, or `null` for a suit with no sheet. */
+  selected: Nullable<SpecSheetEntry>;
 };
 
-/** @description The spec sheet the URL's `?spec=` picks, with every sheet's key and label. */
-export function useSelectedSpecSheet(
+/** @description The spec sheet the URL's `?spec=` picks, among all the suit's sheets. */
+export function useSpecSheetSelection(
   sheets: readonly MobileSuitSpecSheetEntity[],
-): SelectedSpecSheet {
+): SpecSheetSelection {
   const [searchParams] = useSearchParams();
-  const keys = specSheetKeys(sheets);
-  const index = selectSpecSheetIndex({ keys, spec: searchParams.get(SPEC_PARAM) });
-  return { index, keys, labels: specSheetLabels(sheets), sheet: sheets[index] ?? null };
+  const entries = specSheetEntries(sheets);
+  const index = selectSpecSheetIndex({ entries, spec: searchParams.get(SPEC_PARAM) });
+  return { entries, index, selected: entries[index] ?? null };
 }

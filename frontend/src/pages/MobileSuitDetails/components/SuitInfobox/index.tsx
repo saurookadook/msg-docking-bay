@@ -13,6 +13,7 @@ import {
   formatQuantity,
   MEASUREMENTS,
 } from '../../utils/format';
+import type { SpecSheetEntry } from '../../utils/specSheets';
 
 import './styles.css';
 
@@ -109,9 +110,8 @@ function sheetItems(sheet: Nullable<MobileSuitSpecSheetEntity>): SpecPlateItem[]
 
 export type SuitInfoboxProps = {
   cite: Cite;
-  /** @description The selected sheet's name, such as "Base spec". */
-  sheetLabel: Nullable<string>;
-  sheet: Nullable<MobileSuitSpecSheetEntity>;
+  /** @description The sheet the tabs have selected, or `null` for a suit with none. */
+  selected: Nullable<SpecSheetEntry>;
   suit: MobileSuitDetailEntity;
 };
 
@@ -119,7 +119,8 @@ export type SuitInfoboxProps = {
  * @description The dossier's side panel: the image slot, the selected spec sheet's
  * headline numbers, and who designed, built, flew and debuted the suit.
  */
-export function SuitInfobox({ cite, sheet, sheetLabel, suit }: SuitInfoboxProps) {
+export function SuitInfobox({ cite, selected, suit }: SuitInfoboxProps) {
+  const sheet = selected?.sheet ?? null;
   const debuts = suit.appearances.filter(({ is_debut }) => is_debut);
 
   const creditItems: SpecPlateItem[] = [
@@ -205,10 +206,10 @@ export function SuitInfobox({ cite, sheet, sheetLabel, suit }: SuitInfoboxProps)
       <h3 className="visually-hidden" id="suit-infobox-title">
         Unit data
       </h3>
-      {sheet != null && (
+      {selected != null && (
         <p className="suit-infobox-sheet stencil-label">
-          {sheetLabel}
-          {cite(sheet.source)}
+          {selected.label}
+          {cite(selected.sheet.source)}
         </p>
       )}
       <SpecPlate aria-label="Spec summary" items={sheetItems(sheet)} />

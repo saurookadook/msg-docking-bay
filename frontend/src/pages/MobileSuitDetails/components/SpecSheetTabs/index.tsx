@@ -1,13 +1,12 @@
 import { useId, useRef } from 'react';
 import { useSearchParams } from 'react-router';
 
-import type { MobileSuitSpecSheetEntity } from '@/api';
 import { DeckPanel, SpecPlate } from '@/components';
 
 import type { Cite } from '../../utils/citations';
 import { formatMeasurement, MEASUREMENTS } from '../../utils/format';
-import type { SelectedSpecSheet } from '../../utils/hooks';
-import { SPEC_PARAM } from '../../utils/specSheets';
+import type { SpecSheetSelection } from '../../utils/hooks';
+import { SPEC_PARAM, type SpecSheetEntry } from '../../utils/specSheets';
 import { HeightLineup } from '../HeightLineup';
 import { SuitParts } from '../SuitParts';
 
@@ -19,14 +18,12 @@ const MEASUREMENT_FIELDS = Object.keys(MEASUREMENTS) as (keyof typeof MEASUREMEN
 /** @description One sheet's name, measurements and parts. */
 function SheetContents({
   cite,
-  label,
+  entry: { label, sheet },
   name,
-  sheet,
 }: {
   cite: Cite;
-  label: string;
+  entry: SpecSheetEntry;
   name: string;
-  sheet: MobileSuitSpecSheetEntity;
 }) {
   return (
     <>
@@ -52,8 +49,7 @@ export type SpecSheetTabsProps = {
   cite: Cite;
   /** @description The suit's name, for the height lineup. */
   name: string;
-  selected: SelectedSpecSheet;
-  sheets: MobileSuitSpecSheetEntity[];
+  selection: SpecSheetSelection;
 };
 
 /**
@@ -62,19 +58,21 @@ export type SpecSheetTabsProps = {
  * so the infobox follows it and a link opens it.
  * @note One sheet shows no tabs; none shows "DATA PENDING".
  */
-export function SpecSheetTabs({ cite, name, selected, sheets }: SpecSheetTabsProps) {
+export function SpecSheetTabs({ cite, name, selection }: SpecSheetTabsProps) {
   const [, setSearchParams] = useSearchParams();
   const idPrefix = useId();
   const headingID = `${idPrefix}-heading`;
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const { index, keys, labels, sheet } = selected;
+  const { entries, index, selected } = selection;
 
   function selectSheet(nextIndex: number) {
+    const key = entries[nextIndex]?.key;
     setSearchParams(
       (previous) => {
         const nextSearchParams = new URLSearchParams(previous);
-        if (nextIndex === 0) nextSearchParams.delete(SPEC_PARAM);
-        else nextSearchParams.set(SPEC_PARAM, keys[nextIndex]!);
+        // NOTE: no `spec` is the first sheet, and so is a place with no sheet.
+        if (nextIndex === 0 || key == null) nextSearchParams.delete(SPEC_PARAM);
+        else nextSearchParams.set(SPEC_PARAM, key);
         return nextSearchParams;
       },
       { replace: true, preventScrollReset: true },
@@ -85,13 +83,13 @@ export function SpecSheetTabs({ cite, name, selected, sheets }: SpecSheetTabsPro
     const nextIndex = (function () {
       switch (event.key) {
         case 'ArrowRight':
-          return (index + 1) % sheets.length;
+          return (index + 1) % entries.length;
         case 'ArrowLeft':
-          return (index - 1 + sheets.length) % sheets.length;
+          return (index - 1 + entries.length) % entries.length;
         case 'Home':
           return 0;
         case 'End':
-          return sheets.length - 1;
+          return entries.length - 1;
         default:
           return null;
       }
@@ -107,17 +105,17 @@ export function SpecSheetTabs({ cite, name, selected, sheets }: SpecSheetTabsPro
       <h3 className="stencil-label" id={headingID}>
         Specifications
       </h3>
-      {sheet == null && (
+      {selected == null && (
         <DeckPanel>
           <p className="stencil-label">DATA PENDING</p>
         </DeckPanel>
       )}
-      {sheet != null && sheets.length === 1 && (
+      {selected != null && entries.length === 1 && (
         <div className="spec-sheet-panel">
-          <SheetContents cite={cite} label={labels[0]!} name={name} sheet={sheet} />
+          <SheetContents cite={cite} entry={selected} name={name} />
         </div>
       )}
-      {sheet != null && sheets.length > 1 && (
+      {selected != null && entries.length > 1 && (
         <>
           <div
             aria-label="Spec sheets"
@@ -125,7 +123,7 @@ export function SpecSheetTabs({ cite, name, selected, sheets }: SpecSheetTabsPro
             onKeyDown={handleKeyDown}
             role="tablist"
           >
-            {keys.map((key, tabIndex) => (
+            {entries.map(({ key, label }, tabIndex) => (
               <button
                 aria-controls={`${idPrefix}-panel`}
                 aria-selected={tabIndex === index}
@@ -140,23 +138,18 @@ export function SpecSheetTabs({ cite, name, selected, sheets }: SpecSheetTabsPro
                 tabIndex={tabIndex === index ? 0 : -1}
                 type="button"
               >
-                {labels[tabIndex]}
+                {label}
               </button>
             ))}
           </div>
           <div
-            aria-labelledby={`${idPrefix}-tab-${keys[index]}`}
+            aria-labelledby={`${idPrefix}-tab-${selected.key}`}
             className="spec-sheet-panel"
             id={`${idPrefix}-panel`}
             role="tabpanel"
             tabIndex={0}
           >
-            <SheetContents
-              cite={cite}
-              label={labels[index]!}
-              name={name}
-              sheet={sheet}
-            />
+            <SheetContents cite={cite} entry={selected} name={name} />
           </div>
         </>
       )}

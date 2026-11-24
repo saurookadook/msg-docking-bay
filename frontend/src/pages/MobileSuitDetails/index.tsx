@@ -23,7 +23,7 @@ import {
   SuitStrip,
 } from './components';
 import { collectCitations, SOURCE_ID_PREFIX } from './utils/citations';
-import { useSelectedSpecSheet } from './utils/hooks';
+import { useSpecSheetSelection } from './utils/hooks';
 
 import './styles.css';
 
@@ -59,8 +59,7 @@ function PendingSection({ title }: { title: string }) {
 
 /** @description The dossier for a loaded suit. */
 function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
-  const selected = useSelectedSpecSheet(suit.spec_sheets);
-  const { index, labels, sheet } = selected;
+  const selection = useSpecSheetSelection(suit.spec_sheets);
   const { citations, numberOf } = numberCitations(collectCitations(suit));
   const cite = (source: SourceCitationEntity) => (
     <CitationMark idPrefix={SOURCE_ID_PREFIX} number={numberOf(source)} />
@@ -70,24 +69,14 @@ function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
     <section aria-labelledby={HEADING_ID} id="mobile-suit-details">
       <SuitStrip suit={suit} />
       <SuitHeader headingID={HEADING_ID} suit={suit} />
-      <SuitInfobox
-        cite={cite}
-        sheet={sheet}
-        sheetLabel={labels[index] ?? null}
-        suit={suit}
-      />
+      <SuitInfobox cite={cite} selected={selection.selected} suit={suit} />
       <div className="mobile-suit-details-body">
         <SpecPlate
           aria-label="Registry"
           className="registry-plate"
           items={REGISTRY_ITEMS}
         />
-        <SpecSheetTabs
-          cite={cite}
-          name={suit.name}
-          selected={selected}
-          sheets={suit.spec_sheets}
-        />
+        <SpecSheetTabs cite={cite} name={suit.name} selection={selection} />
         <SuitLineage cite={cite} suit={suit} />
         <SuitAppearances appearances={suit.appearances} cite={cite} />
         {PENDING_SECTIONS.map((title) => (
