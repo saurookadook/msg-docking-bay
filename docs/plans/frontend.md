@@ -187,7 +187,7 @@ Frontend:
 - [x] **F1** `feat(frontend): add the docking bay design system and shell` — tokens, fonts, shared
   components, Root layout, shift toggle, breakpoints, `AppParams`, Storybook stories for each component.
   Plan: [`design-system.md`](design-system.md).
-- [ ] **F2** `feat(frontend): browse the catalog` — store slices, list pages with filters/pagination
+- [x] **F2** `feat(frontend): browse the catalog` — store slices, list pages with filters/pagination
   in URL params, `FilterBar` (live, debounced `q`), rosters as `@tanstack/react-table` tables
   (no sorting), Mirage filters; `?work=` is honoured and shown as a chip; commission the list
   routes' nav signs. Plan: [`catalog-browser.md`](catalog-browser.md).
