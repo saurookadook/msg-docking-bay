@@ -14,28 +14,53 @@ export type LineageTier = 'ancestors' | 'alternates' | 'descendants';
  */
 export const LINEAGE_WORDING = {
   developed_from: {
-    outgoing: { label: 'Developed from', tier: 'ancestors' },
-    incoming: { label: 'Developed into', tier: 'descendants' },
+    outgoing: {
+      group: 'developed_from-outgoing',
+      label: 'Developed from',
+      tier: 'ancestors',
+    },
+    incoming: {
+      group: 'developed_from-incoming',
+      label: 'Developed into',
+      tier: 'descendants',
+    },
   },
   upgrade_of: {
-    outgoing: { label: 'Upgrade of', tier: 'ancestors' },
-    incoming: { label: 'Upgraded into', tier: 'descendants' },
+    outgoing: { group: 'upgrade_of-outgoing', label: 'Upgrade of', tier: 'ancestors' },
+    incoming: {
+      group: 'upgrade_of-incoming',
+      label: 'Upgraded into',
+      tier: 'descendants',
+    },
   },
   variant_of: {
-    outgoing: { label: 'Variant of', tier: 'ancestors' },
-    incoming: { label: 'Variants', tier: 'descendants' },
+    outgoing: { group: 'variant_of-outgoing', label: 'Variant of', tier: 'ancestors' },
+    incoming: { group: 'variant_of-incoming', label: 'Variants', tier: 'descendants' },
   },
   // NOTE: either way round, both are versions of one design; one group holds them.
   alternate_version_of: {
-    outgoing: { label: 'Alternate versions', tier: 'alternates' },
-    incoming: { label: 'Alternate versions', tier: 'alternates' },
+    outgoing: {
+      group: 'alternate_versions',
+      label: 'Alternate versions',
+      tier: 'alternates',
+    },
+    incoming: {
+      group: 'alternate_versions',
+      label: 'Alternate versions',
+      tier: 'alternates',
+    },
   },
 } as const satisfies Record<
   MobileSuitRelationType,
-  Record<RelationDirection, { label: string; tier: LineageTier }>
+  Record<RelationDirection, { group: string; label: string; tier: LineageTier }>
 >;
 
-export type LineageGroup = { label: string; relations: RelatedMobileSuitEntity[] };
+export type LineageGroup = {
+  /** @description The group's identity: relations with the same key share one group. */
+  key: string;
+  label: string;
+  relations: RelatedMobileSuitEntity[];
+};
 
 export type Lineage = Record<LineageTier, LineageGroup[]>;
 
@@ -48,14 +73,14 @@ export function buildLineage(relations: readonly RelatedMobileSuitEntity[]): Lin
   const types = Object.keys(LINEAGE_WORDING) as MobileSuitRelationType[];
   for (const type of types) {
     for (const direction of ['outgoing', 'incoming'] as const) {
-      const { label, tier } = LINEAGE_WORDING[type][direction];
+      const { group: key, label, tier } = LINEAGE_WORDING[type][direction];
       const matching = relations.filter(
         (relation) =>
           relation.relation_type === type && relation.direction === direction,
       );
       if (matching.length === 0) continue;
-      const group = lineage[tier].find((existing) => existing.label === label);
-      if (group == null) lineage[tier].push({ label, relations: matching });
+      const group = lineage[tier].find((existing) => existing.key === key);
+      if (group == null) lineage[tier].push({ key, label, relations: matching });
       else group.relations.push(...matching);
     }
   }

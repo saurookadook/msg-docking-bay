@@ -43,7 +43,9 @@ describe('lineage', () => {
     ] as const)('puts %s %s under %s as "%s"', (type, direction, tier, label) => {
       const related = relation({ direction, type });
 
-      expect(buildLineage([related])[tier]).toEqual([{ label, relations: [related] }]);
+      expect(buildLineage([related])[tier]).toEqual([
+        { key: expect.any(String), label, relations: [related] },
+      ]);
     });
 
     it('merges alternate versions from both directions into one group', () => {
@@ -59,7 +61,11 @@ describe('lineage', () => {
       });
 
       expect(buildLineage([incoming, outgoing]).alternates).toEqual([
-        { label: 'Alternate versions', relations: [outgoing, incoming] },
+        {
+          key: 'alternate_versions',
+          label: 'Alternate versions',
+          relations: [outgoing, incoming],
+        },
       ]);
     });
 
@@ -74,8 +80,12 @@ describe('lineage', () => {
       expect(buildLineage([variant, developedFrom])).toEqual({
         alternates: [],
         ancestors: [
-          { label: 'Developed from', relations: [developedFrom] },
-          { label: 'Variant of', relations: [variant] },
+          {
+            key: 'developed_from-outgoing',
+            label: 'Developed from',
+            relations: [developedFrom],
+          },
+          { key: 'variant_of-outgoing', label: 'Variant of', relations: [variant] },
         ],
         descendants: [],
       });
