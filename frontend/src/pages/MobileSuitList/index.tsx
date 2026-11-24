@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import type { MobileSuitCardEntity } from '@/api';
 import {
   CageNumber,
@@ -37,34 +39,41 @@ export function MobileSuitList() {
   const workChips = useWorkFilterChips();
   const offset = list.meta?.offset ?? 0;
 
-  const columns = helper.columns([
-    helper.display({
-      cell: ({ row }) => <CageNumber cage={offset + row.index + 1} deck={SUIT_DECK} />,
-      header: 'Cage',
-      id: 'cage',
-    }),
-    helper.accessor((suit) => suit.model_number ?? '—', {
-      header: 'Model number',
-      id: 'model_number',
-    }),
-    helper.accessor('name', {
-      cell: ({ row }) => (
-        <EntityLink kind="mobileSuit" slug={row.original.slug}>
-          {row.original.name}
-        </EntityLink>
-      ),
-      header: 'Name',
-      meta: { isRowHeader: true },
-    }),
-    helper.accessor('unit_type', {
-      cell: ({ getValue }) => UNIT_TYPE_LABELS[getValue()],
-      header: 'Unit type',
-    }),
-    helper.accessor((suit) => suit.continuity?.name ?? '—', {
-      header: 'Continuity',
-      id: 'continuity',
-    }),
-  ]);
+  // NOTE: memoized on offset, so the table gets new columns only when the page changes.
+  const columns = useMemo(
+    () =>
+      helper.columns([
+        helper.display({
+          cell: ({ row }) => (
+            <CageNumber cage={offset + row.index + 1} deck={SUIT_DECK} />
+          ),
+          header: 'Cage',
+          id: 'cage',
+        }),
+        helper.accessor((suit) => suit.model_number ?? '—', {
+          header: 'Model number',
+          id: 'model_number',
+        }),
+        helper.accessor('name', {
+          cell: ({ row }) => (
+            <EntityLink kind="mobileSuit" slug={row.original.slug}>
+              {row.original.name}
+            </EntityLink>
+          ),
+          header: 'Name',
+          meta: { isRowHeader: true },
+        }),
+        helper.accessor('unit_type', {
+          cell: ({ getValue }) => UNIT_TYPE_LABELS[getValue()],
+          header: 'Unit type',
+        }),
+        helper.accessor((suit) => suit.continuity?.name ?? '—', {
+          header: 'Continuity',
+          id: 'continuity',
+        }),
+      ]),
+    [offset],
+  );
 
   return (
     <CatalogRoster
