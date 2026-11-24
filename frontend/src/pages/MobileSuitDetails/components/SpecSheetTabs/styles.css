@@ -13,7 +13,7 @@
     }
 
     & .spec-sheet-tablist {
-        border-block-end: 2px solid var(--color-border-strong);
+        border-block-end: 0.125rem solid var(--color-border-strong);
         display: flex;
         flex-wrap: wrap;
         gap: var(--space-1);

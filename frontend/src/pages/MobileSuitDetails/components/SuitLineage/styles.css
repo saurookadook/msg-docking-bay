@@ -12,7 +12,7 @@
     /* NOTE: a rail between tiers, as on a dev-tree diagram. */
     & .suit-lineage-tree > * + *::before {
         block-size: var(--space-4);
-        border-inline-start: 2px solid var(--color-border-strong);
+        border-inline-start: 0.125rem solid var(--color-border-strong);
         content: '';
         display: block;
         inset-block-start: calc(-1 * var(--space-4));
@@ -64,7 +64,7 @@
 
     & .suit-lineage-current > .suit-lineage-node {
         align-self: flex-end;
-        border: 2px solid var(--color-accent);
+        border: 0.125rem solid var(--color-accent);
         font-weight: 600;
     }
 
