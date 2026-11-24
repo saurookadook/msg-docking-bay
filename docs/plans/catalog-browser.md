@@ -217,3 +217,47 @@ Run in `frontend/` (moon not on PATH):
   titled chip and removing it widens the list; `?limit=2` shows Pagination and paging
   keeps filters; reload keeps state; a bad `?unit_type=x` shows the API error;
   keyboard-only use; both shifts; phone width.
+
+## As built (2026-11-23)
+
+Where the implementation differs from the steps above:
+
+- **Two extra commits.** `refactor(frontend): share the mock routes' query validation` comes
+  before step 2: it pulls the page and `q` checks out of `paginate` and `searchCatalog`, so a
+  list route reports every bad param in one 422, as FastAPI does. `build(deps): add
+  @tanstack/react-table` comes before step 4, since `COMMIT_CONVENTIONS.md` gives dependency
+  additions the `deps` scope.
+- **No `createListFieldReducer` (Q1).** TypeScript can't narrow the `AppAction` union through
+  a generic action type without casting payloads, and REACT-14 wants field reducers that
+  `switch` on `action.type`. Each slice's `list` field switches on its own three types and
+  calls shared, typed transitions in `store/catalogList.ts` (`requestList`, `setList`,
+  `setListError`, and `requestDetail`/`setDetail`/`setDetailError` for works). `setList` and
+  `setListError` drop a response whose `search` isn't the latest request's, so the slice
+  itself guards against stale pages, on top of `useCatalogList`'s unmount guard (D2).
+- **`fetchCatalogList` takes callbacks** (`onRequest`, `onSuccess`, `onError`), so each
+  slice's `fetch<Kind>` dispatches its own actions. A 422's errors show as
+  `<param>: <msg>`, joined by semicolons (`catalogErrorMessage`).
+- **The enum labels (D4) land in step 2**, not step 6: the mock 422s take their allowed
+  values from the labels' keys.
+- **Mock filter helpers live in `__mocks__/listFilters.ts`** from the start: with them,
+  `endpoints.ts` passed 500 lines (a named risk). `listHandler` stays in `endpoints.ts`.
+- **The work chip is built in step 6**, not step 7: the suit roster already uses `?work=`.
+  `useWorkFilterChips` and `useContinuities` sit beside `useCatalogList` in `store/hooks.ts`.
+- **Blur writes a pending search (Q6, Q7).** Leaving the box, by Tab or by picking a select,
+  writes the draft at once and ends the run; Enter also writes it at once. Only a URL change
+  made while the box keeps focus (Back by keyboard, a link) drops the pending draft.
+- **`SEARCH_DEBOUNCE_MS`** (300) is in `constants/index.ts`.
+- **`isCommissioned` stays in `ENTITY_KINDS`**, now `true` for all five kinds. `BaySign`
+  keeps its offline branch for a future kind; its comment no longer names F3/F4.
+- **Organization rows link their parent** with `EntityLink`, and Japanese names render with
+  `lang="ja"`. The suit roster's cage number is the row's place in the whole list
+  (`offset + index + 1`) on deck 01.
+- **Bundle:** the app's JS grows from 326 kB (103 kB gzip) on `main` to 375 kB (117 kB gzip),
+  for TanStack Table, the store slices and five pages. `pnpm build-storybook` warns about
+  chunks over 500 kB, as it does on `main`.
+- **Browser check** ran in Storybook, not in the app with `MOCK_API=true`. Checked: the suit
+  roster's columns and links, live search narrowing to one suit, the work chip titling the
+  old slug `msg`, paging with a filter kept (`1–2 of 3`, then `3–3 of 3` with cage 03), and
+  the Works roster; no console errors. Not checked in a browser: the phone layout (the
+  window would not resize; the unit test checks each cell's `data-label`), the Day shift,
+  and keyboard-only use.
