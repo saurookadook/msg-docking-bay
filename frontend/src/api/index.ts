@@ -14,6 +14,7 @@ export type HealthCheckResponse = Schemas['HealthCheckResponse'];
 
 // Shared pieces.
 export type ContentLicense = Schemas['ContentLicense'];
+export type HTTPValidationError = Schemas['HTTPValidationError'];
 export type PageMeta = Schemas['PageMeta'];
 export type RelationDirection = Schemas['RelationDirection'];
 export type SourceCitationEntity = Schemas['SourceCitationEntity'];

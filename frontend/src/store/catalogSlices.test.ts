@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockRx782Gundam } from '@/__mocks__/mobileSuitMocks';
 import { mockMobileSuitGundam } from '@/__mocks__/workMocks';
+import type { HTTPValidationError } from '@/api';
 
 import {
   fetchCharacters,
@@ -215,7 +216,15 @@ describe('catalog slices', () => {
     [503, {}, 'The mobile suit request failed.'],
     [
       422,
-      { detail: [{ loc: ['path', 'mobile_suit_slug'], msg: 'Too long', type: 'x' }] },
+      {
+        detail: [
+          {
+            loc: ['path', 'mobile_suit_slug'],
+            msg: 'Too long',
+            type: 'string_too_long',
+          },
+        ],
+      } satisfies HTTPValidationError,
       'mobile_suit_slug: Too long',
     ],
   ])(
