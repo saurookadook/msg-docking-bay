@@ -54,6 +54,7 @@ describe('SuitLineage', () => {
       created_at: zaku.created_at,
       source: mockSources.ms06fZakuII,
     };
+    /* START TEST SETUP */
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
@@ -79,6 +80,7 @@ describe('SuitLineage', () => {
       },
     });
     renderWithProviders({ initialEntries: [`/mobile-suits/${mockZakuII.slug}`] });
+    /* END TEST SETUP */
 
     const lineage = await findLineage();
     expect(

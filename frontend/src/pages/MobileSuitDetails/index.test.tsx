@@ -272,6 +272,7 @@ describe('MobileSuitDetails', () => {
   });
 
   it('shows a suit with no sheet, model number, Japanese name or continuity', async () => {
+    /* START TEST SETUP */
     const rx782 = mockMobileSuitDetails[mockRx782Gundam.slug]!;
     server = makeMirageServer({
       environment: 'test',
@@ -288,6 +289,7 @@ describe('MobileSuitDetails', () => {
       },
     });
     renderWithProviders({ initialEntries: [`/mobile-suits/${rx782.slug}`] });
+    /* END TEST SETUP */
 
     const dossier = await findDossier();
     expect(within(dossier).getByText('No model number')).toBeVisible();
@@ -302,6 +304,7 @@ describe('MobileSuitDetails', () => {
   });
 
   it('prefers the overall height, and counts powerplants and frame materials', async () => {
+    /* START TEST SETUP */
     const rx782 = mockMobileSuitDetails[mockRx782Gundam.slug]!;
     server = makeMirageServer({
       environment: 'test',
@@ -334,6 +337,7 @@ describe('MobileSuitDetails', () => {
       },
     });
     renderWithProviders({ initialEntries: [`/mobile-suits/${rx782.slug}`] });
+    /* END TEST SETUP */
 
     const summary = await screen.findByLabelText('Spec summary');
     expect(

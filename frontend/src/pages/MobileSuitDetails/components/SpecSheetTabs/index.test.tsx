@@ -188,6 +188,7 @@ describe('SpecSheetTabs', () => {
   });
 
   it('lists optional equipment apart from standard', async () => {
+    /* START TEST SETUP */
     const rx782 = mockMobileSuitDetails[mockRx782Gundam.slug]!;
     server = makeMirageServer({
       environment: 'test',
@@ -208,6 +209,7 @@ describe('SpecSheetTabs', () => {
       },
     });
     renderWithProviders({ initialEntries: [RX782_PATH] });
+    /* END TEST SETUP */
 
     const specifications = await findSpecifications();
     expect(
