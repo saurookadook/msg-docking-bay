@@ -125,3 +125,6 @@ export const WORK_TYPE_LABELS = {
   video_game: 'Video game',
   other: 'Other',
 } as const satisfies Record<WorkType, string>;
+
+/** @description How long the roster search waits after the last keystroke to search. */
+export const SEARCH_DEBOUNCE_MS = 300;
