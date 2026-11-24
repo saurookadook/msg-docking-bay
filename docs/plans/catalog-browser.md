@@ -261,3 +261,20 @@ Where the implementation differs from the steps above:
   the Works roster; no console errors. Not checked in a browser: the phone layout (the
   window would not resize; the unit test checks each cell's `data-label`), the Day shift,
   and keyboard-only use.
+- **Review fixes.** The comprehensive review before the PR changed these:
+  - The list state's `search` (the API query string) is now `query`, in the slices,
+    payloads and `fetchCatalogList`. D1 and D2 above still say `search`.
+  - `fetchCatalogList` is generic over the generated `<Kind>ListResponse`, and it and
+    `fetchWork` store the page outside the `try`, so a store bug is no longer shown as a
+    failed request.
+  - The continuities slice has `continuitiesLoaded`, so an empty answer is not
+    refetched in a loop (D6).
+  - Swapping an old `?work=` slug keeps `offset` (a plain set, not `withSearchParam`).
+  - Rosters mark their naming column with `meta: { isRowHeader: true }`, typed through
+    the roster's `tableFeatures({ columnMeta })`, in place of a `rowHeaderColumnID` prop.
+  - `useDebouncedSearch` moved to `components/FilterBar/utils/hooks.ts`. The select
+    options are `UNIT_TYPE_OPTIONS`, `WORK_TYPE_OPTIONS` and `useContinuityOptions`. The
+    mock enum filters come from `enumFilter`. Page tests read rows with
+    `findRowHeaderTexts` from `utils/testing`.
+  - The phone layout was checked headless at 360 px and 600 px. At 360 px the cage plate
+    ran past the table's edge, so a value too wide for its row now wraps under its label.
