@@ -96,6 +96,15 @@ describe('MobileSuitList', () => {
     );
   });
 
+  it('keeps its page when it swaps an old work slug', async () => {
+    server = makeMirageServer({ environment: 'test' });
+    renderWithProviders({
+      initialEntries: ['/mobile-suits?work=msg&limit=1&offset=1'],
+    });
+
+    await waitFor(async () => expect(await findRowNames()).toEqual(['Zaku II']));
+  });
+
   it('shows an unknown work, and the empty roster with a way out', async () => {
     server = makeMirageServer({ environment: 'test' });
     renderWithProviders({

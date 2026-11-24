@@ -1,7 +1,7 @@
 import { use, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 
-import { listSearch, withSearchParam } from '@/utils';
+import { listSearch } from '@/utils';
 
 import type { ListState } from './catalogList';
 import { AppStoreContext, type AppStoreContextValue } from './context';
@@ -110,9 +110,13 @@ export function useWorkFilterChips(): {
 
   useEffect(() => {
     if (currentSlug == null || currentSlug === workSlug) return;
+    // NOTE: a plain set, not withSearchParam: the page itself has not changed, so keep offset.
     setSearchParams(
-      (previous) =>
-        withSearchParam({ name: 'work', searchParams: previous, value: currentSlug }),
+      (previous) => {
+        const nextSearchParams = new URLSearchParams(previous);
+        nextSearchParams.set('work', currentSlug);
+        return nextSearchParams;
+      },
       { replace: true },
     );
   }, [currentSlug, setSearchParams, workSlug]);
