@@ -2,23 +2,16 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { mockMobileSuits } from '@/__mocks__/mobileSuitMocks';
 import type { MobileSuitCardEntity } from '@/api';
-import { UNIT_TYPE_LABELS } from '@/constants';
 
 import { RosterTable } from '.';
 import { rosterColumnHelper } from './rosterColumns';
 
-const helper = rosterColumnHelper<MobileSuitCardEntity>();
-const columns = helper.columns([
-  helper.accessor('model_number', { header: 'Model number' }),
-  helper.accessor('name', { header: 'Name', meta: { isRowHeader: true } }),
-  helper.accessor('unit_type', {
-    cell: ({ getValue }) => UNIT_TYPE_LABELS[getValue()],
-    header: 'Unit type',
-  }),
-  helper.accessor((suit) => suit.continuity?.name ?? '—', {
-    header: 'Continuity',
-    id: 'continuity',
-  }),
+// NOTE: plain columns of its own: the suits roster's cells belong to MobileSuitList.
+const columnHelper = rosterColumnHelper<MobileSuitCardEntity>();
+const columns = columnHelper.columns([
+  columnHelper.accessor('model_number', { header: 'Model number' }),
+  columnHelper.accessor('name', { header: 'Name', meta: { isRowHeader: true } }),
+  columnHelper.accessor('name_ja', { header: 'Japanese name' }),
 ]);
 
 const meta = {
