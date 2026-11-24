@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import type { Server } from 'miragejs';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockRx782Gundam, mockZakuII } from '@/__mocks__/mobileSuitMocks';
 import { mockMobileSuitGundam } from '@/__mocks__/workMocks';
 import type { MobileSuitCardEntity } from '@/api';
@@ -8,6 +10,7 @@ import { SafeFetchError } from '@/utils';
 import {
   catalogErrorMessage,
   createInitialListState,
+  fetchCatalogList,
   requestDetail,
   requestList,
   setDetail,
@@ -143,5 +146,32 @@ describe('catalogErrorMessage', () => {
     [new Error('offline'), 'fallback'],
   ])('shows %o as %s', (error, message) => {
     expect(catalogErrorMessage({ error, fallback: 'fallback' })).toBe(message);
+  });
+});
+
+describe('fetchCatalogList', () => {
+  let server: Server;
+
+  afterEach(() => {
+    server.shutdown();
+  });
+
+  it('lets a failure in storing the page surface, instead of calling it a failed request', async () => {
+    server = makeMirageServer({ environment: 'test' });
+    const onError = vi.fn();
+
+    await expect(
+      fetchCatalogList<MobileSuitCardEntity>({
+        listPath: '/api/mobile-suits',
+        name: 'test',
+        onError,
+        onRequest: vi.fn(),
+        onSuccess: () => {
+          throw new Error('[test] : the store rejected the page');
+        },
+        search: '',
+      }),
+    ).rejects.toThrow('the store rejected the page');
+    expect(onError).not.toHaveBeenCalled();
   });
 });

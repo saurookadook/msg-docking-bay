@@ -90,15 +90,15 @@ export async function fetchWork({
   slug,
 }: BaseAction & { slug: string }): Promise<void> {
   requestWork({ dispatch, slug });
+  let responseData: WorkResponse;
   try {
-    const responseData = await safeFetch.call<WorkResponse>(
+    responseData = await safeFetch.call<WorkResponse>(
       { name: fetchWork.name },
       {
         fetchOpts: { method: 'GET' },
         requestPathname: `/api/works/${encodeURIComponent(slug)}`,
       },
     );
-    return setWork({ detail: responseData.data, dispatch, slug });
   } catch (error) {
     return setWorkError({
       dispatch,
@@ -110,4 +110,6 @@ export async function fetchWork({
       slug,
     });
   }
+  // NOTE: dispatched outside the try, so a store bug surfaces instead of reading as a failed request.
+  return setWork({ detail: responseData.data, dispatch, slug });
 }

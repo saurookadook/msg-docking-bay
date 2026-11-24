@@ -174,18 +174,20 @@ export async function fetchCatalogList<Card>({
   search: string;
 }): Promise<void> {
   onRequest();
+  let responseData: { data: Card[]; meta: PageMeta };
   try {
-    const responseData = await safeFetch.call<{ data: Card[]; meta: PageMeta }>(
+    responseData = await safeFetch.call<{ data: Card[]; meta: PageMeta }>(
       { name },
       {
         fetchOpts: { method: 'GET' },
         requestPathname: search === '' ? listPath : `${listPath}?${search}`,
       },
     );
-    return onSuccess(responseData);
   } catch (error) {
     return onError(
       catalogErrorMessage({ error, fallback: 'The catalog request failed.' }),
     );
   }
+  // NOTE: called outside the try, so a store bug surfaces instead of reading as a failed request.
+  return onSuccess(responseData);
 }
