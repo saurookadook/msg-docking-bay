@@ -433,7 +433,9 @@ describe('list route filters', () => {
     queryParams: Record<string, string>;
   }): { slugs: string[]; total: number } {
     const result = handle(path, {}, queryParams);
-    if (result instanceof MirageResponse) throw new Error('Expected a 200 body');
+    if (result instanceof MirageResponse) {
+      throw new Error(`[listSlugs] : Expected a 200 body from '${path}'`);
+    }
     const { data, meta } = result as {
       data: { slug: string }[];
       meta: { total: number };
