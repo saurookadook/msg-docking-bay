@@ -164,8 +164,9 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
 - Mirage: extend `endpoints.ts` handlers to apply `q` and filters, and add enough fixtures
   (several continuities, a suit with full parts and relations) to make both modes demo-able with
   `MOCK_API=true`. BE-1 adds `/api/search` and the TypeScript `normalizeSearch` and
-  `searchList` (`src/__mocks__/search.ts`), which F2's list handlers will reuse. Until F2, the
-  mock list routes ignore `q` (`catalog-search.md` Q9).
+  `searchList` (`src/__mocks__/search.ts`), which F2's list handlers reuse to apply `q`
+  (`catalog-search.md` Q9). Fixtures stay a mirror of `backend/scripts/seed_dev.py`; tests
+  that need more rows use Mirage `overrides` (`catalog-browser.md` Q5).
 
 ## PRs (in order)
 
@@ -186,8 +187,12 @@ Frontend:
 - [x] **F1** `feat(frontend): add the docking bay design system and shell` — tokens, fonts, shared
   components, Root layout, shift toggle, breakpoints, `AppParams`, Storybook stories for each component.
   Plan: [`design-system.md`](design-system.md).
-- [ ] **F2** `feat(frontend): browse the catalog` — store slices, list pages with filters/pagination
-  in URL params, `FilterBar`, Mirage filters; commission the list routes' nav signs.
+- [x] **F2** `feat(frontend): browse the catalog` — store slices, list pages with filters/pagination
+  in URL params, `FilterBar` (live, debounced `q`), rosters as `@tanstack/react-table` tables
+  (no sorting), Mirage filters; `?work=` is honoured and shown as a chip; commission the list
+  routes' nav signs. Plan: [`catalog-browser.md`](catalog-browser.md).
+- [ ] **F2b** `feat(frontend): pick a work in the filter bar` — an accessible combobox over
+  `/api/works?q=` in `FilterBar`'s work slot, replacing the URL-only chip (after F2).
 - [ ] **F3** `feat(frontend): add the mobile suit dossier` — detail page, spec tabs, parts, lineage,
   height lineup.
 - [ ] **F4** `feat(frontend): add personnel, faction, operation and designer pages`.
@@ -223,4 +228,6 @@ F1–F6 deliver a complete wiki mode; F7–F9 layer hangar mode on top without c
   and works matching their series tags (`work_short_names`) once 3a ingests them.
 - Ingest fields for the ⏳ sections (character bio fields, org HQ/leaders, work staff, suit
   history/trivia), each needing schema + routes.
+- Server-side sorting for the rosters: a `sort` param on the list routes, then sortable
+  headers in `RosterTable` (`catalog-browser.md` Q10).
 - Optional: ambient deck audio (intercom, crane hum) behind an explicit "sound on" toggle.

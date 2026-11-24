@@ -1,0 +1,28 @@
+.catalog-roster {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+
+    & .catalog-roster-status {
+        color: var(--color-text-muted);
+        font-family: var(--font-family-mono);
+        min-block-size: 1.5rem;
+    }
+
+    & .catalog-roster-error {
+        border-inline-start: 0.25rem solid var(--color-danger);
+        color: var(--color-danger);
+        font-family: var(--font-family-mono);
+        padding-inline-start: var(--space-3);
+    }
+
+    & .catalog-roster-empty {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    & .roster-table.stale {
+        opacity: 0.6;
+    }
+}

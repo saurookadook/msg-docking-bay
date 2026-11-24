@@ -1,0 +1,72 @@
+.roster-table {
+    border: 1px solid var(--color-border-strong);
+    border-collapse: collapse;
+    font-family: var(--font-family-mono);
+    inline-size: 100%;
+
+    & caption {
+        color: var(--color-text-muted);
+        padding-block-end: var(--space-2);
+        text-align: start;
+    }
+
+    & thead th {
+        background: var(--color-surface-sunken);
+        border-block-end: 0.125rem solid var(--color-border-strong);
+        color: var(--color-text-muted);
+        font-family: var(--font-family-display);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    & th,
+    & td {
+        padding: var(--space-2) var(--space-3);
+        text-align: start;
+        vertical-align: top;
+    }
+
+    & tbody th {
+        font-weight: 600;
+    }
+
+    & tbody tr + tr {
+        border-block-start: 1px dashed var(--color-border);
+    }
+
+    @media (max-width: 40rem) {
+        /* NOTE: hidden visually, not with display: none, so screen readers keep the headers. */
+        & thead {
+            block-size: 1px;
+            clip-path: inset(50%);
+            inline-size: 1px;
+            overflow: hidden;
+            position: absolute;
+            white-space: nowrap;
+        }
+
+        & tbody tr {
+            display: flex;
+            flex-direction: column;
+            padding-block: var(--space-2);
+        }
+
+        & tbody th,
+        & tbody td {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            padding-block: var(--space-1);
+        }
+
+        & tbody [data-label]::before {
+            color: var(--color-text-muted);
+            content: attr(data-label);
+            flex: 0 0 8rem;
+            font-family: var(--font-family-display);
+            font-weight: 400;
+            text-transform: uppercase;
+        }
+    }
+}
