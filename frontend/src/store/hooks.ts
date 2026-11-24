@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router';
 import type { FilterBarChip } from '@/components';
 import { listSearch } from '@/utils';
 
-import type { ListState } from './catalogList';
+import type { DetailsBySlug, DetailState, ListState } from './catalogList';
 import { AppStoreContext, type AppStoreContextValue } from './context';
 import { fetchContinuities } from './continuities/actions';
 import type { ContinuitiesStateSlice } from './continuities/reducer.types';
@@ -68,6 +68,33 @@ export function useCatalogList<Card>({
   }, [appDispatch, fetchList, query]);
 
   return selectList(appState);
+}
+
+/**
+ * @description Loads the detail for `slug` once, and returns its state.
+ * @returns `undefined` until the first request is dispatched
+ * @note Details stay in the store, so returning to a page shows it without refetching.
+ * No guard drops a late response: each slug's state is kept apart, so one that lands
+ * after the page moved on is stored under its own slug and replaces nothing.
+ */
+export function useCatalogDetail<Detail>({
+  fetchDetail,
+  selectDetails,
+  slug,
+}: {
+  fetchDetail: (args: BaseAction & { slug: string }) => Promise<void>;
+  selectDetails: (appState: AppState) => DetailsBySlug<Detail>;
+  slug: string;
+}): DetailState<Detail> | undefined {
+  const { appDispatch, appState } = useAppStore();
+  const detailState = selectDetails(appState)[slug];
+  const shouldFetch = detailState === undefined;
+
+  useEffect(() => {
+    if (shouldFetch) void fetchDetail({ dispatch: appDispatch, slug });
+  }, [appDispatch, fetchDetail, shouldFetch, slug]);
+
+  return detailState;
 }
 
 /** @description Every continuity, loaded once for the whole app. */
