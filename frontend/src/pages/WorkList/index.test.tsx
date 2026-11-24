@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockItMoves, mockMobileSuitGundam } from '@/__mocks__/workMocks';
-import type { ContinuitiesListResponse } from '@/api';
+import type { ContinuitiesListResponse, WorksListResponse } from '@/api';
 import { safeFetch } from '@/utils';
 import { renderWithProviders } from '@/utils/testing';
 
@@ -75,7 +75,7 @@ describe('WorkList', () => {
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
-        mirage.get('/works', () => ({
+        mirage.get('/works', (): WorksListResponse => ({
           data: [
             { ...mockItMoves, end_date: null, start_date: null },
             { ...mockMobileSuitGundam, end_date: '1979-04-07' },

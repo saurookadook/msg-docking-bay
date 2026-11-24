@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockPrincipalityOfZeonRef, mockZeonic } from '@/__mocks__/peopleMocks';
+import type { OrganizationsListResponse } from '@/api';
 import { renderWithProviders } from '@/utils/testing';
 
 async function findRowNames(): Promise<string[]> {
@@ -32,7 +33,7 @@ describe('OrganizationList', () => {
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
-        mirage.get('/organizations', () => ({
+        mirage.get('/organizations', (): OrganizationsListResponse => ({
           data: [{ ...mockZeonic, parent_organization: mockPrincipalityOfZeonRef }],
           meta: { limit: 50, offset: 0, total: 1 },
         }));

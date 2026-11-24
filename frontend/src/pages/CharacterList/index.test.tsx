@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockAmuroRay } from '@/__mocks__/peopleMocks';
+import type { CharactersListResponse } from '@/api';
 import { renderWithProviders } from '@/utils/testing';
 
 async function findRowNames(): Promise<string[]> {
@@ -54,7 +55,7 @@ describe('CharacterList', () => {
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
-        mirage.get('/characters', () => ({
+        mirage.get('/characters', (): CharactersListResponse => ({
           data: [{ ...mockAmuroRay, name_ja: null }],
           meta: { limit: 50, offset: 0, total: 1 },
         }));

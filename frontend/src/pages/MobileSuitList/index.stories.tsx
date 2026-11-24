@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Response as MirageResponse, type Server } from 'miragejs';
 
 import { mockMobileSuits } from '@/__mocks__/mobileSuitMocks';
+import type { MobileSuitsListResponse } from '@/api';
 
 import { MobileSuitList } from '.';
 
@@ -34,7 +35,7 @@ export const Loading: Story = {
     mirage: (server: Server) => {
       server.get(
         '/mobile-suits',
-        () => ({
+        (): MobileSuitsListResponse => ({
           data: [...mockMobileSuits],
           meta: { limit: 50, offset: 0, total: 4 },
         }),

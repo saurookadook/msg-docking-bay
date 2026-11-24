@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockZakuII } from '@/__mocks__/mobileSuitMocks';
+import type { MobileSuitsListResponse } from '@/api';
 import { safeFetch } from '@/utils';
 import { renderWithProviders } from '@/utils/testing';
 
@@ -155,7 +156,7 @@ describe('MobileSuitList', () => {
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
-        mirage.get('/mobile-suits', () => ({
+        mirage.get('/mobile-suits', (): MobileSuitsListResponse => ({
           data: [{ ...mockZakuII, model_number: null }],
           meta: { limit: 50, offset: 0, total: 1 },
         }));
@@ -172,7 +173,10 @@ describe('MobileSuitList', () => {
       overrides: (mirage) => {
         mirage.get(
           '/mobile-suits',
-          () => ({ data: [mockZakuII], meta: { limit: 50, offset: 0, total: 1 } }),
+          (): MobileSuitsListResponse => ({
+            data: [mockZakuII],
+            meta: { limit: 50, offset: 0, total: 1 },
+          }),
           { timing: 50 },
         );
       },
