@@ -2,19 +2,14 @@ import { useId } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router';
 
 import type { MobileSuitDetailEntity, SourceCitationEntity } from '@/api';
-import {
-  CitationMark,
-  DeckPanel,
-  SourceCitations,
-  SpecPlate,
-  StatusLamp,
-} from '@/components';
+import { CitationMark, SourceCitations, SpecPlate, StatusLamp } from '@/components';
 import { NotFound } from '@/pages/NotFound';
 import { fetchMobileSuit, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
 import { entityPath, numberCitations } from '@/utils';
 
 import {
+  PendingPanel,
   SpecSheetTabs,
   SuitAppearances,
   SuitHeader,
@@ -50,9 +45,7 @@ function PendingSection({ title }: { title: string }) {
       <h3 className="stencil-label" id={headingID}>
         {title}
       </h3>
-      <DeckPanel>
-        <p className="stencil-label">DATA PENDING</p>
-      </DeckPanel>
+      <PendingPanel />
     </section>
   );
 }

@@ -1,5 +1,6 @@
 export * from './HeightLineup';
 export * from './ModelNumber';
+export * from './PendingPanel';
 export * from './SheetSummary';
 export * from './SpecSheetTabs';
 export * from './SuitAppearances';

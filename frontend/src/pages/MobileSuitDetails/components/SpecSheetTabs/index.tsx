@@ -1,7 +1,7 @@
 import { useId, useRef } from 'react';
 import { useSearchParams } from 'react-router';
 
-import { DeckPanel, SpecPlate } from '@/components';
+import { SpecPlate } from '@/components';
 import type { Nullable } from '@/types';
 
 import type { Cite } from '../../utils/citations';
@@ -10,6 +10,7 @@ import type { SpecSheetSelection } from '../../utils/hooks';
 import { measurementItem } from '../../utils/sheetParts';
 import { SPEC_PARAM, type SpecSheetEntry } from '../../utils/specSheets';
 import { HeightLineup } from '../HeightLineup';
+import { PendingPanel } from '../PendingPanel';
 import { SuitParts } from '../SuitParts';
 
 import './styles.css';
@@ -107,11 +108,7 @@ export function SpecSheetTabs({ cite, name, selection }: SpecSheetTabsProps) {
       <h3 className="stencil-label" id={headingID}>
         Specifications
       </h3>
-      {selected == null && (
-        <DeckPanel>
-          <p className="stencil-label">DATA PENDING</p>
-        </DeckPanel>
-      )}
+      {selected == null && <PendingPanel />}
       {selected != null && entries.length === 1 && (
         <div className="spec-sheet-panel">
           <SheetContents cite={cite} entry={selected} name={name} />

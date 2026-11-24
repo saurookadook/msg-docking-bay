@@ -40,9 +40,4 @@
         flex-direction: column;
         gap: var(--space-3);
     }
-
-    & .deck-panel p {
-        color: var(--color-text-muted);
-        margin: 0;
-    }
 }
