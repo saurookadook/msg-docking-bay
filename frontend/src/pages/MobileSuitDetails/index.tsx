@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useId } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router';
 
 import type { MobileSuitDetailEntity, SourceCitationEntity } from '@/api';
@@ -61,10 +61,7 @@ function PendingSection({ title }: { title: string }) {
 function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
   const selected = useSelectedSpecSheet(suit.spec_sheets);
   const { index, labels, sheet } = selected;
-  const { citations, numberOf } = useMemo(
-    () => numberCitations(collectCitations(suit)),
-    [suit],
-  );
+  const { citations, numberOf } = numberCitations(collectCitations(suit));
   const cite = (source: SourceCitationEntity) => (
     <CitationMark idPrefix={SOURCE_ID_PREFIX} number={numberOf(source)} />
   );
