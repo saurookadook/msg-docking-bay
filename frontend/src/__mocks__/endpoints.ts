@@ -17,9 +17,10 @@ import { mockContinuitiesListResponse } from './continuityMocks';
 import { mockHealthCheckResponse } from './healthMocks';
 import {
   continuityFilter,
+  enumFilter,
   enumMessage,
-  type ListFilter,
   workFilter,
+  type ListFilter,
 } from './listFilters';
 import {
   findMechanicalDesignerMobileSuitsMock,
@@ -414,11 +415,7 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
       filters: [
         continuityFilter(),
         workFilter(({ slug }) => mockMobileSuitDetails[slug]?.appearances),
-        {
-          allowed: Object.keys(UNIT_TYPE_LABELS),
-          isMatch: ({ unit_type }, value) => unit_type === value,
-          param: 'unit_type',
-        },
+        enumFilter({ field: 'unit_type', labels: UNIT_TYPE_LABELS }),
       ],
       items: mockMobileSuits,
     }),
@@ -463,11 +460,7 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
       columns: searchKinds.works.columns,
       filters: [
         continuityFilter(),
-        {
-          allowed: Object.keys(WORK_TYPE_LABELS),
-          isMatch: ({ work_type }, value) => work_type === value,
-          param: 'work_type',
-        },
+        enumFilter({ field: 'work_type', labels: WORK_TYPE_LABELS }),
       ],
       items: mockWorks,
     }),

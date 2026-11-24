@@ -18,6 +18,24 @@ export function enumMessage(allowed: readonly string[]): string {
   return `Input should be ${quoted.slice(0, -1).join(', ')} or ${quoted.at(-1)}`;
 }
 
+/**
+ * @description Filters rows by one enum field. Its allowed values are the label map's
+ * keys, so any other value gets the API's 422.
+ */
+export function enumFilter<Field extends string, T extends Record<Field, string>>({
+  field,
+  labels,
+}: {
+  field: Field;
+  labels: Readonly<Record<T[Field], string>>;
+}): ListFilter<T> {
+  return {
+    allowed: Object.keys(labels),
+    isMatch: (item, value) => item[field] === value,
+    param: field,
+  };
+}
+
 /** @description Filters rows by their continuity's current slug. */
 export function continuityFilter<
   T extends { continuity: Nullable<{ slug: string }> },
