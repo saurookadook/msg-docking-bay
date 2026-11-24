@@ -4,6 +4,8 @@ export * from './EntityLink';
 export * from './HazardStripe';
 export * from './Pagination';
 export * from './Readout';
+export * from './RosterTable';
+export * from './RosterTable/rosterColumns';
 export * from './ShiftToggle';
 export * from './SourceCitations';
 export * from './SpecPlate';
