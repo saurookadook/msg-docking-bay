@@ -4,7 +4,7 @@ import type { MobileSuitSpecSheetEntity } from '@/api';
 import { BLUEPRINT_GRID, BLUEPRINT_PATH } from '@/components';
 import type { Nullable } from '@/types';
 
-import { formatMetres as metres, MEASUREMENTS } from '../../utils/format';
+import { formatMetres, MEASUREMENTS } from '../../utils/format';
 import {
   HUMAN_HEIGHT_M,
   lineupHeight,
@@ -64,16 +64,16 @@ export function HeightLineup({ name, sheet }: HeightLineupProps) {
   const { figures, groundY, labelSize, viewBox } = lineupLayout(height.metres);
   const heightLabel = MEASUREMENTS[height.field].label.toLowerCase();
   const labels = {
-    human: `Human ${metres(HUMAN_HEIGHT_M)}`,
-    reference: `Frame ${metres(REFERENCE_HEIGHT_M)}`,
-    suit: `${name} ${metres(height.metres)}`,
+    human: `Human ${formatMetres(HUMAN_HEIGHT_M)}`,
+    reference: `Frame ${formatMetres(REFERENCE_HEIGHT_M)}`,
+    suit: `${name} ${formatMetres(height.metres)}`,
   };
 
   return (
     <figure className="height-lineup">
       <svg aria-labelledby={titleID} role="img" viewBox={viewBox}>
         <title id={titleID}>
-          {`Height lineup: ${name} at ${metres(height.metres)} (${heightLabel}), beside an ${metres(REFERENCE_HEIGHT_M)} reference frame and a ${metres(HUMAN_HEIGHT_M)} human`}
+          {`Height lineup: ${name} at ${formatMetres(height.metres)} (${heightLabel}), beside an ${formatMetres(REFERENCE_HEIGHT_M)} reference frame and a ${formatMetres(HUMAN_HEIGHT_M)} human`}
         </title>
         <line
           className="height-lineup-ground"

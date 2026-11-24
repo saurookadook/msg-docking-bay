@@ -10,7 +10,8 @@ import { ModelNumber } from '../ModelNumber';
 
 import './styles.css';
 
-function Groups({
+/** @description One tier of the dev-tree: its labelled groups of related suits. */
+function LineageTierGroups({
   cite,
   className,
   groups,
@@ -70,7 +71,11 @@ export function SuitLineage({ cite, suit }: SuitLineageProps) {
       </h3>
       <div className="suit-lineage-tree">
         {ancestors.length > 0 && (
-          <Groups cite={cite} className="suit-lineage-ancestors" groups={ancestors} />
+          <LineageTierGroups
+            cite={cite}
+            className="suit-lineage-ancestors"
+            groups={ancestors}
+          />
         )}
         <div className="suit-lineage-current">
           <p aria-current="page" className="suit-lineage-node">
@@ -81,7 +86,7 @@ export function SuitLineage({ cite, suit }: SuitLineageProps) {
             <span>{suit.name}</span>
           </p>
           {alternates.length > 0 && (
-            <Groups
+            <LineageTierGroups
               cite={cite}
               className="suit-lineage-alternates"
               groups={alternates}
@@ -89,7 +94,7 @@ export function SuitLineage({ cite, suit }: SuitLineageProps) {
           )}
         </div>
         {descendants.length > 0 && (
-          <Groups
+          <LineageTierGroups
             cite={cite}
             className="suit-lineage-descendants"
             groups={descendants}
