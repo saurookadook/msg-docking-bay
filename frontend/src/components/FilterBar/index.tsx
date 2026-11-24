@@ -5,7 +5,7 @@ import { useSearchParams } from 'react-router';
 import { MAX_SEARCH_LENGTH } from '@/constants';
 import { withoutSearchParams, withSearchParam } from '@/utils';
 
-import { useDebouncedSearch } from './useDebouncedSearch';
+import { useDebouncedSearch } from './utils/hooks';
 
 import './styles.css';
 
