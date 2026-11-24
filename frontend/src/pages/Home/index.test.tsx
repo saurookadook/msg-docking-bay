@@ -26,6 +26,23 @@ describe('Home', () => {
     ).toBeVisible();
   });
 
+  it('lists every bay, each opening its roster', async () => {
+    const user = userEvent.setup();
+    renderWithProviders({ initialEntries: ['/'] });
+
+    const directory = await screen.findByRole('navigation', { name: 'Bay directory' });
+    expect(
+      within(directory)
+        .getAllByRole('link')
+        .map(({ textContent }) => textContent),
+    ).toEqual(['Mobile Suits', 'Personnel', 'Organizations', 'Works', 'Designers']);
+    await user.click(within(directory).getByRole('link', { name: 'Works' }));
+
+    expect(
+      await screen.findByRole('heading', { level: 2, name: /Works/ }),
+    ).toBeVisible();
+  });
+
   it('navigates to the health check page from its link', async () => {
     const user = userEvent.setup();
     renderWithProviders({ initialEntries: ['/'] });

@@ -54,39 +54,39 @@ export const SHIFTS = ['auto', 'day', 'night'] as const;
  * @description Every catalog entity kind with its own pages, in deck (nav) order, with
  * what each part of the app needs to know about it.
  * @note Adding a kind here is the whole change: `EntityKind`, `AppParams`, `entityPath`,
- * `EntityLink` and the nav all read this table. F2 to F4 set `isCommissioned` as each
- * kind's list page lands.
+ * `EntityLink` and the nav all read this table. Set `isCommissioned` once the kind's
+ * list page exists; until then its bay sign shows "Offline".
  */
 export const ENTITY_KINDS = {
   mobileSuit: {
     listPath: '/mobile-suits',
     navLabel: 'Mobile Suits',
-    isCommissioned: false,
+    isCommissioned: true,
     // NOTE: icons are original line drawings on a 16-unit grid (`EntityLink`).
     iconPath: 'M5 2h6l2 4v5l-2 3H5l-2-3V6zM5 7h6',
   },
   character: {
     listPath: '/characters',
     navLabel: 'Personnel',
-    isCommissioned: false,
+    isCommissioned: true,
     iconPath: 'M8 2a3 3 0 1 1 0 6a3 3 0 1 1 0-6zM2 14c1-3 3-4 6-4s5 1 6 4',
   },
   organization: {
     listPath: '/organizations',
     navLabel: 'Organizations',
-    isCommissioned: false,
+    isCommissioned: true,
     iconPath: 'M8 1l6 2v5c0 3-3 6-6 7c-3-1-6-4-6-7V3z',
   },
   work: {
     listPath: '/works',
     navLabel: 'Works',
-    isCommissioned: false,
+    isCommissioned: true,
     iconPath: 'M2 3h12v10H2zM5 3v10M11 3v10M2 8h3M11 8h3',
   },
   mechanicalDesigner: {
     listPath: '/mechanical-designers',
     navLabel: 'Designers',
-    isCommissioned: false,
+    isCommissioned: true,
     iconPath: 'M8 1v3M8 4l-5 11M8 4l5 11M5 10h6',
   },
 } as const satisfies Record<

@@ -29,21 +29,22 @@ describe('Root', () => {
     expect(within(statusBar).getByRole('group', { name: 'Shift' })).toBeVisible();
   });
 
-  it('shows every bay sign, with uncommissioned bays offline and not linked', async () => {
+  it.each([
+    ['Mobile Suits', 'Mobile Suits'],
+    ['Personnel', 'Personnel'],
+    ['Organizations', 'Organizations'],
+    ['Works', 'Works'],
+    ['Designers', 'Designers'],
+  ])('opens the %s roster from its bay sign', async (label, heading) => {
+    const user = userEvent.setup();
     renderWithProviders({ initialEntries: ['/'] });
 
     const bays = await screen.findByRole('navigation', { name: 'Bays' });
-    for (const label of [
-      'Mobile Suits',
-      'Personnel',
-      'Organizations',
-      'Works',
-      'Designers',
-    ]) {
-      const sign = within(bays).getByText(label);
-      expect(sign).toHaveTextContent(`${label} Offline`);
-    }
-    expect(within(bays).queryByRole('link')).not.toBeInTheDocument();
+    await user.click(within(bays).getByRole('link', { name: label }));
+
+    expect(
+      await screen.findByRole('heading', { level: 2, name: new RegExp(heading) }),
+    ).toBeVisible();
   });
 
   it('starts the shift toggle on the stored shift', async () => {
