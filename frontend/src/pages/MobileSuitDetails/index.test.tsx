@@ -8,6 +8,7 @@ import {
   mockRx7802Gundam,
   mockRx782Gundam,
   mockRx782GundamBaseSheet,
+  mockRx782GundamDetail,
 } from '@/__mocks__/mobileSuitMocks';
 import type { MobileSuitResponse } from '@/api';
 import { safeFetch } from '@/utils';
@@ -301,6 +302,37 @@ describe('MobileSuitDetails', () => {
     expect(
       getSpecPlateValue({ label: 'Powerplant', plate: summary }),
     ).toHaveTextContent('DATA PENDING');
+  });
+
+  it('leaves out appearances for a suit with none, and lists two pilots as Pilots', async () => {
+    /* START TEST SETUP */
+    const [originPilot] = mockMobileSuitDetails[mockRx7802Gundam.slug]!.pilots;
+    server = makeMirageServer({
+      environment: 'test',
+      overrides: (mirage) => {
+        mirage.get('/mobile-suits/:mobile_suit_slug', (): MobileSuitResponse => ({
+          data: {
+            ...mockRx782GundamDetail,
+            appearances: [],
+            pilots: [...mockRx782GundamDetail.pilots, originPilot!],
+          },
+        }));
+      },
+    });
+    renderWithProviders({ initialEntries: [`/mobile-suits/${mockRx782Gundam.slug}`] });
+    /* END TEST SETUP */
+
+    const dossier = await findDossier();
+    expect(
+      within(dossier).queryByRole('region', { name: 'Appearances' }),
+    ).not.toBeInTheDocument();
+    const credits = within(dossier).getByLabelText('Credits');
+    expect(getSpecPlateValue({ label: 'Pilots', plate: credits })).toHaveTextContent(
+      /^Amuro Ray \(Mobile Suit Gundam\)\[1\]Amuro Ray\[\d\]$/,
+    );
+    expect(getSpecPlateValue({ label: 'Debut', plate: credits })).toHaveTextContent(
+      'DATA PENDING',
+    );
   });
 
   it('prefers the overall height, and counts powerplants and frame materials', async () => {
