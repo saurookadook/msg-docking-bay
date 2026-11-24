@@ -19,6 +19,9 @@ const LIST_KEYS = ['continuity', 'limit', 'offset', 'q', 'unit_type', 'work'] as
 
 const selectMobileSuits = (appState: AppState) => appState.mobileSuits.list;
 
+/** @description The deck the suits are kept on, shown in the heading and each cage. */
+const SUIT_DECK = 1;
+
 const helper = rosterColumnHelper<MobileSuitCardEntity>();
 
 /**
@@ -36,7 +39,7 @@ export function MobileSuitList() {
 
   const columns = helper.columns([
     helper.display({
-      cell: ({ row }) => <CageNumber cage={offset + row.index + 1} deck={1} />,
+      cell: ({ row }) => <CageNumber cage={offset + row.index + 1} deck={SUIT_DECK} />,
       header: 'Cage',
       id: 'cage',
     }),
@@ -67,7 +70,7 @@ export function MobileSuitList() {
     <CatalogRoster
       caption="Mobile suits in their cages, by name"
       columns={columns}
-      eyebrow="MS DECK 01"
+      eyebrow={`MS DECK ${String(SUIT_DECK).padStart(2, '0')}`}
       filterBar={
         <FilterBar
           chips={workChips}
