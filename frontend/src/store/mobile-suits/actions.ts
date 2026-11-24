@@ -1,6 +1,7 @@
 import type {
   MobileSuitCardEntity,
   MobileSuitDetailEntity,
+  MobileSuitResponse,
   MobileSuitsListResponse,
   PageMeta,
 } from '@/api';
@@ -113,7 +114,7 @@ export async function fetchMobileSuit({
   dispatch,
   slug,
 }: BaseAction & { slug: string }): Promise<void> {
-  return fetchCatalogDetail<MobileSuitDetailEntity>({
+  return fetchCatalogDetail<MobileSuitResponse>({
     detailPath: `/api/mobile-suits/${encodeURIComponent(slug)}`,
     fallbackErrorMessage: 'The mobile suit request failed.',
     name: fetchMobileSuit.name,

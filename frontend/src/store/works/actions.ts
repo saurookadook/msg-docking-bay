@@ -2,6 +2,7 @@ import type {
   PageMeta,
   WorkCardEntity,
   WorkDetailEntity,
+  WorkResponse,
   WorksListResponse,
 } from '@/api';
 import {
@@ -99,7 +100,7 @@ export async function fetchWork({
   dispatch,
   slug,
 }: BaseAction & { slug: string }): Promise<void> {
-  return fetchCatalogDetail<WorkDetailEntity>({
+  return fetchCatalogDetail<WorkResponse>({
     detailPath: `/api/works/${encodeURIComponent(slug)}`,
     fallbackErrorMessage: 'The work request failed.',
     name: fetchWork.name,

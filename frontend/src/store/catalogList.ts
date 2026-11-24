@@ -219,7 +219,7 @@ export async function fetchCatalogList<Response extends ListPage<unknown>>({
  * own actions.
  * @note A failed request does not throw: `safeFetch` has already logged it.
  */
-export async function fetchCatalogDetail<Detail>({
+export async function fetchCatalogDetail<Response extends { data: unknown }>({
   detailPath,
   fallbackErrorMessage,
   name,
@@ -233,12 +233,12 @@ export async function fetchCatalogDetail<Detail>({
   name: string;
   onError: (args: { errorMessage: string; isNotFound: boolean }) => void;
   onRequest: () => void;
-  onSuccess: (detail: Detail) => void;
+  onSuccess: (detail: Response['data']) => void;
 }): Promise<void> {
   onRequest();
-  let responseData: { data: Detail };
+  let responseData: Response;
   try {
-    responseData = await safeFetch.call<{ data: Detail }>(
+    responseData = await safeFetch.call<Response>(
       { name },
       { fetchOpts: { method: 'GET' }, requestPathname: detailPath },
     );
