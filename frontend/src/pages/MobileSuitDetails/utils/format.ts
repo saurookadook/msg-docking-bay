@@ -39,6 +39,46 @@ export function formatMeasurement({
     : `${numberFormat.format(value)} ${MEASUREMENTS[field].unit}`;
 }
 
+/** @description How a range of whole numbers reads: one value, a span, or one open end. */
+type RangeWording = {
+  between: (args: { max: number; min: number }) => string;
+  exactly: (value: number) => string;
+  from: (min: number) => string;
+  upTo: (max: number) => string;
+};
+
+/** @returns `null` when neither end is known */
+function formatRange({
+  max,
+  min,
+  wording,
+}: {
+  max: Nullable<number>;
+  min: Nullable<number>;
+  wording: RangeWording;
+}): Nullable<string> {
+  if (min != null && max != null) {
+    return min === max ? wording.exactly(min) : wording.between({ max, min });
+  }
+  if (min != null) return wording.from(min);
+  if (max != null) return wording.upTo(max);
+  return null;
+}
+
+const QUANTITY_WORDING: RangeWording = {
+  between: ({ max, min }) => `${min}–${max} ×`,
+  exactly: (value) => `${value} ×`,
+  from: (min) => `${min}+ ×`,
+  upTo: (max) => `up to ${max} ×`,
+};
+
+const EPISODE_WORDING: RangeWording = {
+  between: ({ max, min }) => `Episodes ${min}–${max}`,
+  exactly: (value) => `Episode ${value}`,
+  from: (min) => `From episode ${min}`,
+  upTo: (max) => `To episode ${max}`,
+};
+
 /**
  * @description A part's count as the infobox gives it: `2 ×`, `1–2 ×`, `2+ ×` or
  * `up to 2 ×`.
@@ -51,14 +91,11 @@ export function formatQuantity({
   quantity_max: Nullable<number>;
   quantity_min: Nullable<number>;
 }): Nullable<string> {
-  if (quantity_min != null && quantity_max != null) {
-    return quantity_min === quantity_max
-      ? `${quantity_min} ×`
-      : `${quantity_min}–${quantity_max} ×`;
-  }
-  if (quantity_min != null) return `${quantity_min}+ ×`;
-  if (quantity_max != null) return `up to ${quantity_max} ×`;
-  return null;
+  return formatRange({
+    max: quantity_max,
+    min: quantity_min,
+    wording: QUANTITY_WORDING,
+  });
 }
 
 /**
@@ -73,12 +110,9 @@ export function formatEpisodes({
   first_episode: Nullable<number>;
   last_episode: Nullable<number>;
 }): Nullable<string> {
-  if (first_episode != null && last_episode != null) {
-    return first_episode === last_episode
-      ? `Episode ${first_episode}`
-      : `Episodes ${first_episode}–${last_episode}`;
-  }
-  if (first_episode != null) return `From episode ${first_episode}`;
-  if (last_episode != null) return `To episode ${last_episode}`;
-  return null;
+  return formatRange({
+    max: last_episode,
+    min: first_episode,
+    wording: EPISODE_WORDING,
+  });
 }
