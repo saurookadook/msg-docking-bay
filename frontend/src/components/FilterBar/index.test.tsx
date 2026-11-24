@@ -40,7 +40,10 @@ const searchBox = () => screen.getByRole('searchbox', { name: 'Search mobile sui
 
 describe('FilterBar', () => {
   beforeEach(() => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.useFakeTimers({
+      shouldAdvanceTime: true,
+      toFake: ['setTimeout', 'clearTimeout', 'Date'],
+    });
   });
 
   afterEach(() => {
