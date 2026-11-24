@@ -7,7 +7,7 @@ import { SEARCH_DEBOUNCE_MS } from '@/constants';
 
 import { FilterBar, type FilterBarProps } from '.';
 
-const props: FilterBarProps = {
+const mockFilterBarProps: FilterBarProps = {
   chips: [{ label: 'Work', param: 'work', valueLabel: 'Mobile Suit Gundam' }],
   searchLabel: 'Search mobile suits',
   selects: [
@@ -28,7 +28,7 @@ const props: FilterBarProps = {
  */
 function renderFilterBar(initialEntry = '/mobile-suits') {
   const router = createMemoryRouter(
-    [{ element: <FilterBar {...props} />, path: '/mobile-suits' }],
+    [{ element: <FilterBar {...mockFilterBarProps} />, path: '/mobile-suits' }],
     { initialEntries: ['/', initialEntry], initialIndex: 1 },
   );
   render(<RouterProvider router={router} />);

@@ -19,7 +19,7 @@ import {
   setListError,
 } from './catalogList';
 
-const meta = { limit: 50, offset: 0, total: 1 };
+const mockPageMeta = { limit: 50, offset: 0, total: 1 };
 
 describe('list transitions', () => {
   it('keeps the shown rows while a new query loads', () => {
@@ -27,7 +27,7 @@ describe('list transitions', () => {
       requestList(createInitialListState<MobileSuitCardEntity>(), { search: '' }),
       {
         items: [mockRx782Gundam],
-        meta,
+        meta: mockPageMeta,
         search: '',
       },
     );
@@ -35,7 +35,7 @@ describe('list transitions', () => {
     expect(requestList(shown, { search: 'q=zaku' })).toEqual({
       errorMessage: null,
       items: [mockRx782Gundam],
-      meta,
+      meta: mockPageMeta,
       requestInProgress: true,
       search: 'q=zaku',
     });
@@ -46,16 +46,22 @@ describe('list transitions', () => {
       search: 'q=zaku',
     });
 
-    expect(setList(loading, { items: [mockRx782Gundam], meta, search: 'q=gu' })).toBe(
-      loading,
-    );
+    expect(
+      setList(loading, {
+        items: [mockRx782Gundam],
+        meta: mockPageMeta,
+        search: 'q=gu',
+      }),
+    ).toBe(loading);
     expect(setListError(loading, { errorMessage: 'late', search: 'q=gu' })).toBe(
       loading,
     );
-    expect(setList(loading, { items: [mockZakuII], meta, search: 'q=zaku' })).toEqual({
+    expect(
+      setList(loading, { items: [mockZakuII], meta: mockPageMeta, search: 'q=zaku' }),
+    ).toEqual({
       errorMessage: null,
       items: [mockZakuII],
-      meta,
+      meta: mockPageMeta,
       requestInProgress: false,
       search: 'q=zaku',
     });
@@ -67,7 +73,7 @@ describe('list transitions', () => {
         requestList(createInitialListState<MobileSuitCardEntity>(), { search: '' }),
         {
           items: [mockRx782Gundam],
-          meta,
+          meta: mockPageMeta,
           search: '',
         },
       ),

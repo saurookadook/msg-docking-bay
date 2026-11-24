@@ -12,7 +12,7 @@ const columns = helper.columns([
   helper.accessor('unitType', { header: 'Unit type' }),
 ]);
 
-const rows: Unit[] = [
+const mockUnits: Unit[] = [
   { name: 'Gundam', slug: 'rx-78-2-gundam', unitType: 'Mobile Suit' },
   { name: 'Zaku II', slug: 'ms-06f-zaku-ii', unitType: 'Mobile Suit' },
 ];
@@ -24,7 +24,7 @@ describe('RosterTable', () => {
         caption="Cage roster"
         columns={columns}
         rowHeaderColumnID="name"
-        rows={rows}
+        rows={mockUnits}
       />,
     );
 
@@ -47,7 +47,7 @@ describe('RosterTable', () => {
         caption="Cage roster"
         columns={columns}
         rowHeaderColumnID="name"
-        rows={rows}
+        rows={mockUnits}
       />,
     );
 
@@ -56,15 +56,15 @@ describe('RosterTable', () => {
   });
 
   it('leaves a cell unlabelled when its header is not plain text', () => {
-    const rendered = helper.columns([
+    const columnsWithNodeHeader = helper.columns([
       helper.accessor('name', { header: () => <span>Name</span> }),
     ]);
     render(
       <RosterTable
         caption="Cage roster"
-        columns={rendered}
+        columns={columnsWithNodeHeader}
         rowHeaderColumnID="name"
-        rows={rows}
+        rows={mockUnits}
       />,
     );
 
