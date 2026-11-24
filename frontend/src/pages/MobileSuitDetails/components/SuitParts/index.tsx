@@ -23,16 +23,21 @@ type PartGroup = {
   items: PartItem[];
 };
 
-const ARMAMENT_GROUPS: { label: string; mounts: ArmamentMount[] }[] = [
-  { label: 'Fixed', mounts: ['fixed'] },
-  { label: 'Handheld', mounts: ['handheld'] },
-  { label: 'Optional', mounts: ['optional_fixed', 'optional_handheld'] },
-];
+/** @description The armament groups, in the order the panel lists them. */
+const ARMAMENT_GROUPS = ['Fixed', 'Handheld', 'Optional'] as const;
 
-/** @description How an optional armament is carried, shown after its name. */
-const OPTIONAL_MOUNT_LABELS: Partial<Record<ArmamentMount, string>> = {
-  optional_fixed: 'fixed',
-  optional_handheld: 'handheld',
+/**
+ * @description Each mount's group, and how an armament on it is carried when its group
+ * does not already say so.
+ */
+const ARMAMENT_MOUNTS: Record<
+  ArmamentMount,
+  { carried: Nullable<string>; group: (typeof ARMAMENT_GROUPS)[number] }
+> = {
+  fixed: { carried: null, group: 'Fixed' },
+  handheld: { carried: null, group: 'Handheld' },
+  optional_fixed: { carried: 'fixed', group: 'Optional' },
+  optional_handheld: { carried: 'handheld', group: 'Optional' },
 };
 
 const EQUIPMENT_GROUPS: { label: string; fit: EquipmentFit }[] = [
@@ -41,14 +46,14 @@ const EQUIPMENT_GROUPS: { label: string; fit: EquipmentFit }[] = [
 ];
 
 /** @description A listing's note and how it is carried, as one muted line. */
-function detailOf(...parts: (Nullable<string> | undefined)[]): Nullable<string> {
+function detailOf(...parts: Nullable<string>[]): Nullable<string> {
   const present = parts.filter((part) => part != null);
   return present.length === 0 ? null : present.join(' · ');
 }
 
 function armamentItem(listing: ArmamentListingEntity): PartItem {
   return {
-    detail: detailOf(OPTIONAL_MOUNT_LABELS[listing.mount], listing.note),
+    detail: detailOf(ARMAMENT_MOUNTS[listing.mount].carried, listing.note),
     key: `${listing.mount}-${listing.armament.slug}`,
     name: listing.armament.name,
     quantity: formatQuantity(listing),
@@ -66,9 +71,9 @@ function partKinds(sheet: MobileSuitSpecSheetEntity): {
   return [
     {
       groups: nonEmpty(
-        ARMAMENT_GROUPS.map(({ label, mounts }) => ({
+        ARMAMENT_GROUPS.map((label) => ({
           items: sheet.armaments
-            .filter(({ mount }) => mounts.includes(mount))
+            .filter(({ mount }) => ARMAMENT_MOUNTS[mount].group === label)
             .map(armamentItem),
           label,
         })),
