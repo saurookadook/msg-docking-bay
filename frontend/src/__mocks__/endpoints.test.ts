@@ -425,10 +425,13 @@ describe('searchCatalog', () => {
 });
 
 describe('list route filters', () => {
-  function slugs(
-    path: ApiGetPath,
-    queryParams: Record<string, string>,
-  ): { slugs: string[]; total: number } {
+  function listSlugs({
+    path,
+    queryParams,
+  }: {
+    path: ApiGetPath;
+    queryParams: Record<string, string>;
+  }): { slugs: string[]; total: number } {
     const result = handle(path, {}, queryParams);
     if (result instanceof MirageResponse) throw new Error('Expected a 200 body');
     const { data, meta } = result as {
@@ -479,31 +482,34 @@ describe('list route filters', () => {
       ['earth-federation', 'principality-of-zeon'],
     ],
   ] as const)('filters %s by %o', (path, queryParams, expected) => {
-    expect(slugs(path, queryParams)).toEqual({
+    expect(listSlugs({ path: path, queryParams: queryParams })).toEqual({
       slugs: expected,
       total: expected.length,
     });
   });
 
   it('applies q to every list route, prefix matches first', () => {
-    expect(slugs('/api/organizations', { q: 'zeon' }).slugs).toEqual([
-      'zeonic',
-      'principality-of-zeon',
-    ]);
-    expect(slugs('/api/mechanical-designers', { q: 'okawara' }).slugs).toEqual([
-      'kunio-okawara',
-    ]);
-    expect(slugs('/api/mobile-suits', { q: 'RX 78-2' }).slugs).toEqual([
-      'rx-78-2-gundam',
-    ]);
+    expect(
+      listSlugs({ path: '/api/organizations', queryParams: { q: 'zeon' } }).slugs,
+    ).toEqual(['zeonic', 'principality-of-zeon']);
+    expect(
+      listSlugs({ path: '/api/mechanical-designers', queryParams: { q: 'okawara' } })
+        .slugs,
+    ).toEqual(['kunio-okawara']);
+    expect(
+      listSlugs({ path: '/api/mobile-suits', queryParams: { q: 'RX 78-2' } }).slugs,
+    ).toEqual(['rx-78-2-gundam']);
   });
 
   it('filters before paging, so the total counts the matches', () => {
     expect(
-      slugs('/api/mobile-suits', {
-        continuity: 'universal-century',
-        limit: '1',
-        offset: '1',
+      listSlugs({
+        path: '/api/mobile-suits',
+        queryParams: {
+          continuity: 'universal-century',
+          limit: '1',
+          offset: '1',
+        },
       }),
     ).toEqual({ slugs: ['rx-78-02-gundam'], total: 3 });
   });
@@ -514,7 +520,10 @@ describe('list route filters', () => {
   ] as const)(
     'gives an empty page for an unknown or old slug on %s: %o',
     (path, query) => {
-      expect(slugs(path, query)).toEqual({ slugs: [], total: 0 });
+      expect(listSlugs({ path: path, queryParams: query })).toEqual({
+        slugs: [],
+        total: 0,
+      });
     },
   );
 
