@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatEpisodes, formatMeasurement, formatQuantity } from './format';
+import {
+  formatEpisodes,
+  formatMeasurement,
+  formatMetres,
+  formatQuantity,
+} from './format';
 
 describe('format', () => {
   describe('formatMeasurement', () => {
@@ -17,6 +22,12 @@ describe('format', () => {
 
     it('gives null for a missing value', () => {
       expect(formatMeasurement({ field: 'sensor_range_m', value: null })).toBeNull();
+    });
+  });
+
+  describe('formatMetres', () => {
+    it('formats a length in metres', () => {
+      expect(formatMetres(1.7)).toBe('1.7 m');
     });
   });
 

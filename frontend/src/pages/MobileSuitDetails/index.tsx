@@ -86,7 +86,12 @@ function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
           className="registry-plate"
           items={REGISTRY_ITEMS}
         />
-        <SpecSheetTabs cite={cite} selected={selected} sheets={suit.spec_sheets} />
+        <SpecSheetTabs
+          cite={cite}
+          name={suit.name}
+          selected={selected}
+          sheets={suit.spec_sheets}
+        />
         <SuitLineage cite={cite} suit={suit} />
         <SuitAppearances appearances={suit.appearances} cite={cite} />
         {PENDING_SECTIONS.map((title) => (

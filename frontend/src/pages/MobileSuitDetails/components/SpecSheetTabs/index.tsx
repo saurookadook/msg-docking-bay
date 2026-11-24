@@ -8,6 +8,7 @@ import type { Cite } from '../../utils/citations';
 import { formatMeasurement, MEASUREMENTS } from '../../utils/format';
 import type { SelectedSpecSheet } from '../../utils/hooks';
 import { SPEC_PARAM } from '../../utils/specSheets';
+import { HeightLineup } from '../HeightLineup';
 import { SuitParts } from '../SuitParts';
 
 import './styles.css';
@@ -19,10 +20,12 @@ const MEASUREMENT_FIELDS = Object.keys(MEASUREMENTS) as (keyof typeof MEASUREMEN
 function SheetContents({
   cite,
   label,
+  name,
   sheet,
 }: {
   cite: Cite;
   label: string;
+  name: string;
   sheet: MobileSuitSpecSheetEntity;
 }) {
   return (
@@ -39,6 +42,7 @@ function SheetContents({
           value: formatMeasurement({ field, value: sheet[field] }),
         }))}
       />
+      <HeightLineup name={name} sheet={sheet} />
       <SuitParts sheet={sheet} />
     </>
   );
@@ -46,6 +50,8 @@ function SheetContents({
 
 export type SpecSheetTabsProps = {
   cite: Cite;
+  /** @description The suit's name, for the height lineup. */
+  name: string;
   selected: SelectedSpecSheet;
   sheets: MobileSuitSpecSheetEntity[];
 };
@@ -56,7 +62,7 @@ export type SpecSheetTabsProps = {
  * so the infobox follows it and a link opens it.
  * @note One sheet shows no tabs; none shows "DATA PENDING".
  */
-export function SpecSheetTabs({ cite, selected, sheets }: SpecSheetTabsProps) {
+export function SpecSheetTabs({ cite, name, selected, sheets }: SpecSheetTabsProps) {
   const [, setSearchParams] = useSearchParams();
   const idPrefix = useId();
   const headingID = `${idPrefix}-heading`;
@@ -108,7 +114,7 @@ export function SpecSheetTabs({ cite, selected, sheets }: SpecSheetTabsProps) {
       )}
       {sheet != null && sheets.length === 1 && (
         <div className="spec-sheet-panel">
-          <SheetContents cite={cite} label={labels[0]!} sheet={sheet} />
+          <SheetContents cite={cite} label={labels[0]!} name={name} sheet={sheet} />
         </div>
       )}
       {sheet != null && sheets.length > 1 && (
@@ -145,7 +151,12 @@ export function SpecSheetTabs({ cite, selected, sheets }: SpecSheetTabsProps) {
             role="tabpanel"
             tabIndex={0}
           >
-            <SheetContents cite={cite} label={labels[index]!} sheet={sheet} />
+            <SheetContents
+              cite={cite}
+              label={labels[index]!}
+              name={name}
+              sheet={sheet}
+            />
           </div>
         </>
       )}

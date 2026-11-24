@@ -31,6 +31,24 @@ export const SingleSheet: Story = {
   parameters: { route: '/mobile-suits/ms-06f-zaku-ii' },
 };
 
+/** @description A suit taller than the reference frame, to show the lineup rescale. */
+export const TallSuit: Story = {
+  parameters: {
+    mirage: (server: Server) => {
+      const rx782 = mockMobileSuitDetails[mockRx782Gundam.slug]!;
+      server.get('/mobile-suits/:mobile_suit_slug', (): MobileSuitResponse => ({
+        data: {
+          ...rx782,
+          spec_sheets: rx782.spec_sheets.map((sheet) => ({
+            ...sheet,
+            overall_height_m: 40,
+          })),
+        },
+      }));
+    },
+  },
+};
+
 /** @description An old slug: the page swaps it for the current one. */
 export const OldSlug: Story = { parameters: { route: '/mobile-suits/rx-78-2' } };
 

@@ -18,6 +18,11 @@ export const MEASUREMENTS = {
 // NOTE: a fixed locale, so the plates read the same everywhere (and in tests).
 const numberFormat = new Intl.NumberFormat('en', { maximumFractionDigits: 2 });
 
+/** @description A length in metres, such as `1.7 m`. */
+export function formatMetres(value: number): string {
+  return `${numberFormat.format(value)} m`;
+}
+
 /**
  * @description A measurement with its unit, such as `43,400 kg`.
  * @returns `null` when the sheet has no value ("DATA PENDING")

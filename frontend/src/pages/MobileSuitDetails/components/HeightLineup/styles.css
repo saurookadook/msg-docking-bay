@@ -1,0 +1,46 @@
+.height-lineup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin: 0;
+
+    & svg {
+        background: var(--color-surface-sunken);
+        border: 1px solid var(--color-border);
+        block-size: auto;
+        inline-size: 100%;
+        max-block-size: 18rem;
+    }
+
+    & .height-lineup-ground {
+        stroke: var(--color-border-strong);
+        stroke-width: 1;
+    }
+
+    & .height-lineup-human {
+        fill: var(--color-text-muted);
+    }
+
+    & .height-lineup-reference {
+        fill: none;
+        stroke: var(--color-border-strong);
+        stroke-dasharray: 4 3;
+        stroke-width: 1;
+    }
+
+    & .height-lineup-suit {
+        fill: var(--color-hologram-faint);
+        stroke: var(--color-hologram);
+        stroke-width: 1.5;
+    }
+
+    & .height-lineup-label {
+        fill: var(--color-text-muted);
+        font-family: var(--font-family-mono);
+        text-anchor: middle;
+    }
+
+    & figcaption {
+        color: var(--color-text-muted);
+    }
+}
