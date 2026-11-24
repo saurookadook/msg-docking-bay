@@ -6,24 +6,24 @@ import { safeFetch, SafeFetchError } from '@/utils';
 
 /**
  * @description One catalog list page, and the API query it answers.
- * @note `search` is set by the request, so a response for an older query (typing fast)
+ * @note `query` is set by the request, so a response for an older query (typing fast)
  * is dropped instead of replacing the newer one's page.
  */
 export type ListState<Card> = {
   errorMessage: Nullable<string>;
   items: Card[];
   meta: Nullable<PageMeta>;
-  requestInProgress: boolean;
   /** @description The API query string, without `?`, of the last request. */
-  search: Nullable<string>;
+  query: Nullable<string>;
+  requestInProgress: boolean;
 };
 
 /** @description A catalog list route's 200 body: one page of cards and its paging. */
 export type ListPage<Card> = { data: Card[]; meta: PageMeta };
 
-export type ListRequestPayload = { search: string };
-export type ListSetPayload<Card> = { items: Card[]; meta: PageMeta; search: string };
-export type ListErrorPayload = { errorMessage: string; search: string };
+export type ListRequestPayload = { query: string };
+export type ListSetPayload<Card> = { items: Card[]; meta: PageMeta; query: string };
+export type ListErrorPayload = { errorMessage: string; query: string };
 
 export function createInitialListState<Card>(): ListState<Card> {
   return {
@@ -31,7 +31,7 @@ export function createInitialListState<Card>(): ListState<Card> {
     items: [],
     meta: null,
     requestInProgress: false,
-    search: null,
+    query: null,
   };
 }
 
@@ -41,33 +41,33 @@ export function createInitialListState<Card>(): ListState<Card> {
  */
 export function requestList<Card>(
   stateSlice: ListState<Card>,
-  { search }: ListRequestPayload,
+  { query }: ListRequestPayload,
 ): ListState<Card> {
-  return { ...stateSlice, errorMessage: null, requestInProgress: true, search };
+  return { ...stateSlice, errorMessage: null, requestInProgress: true, query };
 }
 
 /** @description Stores a page, unless a newer request has replaced its query. */
 export function setList<Card>(
   stateSlice: ListState<Card>,
-  { items, meta, search }: ListSetPayload<Card>,
+  { items, meta, query }: ListSetPayload<Card>,
 ): ListState<Card> {
-  if (search !== stateSlice.search) return stateSlice;
+  if (query !== stateSlice.query) return stateSlice;
   return {
     errorMessage: null,
     items: [...items],
     meta,
     requestInProgress: false,
-    search,
+    query,
   };
 }
 
 /** @description Stores a failed page, unless a newer request has replaced its query. */
 export function setListError<Card>(
   stateSlice: ListState<Card>,
-  { errorMessage, search }: ListErrorPayload,
+  { errorMessage, query }: ListErrorPayload,
 ): ListState<Card> {
-  if (search !== stateSlice.search) return stateSlice;
-  return { errorMessage, items: [], meta: null, requestInProgress: false, search };
+  if (query !== stateSlice.query) return stateSlice;
+  return { errorMessage, items: [], meta: null, requestInProgress: false, query };
 }
 
 /** @description One entity's detail, fetched by the slug a page asked for. */
@@ -167,14 +167,14 @@ export async function fetchCatalogList<Response extends ListPage<unknown>>({
   onError,
   onRequest,
   onSuccess,
-  search,
+  query,
 }: {
   listPath: string;
   name: string;
   onError: (errorMessage: string) => void;
   onRequest: () => void;
   onSuccess: (page: Response) => void;
-  search: string;
+  query: string;
 }): Promise<void> {
   onRequest();
   let responseData: Response;
@@ -183,7 +183,7 @@ export async function fetchCatalogList<Response extends ListPage<unknown>>({
       { name },
       {
         fetchOpts: { method: 'GET' },
-        requestPathname: search === '' ? listPath : `${listPath}?${search}`,
+        requestPathname: query === '' ? listPath : `${listPath}?${query}`,
       },
     );
   } catch (error) {

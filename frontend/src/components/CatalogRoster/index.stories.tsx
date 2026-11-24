@@ -17,7 +17,7 @@ const mockLoadedList = {
   ...createInitialListState<MobileSuitCardEntity>(),
   items: [...mockMobileSuits],
   meta: { limit: 50, offset: 0, total: mockMobileSuits.length },
-  search: '',
+  query: '',
 };
 
 const meta = {

@@ -47,24 +47,24 @@ export function useCatalogList<Card>({
   keys,
   selectList,
 }: {
-  fetchList: (args: BaseAction & { search: string }) => Promise<void>;
+  fetchList: (args: BaseAction & { query: string }) => Promise<void>;
   keys: readonly string[];
   selectList: (appState: AppState) => ListState<Card>;
 }): ListState<Card> {
   const { appDispatch, appState } = useAppStore();
   const [searchParams] = useSearchParams();
-  const search = listSearch({ keys, searchParams });
+  const query = listSearch({ keys, searchParams });
 
   useEffect(() => {
     let isActive = true;
     void fetchList({
       dispatch: guardDispatch({ dispatch: appDispatch, isActive: () => isActive }),
-      search,
+      query,
     });
     return () => {
       isActive = false;
     };
-  }, [appDispatch, fetchList, search]);
+  }, [appDispatch, fetchList, query]);
 
   return selectList(appState);
 }

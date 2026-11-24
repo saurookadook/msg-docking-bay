@@ -24,70 +24,70 @@ const mockPageMeta = { limit: 50, offset: 0, total: 1 };
 describe('list transitions', () => {
   it('keeps the shown rows while a new query loads', () => {
     const shown = setList(
-      requestList(createInitialListState<MobileSuitCardEntity>(), { search: '' }),
+      requestList(createInitialListState<MobileSuitCardEntity>(), { query: '' }),
       {
         items: [mockRx782Gundam],
         meta: mockPageMeta,
-        search: '',
+        query: '',
       },
     );
 
-    expect(requestList(shown, { search: 'q=zaku' })).toEqual({
+    expect(requestList(shown, { query: 'q=zaku' })).toEqual({
       errorMessage: null,
       items: [mockRx782Gundam],
       meta: mockPageMeta,
       requestInProgress: true,
-      search: 'q=zaku',
+      query: 'q=zaku',
     });
   });
 
   it('drops a page that answers an older query', () => {
     const loading = requestList(createInitialListState<MobileSuitCardEntity>(), {
-      search: 'q=zaku',
+      query: 'q=zaku',
     });
 
     expect(
       setList(loading, {
         items: [mockRx782Gundam],
         meta: mockPageMeta,
-        search: 'q=gu',
+        query: 'q=gu',
       }),
     ).toBe(loading);
-    expect(setListError(loading, { errorMessage: 'late', search: 'q=gu' })).toBe(
+    expect(setListError(loading, { errorMessage: 'late', query: 'q=gu' })).toBe(
       loading,
     );
     expect(
-      setList(loading, { items: [mockZakuII], meta: mockPageMeta, search: 'q=zaku' }),
+      setList(loading, { items: [mockZakuII], meta: mockPageMeta, query: 'q=zaku' }),
     ).toEqual({
       errorMessage: null,
       items: [mockZakuII],
       meta: mockPageMeta,
       requestInProgress: false,
-      search: 'q=zaku',
+      query: 'q=zaku',
     });
   });
 
   it('clears the rows when the current query fails', () => {
     const loading = requestList(
       setList(
-        requestList(createInitialListState<MobileSuitCardEntity>(), { search: '' }),
+        requestList(createInitialListState<MobileSuitCardEntity>(), { query: '' }),
         {
           items: [mockRx782Gundam],
           meta: mockPageMeta,
-          search: '',
+          query: '',
         },
       ),
-      { search: 'unit_type=tank' },
+      { query: 'unit_type=tank' },
     );
 
     expect(
-      setListError(loading, { errorMessage: 'bad', search: 'unit_type=tank' }),
+      setListError(loading, { errorMessage: 'bad', query: 'unit_type=tank' }),
     ).toEqual({
       errorMessage: 'bad',
       items: [],
       meta: null,
       requestInProgress: false,
-      search: 'unit_type=tank',
+      query: 'unit_type=tank',
     });
   });
 });
@@ -175,7 +175,7 @@ describe('fetchCatalogList', () => {
         onSuccess: () => {
           throw new Error('[test] : the store rejected the page');
         },
-        search: '',
+        query: '',
       }),
     ).rejects.toThrow('the store rejected the page');
     expect(onError).not.toHaveBeenCalled();

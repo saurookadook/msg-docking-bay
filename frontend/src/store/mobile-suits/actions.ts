@@ -9,53 +9,53 @@ import type { BaseAction } from '@/store/types';
 
 export function requestMobileSuits({
   dispatch,
-  search,
-}: BaseAction & { search: string }): void {
-  return dispatch({ type: REQUEST_MOBILE_SUITS, payload: { mobileSuits: { search } } });
+  query,
+}: BaseAction & { query: string }): void {
+  return dispatch({ type: REQUEST_MOBILE_SUITS, payload: { mobileSuits: { query } } });
 }
 
 export function setMobileSuits({
   dispatch,
   items,
   meta,
-  search,
+  query,
 }: BaseAction & {
   items: MobileSuitCardEntity[];
   meta: PageMeta;
-  search: string;
+  query: string;
 }): void {
   return dispatch({
     type: SET_MOBILE_SUITS,
-    payload: { mobileSuits: { items, meta, search } },
+    payload: { mobileSuits: { items, meta, query } },
   });
 }
 
 export function setMobileSuitsError({
   dispatch,
   errorMessage,
-  search,
-}: BaseAction & { errorMessage: string; search: string }): void {
+  query,
+}: BaseAction & { errorMessage: string; query: string }): void {
   return dispatch({
     type: SET_MOBILE_SUITS_ERROR,
-    payload: { mobileSuits: { errorMessage, search } },
+    payload: { mobileSuits: { errorMessage, query } },
   });
 }
 
 /**
- * @description Requests one page of `GET /api/mobile-suits` for `search` (the API query string,
+ * @description Requests one page of `GET /api/mobile-suits` for `query` (the API query string,
  * without `?`) and stores it.
  */
 export async function fetchMobileSuits({
   dispatch,
-  search,
-}: BaseAction & { search: string }): Promise<void> {
+  query,
+}: BaseAction & { query: string }): Promise<void> {
   return fetchCatalogList<MobileSuitsListResponse>({
     listPath: '/api/mobile-suits',
     name: fetchMobileSuits.name,
-    onError: (errorMessage) => setMobileSuitsError({ dispatch, errorMessage, search }),
-    onRequest: () => requestMobileSuits({ dispatch, search }),
+    onError: (errorMessage) => setMobileSuitsError({ dispatch, errorMessage, query }),
+    onRequest: () => requestMobileSuits({ dispatch, query }),
     onSuccess: ({ data, meta }) =>
-      setMobileSuits({ dispatch, items: data, meta, search }),
-    search,
+      setMobileSuits({ dispatch, items: data, meta, query }),
+    query,
   });
 }

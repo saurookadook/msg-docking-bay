@@ -13,11 +13,11 @@ import type { BaseAction } from '@/store/types';
 
 export function requestOrganizations({
   dispatch,
-  search,
-}: BaseAction & { search: string }): void {
+  query,
+}: BaseAction & { query: string }): void {
   return dispatch({
     type: REQUEST_ORGANIZATIONS,
-    payload: { organizations: { search } },
+    payload: { organizations: { query } },
   });
 }
 
@@ -25,45 +25,44 @@ export function setOrganizations({
   dispatch,
   items,
   meta,
-  search,
+  query,
 }: BaseAction & {
   items: OrganizationCardEntity[];
   meta: PageMeta;
-  search: string;
+  query: string;
 }): void {
   return dispatch({
     type: SET_ORGANIZATIONS,
-    payload: { organizations: { items, meta, search } },
+    payload: { organizations: { items, meta, query } },
   });
 }
 
 export function setOrganizationsError({
   dispatch,
   errorMessage,
-  search,
-}: BaseAction & { errorMessage: string; search: string }): void {
+  query,
+}: BaseAction & { errorMessage: string; query: string }): void {
   return dispatch({
     type: SET_ORGANIZATIONS_ERROR,
-    payload: { organizations: { errorMessage, search } },
+    payload: { organizations: { errorMessage, query } },
   });
 }
 
 /**
- * @description Requests one page of `GET /api/organizations` for `search` (the API query string,
+ * @description Requests one page of `GET /api/organizations` for `query` (the API query string,
  * without `?`) and stores it.
  */
 export async function fetchOrganizations({
   dispatch,
-  search,
-}: BaseAction & { search: string }): Promise<void> {
+  query,
+}: BaseAction & { query: string }): Promise<void> {
   return fetchCatalogList<OrganizationsListResponse>({
     listPath: '/api/organizations',
     name: fetchOrganizations.name,
-    onError: (errorMessage) =>
-      setOrganizationsError({ dispatch, errorMessage, search }),
-    onRequest: () => requestOrganizations({ dispatch, search }),
+    onError: (errorMessage) => setOrganizationsError({ dispatch, errorMessage, query }),
+    onRequest: () => requestOrganizations({ dispatch, query }),
     onSuccess: ({ data, meta }) =>
-      setOrganizations({ dispatch, items: data, meta, search }),
-    search,
+      setOrganizations({ dispatch, items: data, meta, query }),
+    query,
   });
 }

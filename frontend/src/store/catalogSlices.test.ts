@@ -56,10 +56,10 @@ describe('catalog slices', () => {
     [fetchMechanicalDesigners, 'mechanicalDesigners', '', 'hajime-katoki', 3],
   ] as const)(
     '%o stores the page for its query',
-    async (fetchList, slice, search, firstSlug, total) => {
+    async (fetchList, slice, query, firstSlug, total) => {
       server = makeMirageServer({ environment: 'test' });
 
-      const { list } = (await run(({ dispatch }) => fetchList({ dispatch, search })))[
+      const { list } = (await run(({ dispatch }) => fetchList({ dispatch, query })))[
         slice
       ];
 
@@ -67,7 +67,7 @@ describe('catalog slices', () => {
         errorMessage: null,
         meta: { total },
         requestInProgress: false,
-        search,
+        query,
       });
       expect(list.items[0]?.slug).toBe(firstSlug);
     },
@@ -90,7 +90,7 @@ describe('catalog slices', () => {
       });
 
       const { list } = (
-        await run(({ dispatch }) => fetchList({ dispatch, search: '' }))
+        await run(({ dispatch }) => fetchList({ dispatch, query: '' }))
       )[slice];
 
       expect(list).toMatchObject({
@@ -106,7 +106,7 @@ describe('catalog slices', () => {
 
     const { list } = (
       await run(({ dispatch }) =>
-        fetchMobileSuits({ dispatch, search: 'unit_type=tank' }),
+        fetchMobileSuits({ dispatch, query: 'unit_type=tank' }),
       )
     ).mobileSuits;
 

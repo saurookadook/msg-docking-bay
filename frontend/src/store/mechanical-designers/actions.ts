@@ -13,11 +13,11 @@ import type { BaseAction } from '@/store/types';
 
 export function requestMechanicalDesigners({
   dispatch,
-  search,
-}: BaseAction & { search: string }): void {
+  query,
+}: BaseAction & { query: string }): void {
   return dispatch({
     type: REQUEST_MECHANICAL_DESIGNERS,
-    payload: { mechanicalDesigners: { search } },
+    payload: { mechanicalDesigners: { query } },
   });
 }
 
@@ -25,45 +25,45 @@ export function setMechanicalDesigners({
   dispatch,
   items,
   meta,
-  search,
+  query,
 }: BaseAction & {
   items: MechanicalDesignerCardEntity[];
   meta: PageMeta;
-  search: string;
+  query: string;
 }): void {
   return dispatch({
     type: SET_MECHANICAL_DESIGNERS,
-    payload: { mechanicalDesigners: { items, meta, search } },
+    payload: { mechanicalDesigners: { items, meta, query } },
   });
 }
 
 export function setMechanicalDesignersError({
   dispatch,
   errorMessage,
-  search,
-}: BaseAction & { errorMessage: string; search: string }): void {
+  query,
+}: BaseAction & { errorMessage: string; query: string }): void {
   return dispatch({
     type: SET_MECHANICAL_DESIGNERS_ERROR,
-    payload: { mechanicalDesigners: { errorMessage, search } },
+    payload: { mechanicalDesigners: { errorMessage, query } },
   });
 }
 
 /**
- * @description Requests one page of `GET /api/mechanical-designers` for `search` (the API query string,
+ * @description Requests one page of `GET /api/mechanical-designers` for `query` (the API query string,
  * without `?`) and stores it.
  */
 export async function fetchMechanicalDesigners({
   dispatch,
-  search,
-}: BaseAction & { search: string }): Promise<void> {
+  query,
+}: BaseAction & { query: string }): Promise<void> {
   return fetchCatalogList<MechanicalDesignersListResponse>({
     listPath: '/api/mechanical-designers',
     name: fetchMechanicalDesigners.name,
     onError: (errorMessage) =>
-      setMechanicalDesignersError({ dispatch, errorMessage, search }),
-    onRequest: () => requestMechanicalDesigners({ dispatch, search }),
+      setMechanicalDesignersError({ dispatch, errorMessage, query }),
+    onRequest: () => requestMechanicalDesigners({ dispatch, query }),
     onSuccess: ({ data, meta }) =>
-      setMechanicalDesigners({ dispatch, items: data, meta, search }),
-    search,
+      setMechanicalDesigners({ dispatch, items: data, meta, query }),
+    query,
   });
 }

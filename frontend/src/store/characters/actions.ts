@@ -9,53 +9,53 @@ import type { BaseAction } from '@/store/types';
 
 export function requestCharacters({
   dispatch,
-  search,
-}: BaseAction & { search: string }): void {
-  return dispatch({ type: REQUEST_CHARACTERS, payload: { characters: { search } } });
+  query,
+}: BaseAction & { query: string }): void {
+  return dispatch({ type: REQUEST_CHARACTERS, payload: { characters: { query } } });
 }
 
 export function setCharacters({
   dispatch,
   items,
   meta,
-  search,
+  query,
 }: BaseAction & {
   items: CharacterCardEntity[];
   meta: PageMeta;
-  search: string;
+  query: string;
 }): void {
   return dispatch({
     type: SET_CHARACTERS,
-    payload: { characters: { items, meta, search } },
+    payload: { characters: { items, meta, query } },
   });
 }
 
 export function setCharactersError({
   dispatch,
   errorMessage,
-  search,
-}: BaseAction & { errorMessage: string; search: string }): void {
+  query,
+}: BaseAction & { errorMessage: string; query: string }): void {
   return dispatch({
     type: SET_CHARACTERS_ERROR,
-    payload: { characters: { errorMessage, search } },
+    payload: { characters: { errorMessage, query } },
   });
 }
 
 /**
- * @description Requests one page of `GET /api/characters` for `search` (the API query string,
+ * @description Requests one page of `GET /api/characters` for `query` (the API query string,
  * without `?`) and stores it.
  */
 export async function fetchCharacters({
   dispatch,
-  search,
-}: BaseAction & { search: string }): Promise<void> {
+  query,
+}: BaseAction & { query: string }): Promise<void> {
   return fetchCatalogList<CharactersListResponse>({
     listPath: '/api/characters',
     name: fetchCharacters.name,
-    onError: (errorMessage) => setCharactersError({ dispatch, errorMessage, search }),
-    onRequest: () => requestCharacters({ dispatch, search }),
+    onError: (errorMessage) => setCharactersError({ dispatch, errorMessage, query }),
+    onRequest: () => requestCharacters({ dispatch, query }),
     onSuccess: ({ data, meta }) =>
-      setCharacters({ dispatch, items: data, meta, search }),
-    search,
+      setCharacters({ dispatch, items: data, meta, query }),
+    query,
   });
 }

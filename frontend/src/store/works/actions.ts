@@ -19,46 +19,46 @@ import { safeFetch, SafeFetchError } from '@/utils';
 
 export function requestWorks({
   dispatch,
-  search,
-}: BaseAction & { search: string }): void {
-  return dispatch({ type: REQUEST_WORKS, payload: { works: { search } } });
+  query,
+}: BaseAction & { query: string }): void {
+  return dispatch({ type: REQUEST_WORKS, payload: { works: { query } } });
 }
 
 export function setWorks({
   dispatch,
   items,
   meta,
-  search,
-}: BaseAction & { items: WorkCardEntity[]; meta: PageMeta; search: string }): void {
-  return dispatch({ type: SET_WORKS, payload: { works: { items, meta, search } } });
+  query,
+}: BaseAction & { items: WorkCardEntity[]; meta: PageMeta; query: string }): void {
+  return dispatch({ type: SET_WORKS, payload: { works: { items, meta, query } } });
 }
 
 export function setWorksError({
   dispatch,
   errorMessage,
-  search,
-}: BaseAction & { errorMessage: string; search: string }): void {
+  query,
+}: BaseAction & { errorMessage: string; query: string }): void {
   return dispatch({
     type: SET_WORKS_ERROR,
-    payload: { works: { errorMessage, search } },
+    payload: { works: { errorMessage, query } },
   });
 }
 
 /**
- * @description Requests one page of `GET /api/works` for `search` (the API query string,
+ * @description Requests one page of `GET /api/works` for `query` (the API query string,
  * without `?`) and stores it.
  */
 export async function fetchWorks({
   dispatch,
-  search,
-}: BaseAction & { search: string }): Promise<void> {
+  query,
+}: BaseAction & { query: string }): Promise<void> {
   return fetchCatalogList<WorksListResponse>({
     listPath: '/api/works',
     name: fetchWorks.name,
-    onError: (errorMessage) => setWorksError({ dispatch, errorMessage, search }),
-    onRequest: () => requestWorks({ dispatch, search }),
-    onSuccess: ({ data, meta }) => setWorks({ dispatch, items: data, meta, search }),
-    search,
+    onError: (errorMessage) => setWorksError({ dispatch, errorMessage, query }),
+    onRequest: () => requestWorks({ dispatch, query }),
+    onSuccess: ({ data, meta }) => setWorks({ dispatch, items: data, meta, query }),
+    query,
   });
 }
 
