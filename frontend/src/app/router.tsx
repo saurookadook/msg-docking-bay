@@ -1,7 +1,16 @@
 import type { RouteObject } from 'react-router';
 
 import { Root } from '@/layouts';
-import { HealthCheck, Home, MobileSuitList, NotFound } from '@/pages';
+import {
+  CharacterList,
+  DesignerList,
+  HealthCheck,
+  Home,
+  MobileSuitList,
+  NotFound,
+  OrganizationList,
+  WorkList,
+} from '@/pages';
 
 /** @description Every route in the app. Tests build a memory router from it (REACT-24). */
 export const routerConfig: RouteObject[] = [
@@ -11,7 +20,11 @@ export const routerConfig: RouteObject[] = [
     children: [
       { index: true, element: <Home /> },
       { path: 'health-check', element: <HealthCheck /> },
+      { path: 'characters', element: <CharacterList /> },
+      { path: 'mechanical-designers', element: <DesignerList /> },
       { path: 'mobile-suits', element: <MobileSuitList /> },
+      { path: 'organizations', element: <OrganizationList /> },
+      { path: 'works', element: <WorkList /> },
       { path: '*', element: <NotFound /> },
     ],
   },
