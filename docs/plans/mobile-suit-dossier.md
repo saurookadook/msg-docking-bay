@@ -263,10 +263,11 @@ Where the implementation differs from the steps above:
   slug's state is kept apart and the store is app-wide, so a late response is stored under its
   own slug and replaces nothing. The store tests cover the old slug, the 404, a 503 and a 422
   instead of a "stale response dropped" case.
-- **`numberCitations`, `citationKey` and `citationID`** live beside `SourceCitations`
-  (`components/SourceCitations/citationNumbers.ts`), not in the page's `utils/citations.ts`,
-  since F4's pages number their sources the same way. The page keeps `collectCitations`
-  (credits, then sheets, relations and appearances) and a fixed `SOURCE_ID_PREFIX`
+- **`numberCitations`, `citationKey` and `citationID`** live in `utils/citationNumbers.ts`
+  (from `@/utils`), not in the page's `utils/citations.ts`, since F4's pages number their
+  sources the same way. The page keeps `collectCitations` (spec sheets first, as the infobox
+  names its sheet above the credits; then credits, relations and appearances) and a fixed
+  `SOURCE_ID_PREFIX`
   (`mobile-suit-source`), not a `useId` prefix: there is one source list per page.
 - **The deck status bar is not sticky**, so the infobox sticks at `--space-3` from the top
   with no overlap to manage (Q1 risk).
@@ -285,8 +286,9 @@ Where the implementation differs from the steps above:
   `TallSuit` story). The human is a plain head and body block.
 - **Stories:** page-local components have no stories of their own; the page's stories cover
   them (`Default`, `NamedConfiguration`, `SingleSheet`, `TallSuit`, `OldSlug`, `Sparse`,
-  `NotFound`, `RequestFailed`, `Loading`). `CitationMark` has a story.
-- **Bundle:** the app's JS grows from 375 kB (117 kB gzip) after F2 to 397 kB (124 kB gzip).
+  `NotFound`, `RequestFailed`, `Loading`). `CitationMark` has a story, and so do the new
+  `SpecPlate` (`Compact`) and `VisualSlot` (`Landscape`, `Thumbnail`) variants.
+- **Bundle:** the app's JS grows from 375 kB (117 kB gzip) after F2 to 398 kB (124 kB gzip).
 - **Mock mode outside the proxy** needs `APP_DOMAIN` and `PROXY_HTTPS_PORT` set:
   `MOCK_API=true APP_DOMAIN=127.0.0.1 PROXY_HTTPS_PORT=5199 FRONTEND_PORT=5199 pnpm start:dev`.
 - **Browser check** ran in the app with `MOCK_API=true`, and in Storybook. Checked: roster row
@@ -295,7 +297,41 @@ Where the implementation differs from the steps above:
   and the infobox follows; picking Base spec removes `spec`; a footnote mark targets its
   source; the infobox stays pinned while scrolling; at 360 px (in an iframe, since the window
   would not resize) the phone strip pins and nothing overflows; Day shift (which found the
-  part-count contrast); no console errors. Not checked: a full keyboard-only walk.
+  part-count contrast); no console errors. After the review fixes: reload keeps
+  `?spec=magnet-coating`; Night shift; a lineage link opens the related suit
+  (`rx-78-02-gundam`); an unknown slug shows "Cage empty" (its 404 is the only console error,
+  logged by `safeFetch` by design); the 360 px strip still pins, with its thumbnail and plain
+  lists unchanged. Not checked: a full keyboard-only walk.
 - **Flaky F2 tests.** Under `pnpm test:cov` load, the roster tests "searches as the user
   types" (`MobileSuitList`, `CharacterList`) timed out once and passed on four reruns. This PR
   doesn't touch them.
+
+### Review fixes (2026-11-23)
+
+The comprehensive review kept 65 findings; all were fixed except the scope findings recorded
+as deliberate below.
+
+- **Kept beyond the spec, on purpose.** These were built without a requirement and stay:
+  - `?spec=` keys and tab labels that still collide after the source kind get the sheet's
+    place (`g-armor-gundam-wiki-2`, `Base spec (Gundam Wiki) 2`), and a configuration with no
+    ASCII letters is keyed `sheet-<place>`. Without them two sheets could share a key.
+  - Counts read `2+ ×` and `up to 2 ×` when only one bound is known, and episodes read
+    `From episode 3` and `To episode 9`. The API allows either bound alone.
+  - Each appearance shows its work's type and start year beside its episodes, so a reader can
+    tell a series from a film without opening it.
+- **Footnote order.** Spec sheets are numbered before credits, matching the infobox, which
+  names its sheet first.
+- **Shape changes.**
+  - Spec sheets are entries (`{ key, label, sheet }`, `specSheetEntries`), and
+    `useSpecSheetSelection` returns `{ entries, index, selected }`. The infobox takes
+    `selected`.
+  - `utils/sheetParts.ts` holds the shared sheet reading: `measurementItem`,
+    `materialItems`, `powerplantItems`, `partText` and `MATERIAL_USE_LABELS`. The infobox takes
+    its height from `lineupHeight`.
+  - `SuitInfobox` lays out `SheetSummary` and `SuitCredits`. New page components:
+    `ModelNumber` and `PendingPanel`.
+  - Shared pieces F4 can use: `slugify` (`@/utils`), the `plain-list` utility class,
+    `SpecPlate`'s `isCompact`, `VisualSlot`'s `shape`, and in tests `getSpecPlateValue`,
+    `getListItemTexts`, and `renderWithProviders` returning its router.
+  - The page root is a `section` titled by an `h2`. While loading or after an error, that
+    `h2` is a hidden "Mobile suit dossier". Borders that were 2px are `0.125rem`.
