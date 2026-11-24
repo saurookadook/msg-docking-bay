@@ -14,6 +14,12 @@
         min-inline-size: 12rem;
     }
 
+    @media (max-width: 40rem) {
+        & .filter-bar-field {
+            flex: 1 1 100%;
+        }
+    }
+
     & .filter-bar-field:first-child {
         flex: 1 1 16rem;
     }
@@ -65,11 +71,5 @@
     & .filter-bar-chip button {
         border: 0;
         line-height: 1;
-    }
-
-    @media (max-width: 40rem) {
-        & .filter-bar-field {
-            flex: 1 1 100%;
-        }
     }
 }

@@ -6,11 +6,11 @@
     & .catalog-roster-status {
         color: var(--color-text-muted);
         font-family: var(--font-family-mono);
-        min-block-size: 1.5em;
+        min-block-size: 1.5rem;
     }
 
     & .catalog-roster-error {
-        border-inline-start: 4px solid var(--color-danger);
+        border-inline-start: 0.25rem solid var(--color-danger);
         color: var(--color-danger);
         font-family: var(--font-family-mono);
         padding-inline-start: var(--space-3);

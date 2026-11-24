@@ -12,7 +12,7 @@
 
     & thead th {
         background: var(--color-surface-sunken);
-        border-block-end: 2px solid var(--color-border-strong);
+        border-block-end: 0.125rem solid var(--color-border-strong);
         color: var(--color-text-muted);
         font-family: var(--font-family-display);
         font-weight: 600;
@@ -48,15 +48,15 @@
 
         & tbody th,
         & tbody td {
-            display: grid;
+            display: flex;
             gap: var(--space-2);
-            grid-template-columns: 8rem 1fr;
             padding-block: var(--space-1);
         }
 
         & tbody [data-label]::before {
             color: var(--color-text-muted);
             content: attr(data-label);
+            flex: 0 0 8rem;
             font-family: var(--font-family-display);
             font-weight: 400;
             text-transform: uppercase;
