@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 
 import { BLUEPRINT_GRID, BLUEPRINT_PATH } from './blueprint';
+
 import './styles.css';
 
 export type VisualSlotProps = React.HTMLAttributes<HTMLElement> & {

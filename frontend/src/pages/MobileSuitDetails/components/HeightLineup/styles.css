@@ -6,8 +6,8 @@
 
     & svg {
         background: var(--color-surface-sunken);
-        border: 1px solid var(--color-border);
         block-size: auto;
+        border: 1px solid var(--color-border);
         inline-size: 100%;
         max-block-size: 18rem;
     }
