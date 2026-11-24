@@ -1,3 +1,5 @@
+import type { Nullable } from '@/types';
+
 /**
  * @description The API query string, without `?`, for a list page: only `keys` with a
  * non-blank value, sorted by key, so the same state always gives the same string.
@@ -33,7 +35,7 @@ export function withSearchParam({
 }: {
   name: string;
   searchParams: URLSearchParams;
-  value: string | null;
+  value: Nullable<string>;
 }): URLSearchParams {
   const nextSearchParams = new URLSearchParams(searchParams);
   nextSearchParams.delete('offset');

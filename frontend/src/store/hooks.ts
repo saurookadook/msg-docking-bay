@@ -1,6 +1,7 @@
 import { use, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 
+import type { FilterBarChip } from '@/components';
 import { listSearch } from '@/utils';
 
 import type { ListState } from './catalogList';
@@ -97,11 +98,7 @@ export function useContinuityOptions(): { label: string; value: string }[] {
  * filters match current slugs only.
  * @returns no chip while `work` is unset
  */
-export function useWorkFilterChips(): {
-  label: string;
-  param: string;
-  valueLabel: string;
-}[] {
+export function useWorkFilterChips(): FilterBarChip[] {
   const { appDispatch, appState } = useAppStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const workSlug = searchParams.get('work')?.trim() ?? '';

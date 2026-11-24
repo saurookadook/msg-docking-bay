@@ -13,8 +13,8 @@ import { combineReducers } from '@/store/combineReducers';
 import type { AppAction } from '@/store/types';
 
 import type {
-  CombinedCharactersStateSlice,
   CharactersStateSlice,
+  CombinedCharactersStateSlice,
 } from './reducer.types';
 
 export const initialCharactersStateSlice: CharactersStateSlice = {
