@@ -2,6 +2,7 @@ import { useId, useRef } from 'react';
 import { useSearchParams } from 'react-router';
 
 import { DeckPanel, SpecPlate } from '@/components';
+import type { Nullable } from '@/types';
 
 import type { Cite } from '../../utils/citations';
 import { formatMeasurement, MEASUREMENTS } from '../../utils/format';
@@ -62,7 +63,7 @@ export function SpecSheetTabs({ cite, name, selection }: SpecSheetTabsProps) {
   const [, setSearchParams] = useSearchParams();
   const idPrefix = useId();
   const headingID = `${idPrefix}-heading`;
-  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const tabRefs = useRef<Nullable<HTMLButtonElement>[]>([]);
   const { entries, index, selected } = selection;
 
   function selectSheet(nextIndex: number) {
