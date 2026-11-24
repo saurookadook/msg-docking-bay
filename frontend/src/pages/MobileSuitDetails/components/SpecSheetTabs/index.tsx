@@ -79,6 +79,10 @@ export function SpecSheetTabs({ cite, name, selection }: SpecSheetTabsProps) {
     );
   }
 
+  function handleTabClick(tabIndex: number) {
+    selectSheet(tabIndex);
+  }
+
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     const nextIndex = (function () {
       switch (event.key) {
@@ -130,7 +134,7 @@ export function SpecSheetTabs({ cite, name, selection }: SpecSheetTabsProps) {
                 className="stencil-label"
                 id={`${idPrefix}-tab-${key}`}
                 key={key}
-                onClick={() => selectSheet(tabIndex)}
+                onClick={() => handleTabClick(tabIndex)}
                 ref={(element) => {
                   tabRefs.current[tabIndex] = element;
                 }}
