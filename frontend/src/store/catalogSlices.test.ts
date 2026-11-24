@@ -114,19 +114,21 @@ describe('catalog slices', () => {
     expect(list.items).toEqual([]);
   });
 
-  it('stores a work under the slug asked for, old or current', async () => {
+  it('stores a work under the slug asked for, and an old slug under its current one too', async () => {
     server = makeMirageServer({ environment: 'test' });
 
     const { detailsBySlug } = (
       await run(({ dispatch }) => fetchWork({ dispatch, slug: 'msg' }))
     ).works;
 
-    expect(detailsBySlug.msg).toEqual({
+    const storedWork = {
       detail: expect.objectContaining({ slug: mockMobileSuitGundam.slug }),
       errorMessage: null,
       isNotFound: false,
       requestInProgress: false,
-    });
+    };
+    expect(detailsBySlug.msg).toEqual(storedWork);
+    expect(detailsBySlug[mockMobileSuitGundam.slug]).toEqual(storedWork);
   });
 
   it('marks an unknown work as not found', async () => {

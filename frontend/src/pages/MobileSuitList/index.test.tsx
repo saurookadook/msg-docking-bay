@@ -82,6 +82,7 @@ describe('MobileSuitList', () => {
 
   it("titles an old work slug's chip and filters by the current slug", async () => {
     server = makeMirageServer({ environment: 'test' });
+    const fetchSpy = vi.spyOn(safeFetch, 'call');
     renderWithProviders({ initialEntries: ['/mobile-suits?work=msg'] });
 
     expect(
@@ -95,6 +96,10 @@ describe('MobileSuitList', () => {
         'Zaku II',
       ]),
     );
+    const workRequests = fetchSpy.mock.calls.filter(([, { requestPathname }]) =>
+      requestPathname.startsWith('/api/works/'),
+    );
+    expect(workRequests).toHaveLength(1);
   });
 
   it('keeps its page when it swaps an old work slug', async () => {
