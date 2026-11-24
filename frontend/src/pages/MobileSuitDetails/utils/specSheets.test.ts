@@ -4,12 +4,7 @@ import { mockWikidataSource } from '@/__mocks__/catalogMocks';
 import { mockMobileSuitDetails, mockRx782Gundam } from '@/__mocks__/mobileSuitMocks';
 import type { MobileSuitSpecSheetEntity } from '@/api';
 
-import {
-  selectSpecSheetIndex,
-  slugify,
-  specSheetKeys,
-  specSheetLabels,
-} from './specSheets';
+import { selectSpecSheetIndex, specSheetKeys, specSheetLabels } from './specSheets';
 
 const [baseSheet, magnetCoatingSheet] =
   mockMobileSuitDetails[mockRx782Gundam.slug]!.spec_sheets;
@@ -19,12 +14,6 @@ function sheet(values: Partial<MobileSuitSpecSheetEntity>): MobileSuitSpecSheetE
 }
 
 describe('specSheets', () => {
-  describe('slugify', () => {
-    it('lowercases ASCII words and joins them with dashes', () => {
-      expect(slugify('  Magnet Coating (Café) ')).toBe('magnet-coating-cafe');
-    });
-  });
-
   describe('specSheetKeys and specSheetLabels', () => {
     it('names the base sheet and each configuration', () => {
       const sheets = [baseSheet!, magnetCoatingSheet!];

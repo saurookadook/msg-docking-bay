@@ -1,21 +1,12 @@
 import type { MobileSuitSpecSheetEntity, SourceKind } from '@/api';
 import { SOURCE_KIND_LABELS } from '@/constants';
+import { slugify } from '@/utils';
 
 /** @description The `?spec=` param that picks a suit's spec sheet. */
 export const SPEC_PARAM = 'spec';
 
 /** @description A spec sheet's name: its configuration, or "Base spec". */
 const BASE_SPEC_LABEL = 'Base spec';
-
-/** @description Lowercase ASCII words joined by `-`, such as `magnet-coating`. */
-export function slugify(text: string): string {
-  return text
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
 
 /**
  * @description Makes each name unique: a name two sheets share gets its sheet's source
