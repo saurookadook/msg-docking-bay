@@ -1,4 +1,10 @@
-import type { PageMeta, WorkCardEntity, WorkDetailEntity, WorkResponse } from '@/api';
+import type {
+  PageMeta,
+  WorkCardEntity,
+  WorkDetailEntity,
+  WorkResponse,
+  WorksListResponse,
+} from '@/api';
 import {
   REQUEST_WORK,
   REQUEST_WORKS,
@@ -46,7 +52,7 @@ export async function fetchWorks({
   dispatch,
   search,
 }: BaseAction & { search: string }): Promise<void> {
-  return fetchCatalogList<WorkCardEntity>({
+  return fetchCatalogList<WorksListResponse>({
     listPath: '/api/works',
     name: fetchWorks.name,
     onError: (errorMessage) => setWorksError({ dispatch, errorMessage, search }),

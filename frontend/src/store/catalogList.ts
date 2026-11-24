@@ -18,6 +18,9 @@ export type ListState<Card> = {
   search: Nullable<string>;
 };
 
+/** @description A catalog list route's 200 body: one page of cards and its paging. */
+export type ListPage<Card> = { data: Card[]; meta: PageMeta };
+
 export type ListRequestPayload = { search: string };
 export type ListSetPayload<Card> = { items: Card[]; meta: PageMeta; search: string };
 export type ListErrorPayload = { errorMessage: string; search: string };
@@ -158,7 +161,7 @@ export function catalogErrorMessage({
  * page or the error. Each slice's `fetch<Kind>` wraps it with its own actions.
  * @note A failed request does not throw: `safeFetch` has already logged it.
  */
-export async function fetchCatalogList<Card>({
+export async function fetchCatalogList<Response extends ListPage<unknown>>({
   listPath,
   name,
   onError,
@@ -170,13 +173,13 @@ export async function fetchCatalogList<Card>({
   name: string;
   onError: (errorMessage: string) => void;
   onRequest: () => void;
-  onSuccess: (page: { data: Card[]; meta: PageMeta }) => void;
+  onSuccess: (page: Response) => void;
   search: string;
 }): Promise<void> {
   onRequest();
-  let responseData: { data: Card[]; meta: PageMeta };
+  let responseData: Response;
   try {
-    responseData = await safeFetch.call<{ data: Card[]; meta: PageMeta }>(
+    responseData = await safeFetch.call<Response>(
       { name },
       {
         fetchOpts: { method: 'GET' },

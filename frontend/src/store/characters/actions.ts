@@ -1,4 +1,4 @@
-import type { CharacterCardEntity, PageMeta } from '@/api';
+import type { CharacterCardEntity, CharactersListResponse, PageMeta } from '@/api';
 import {
   REQUEST_CHARACTERS, // force formatting
   SET_CHARACTERS,
@@ -49,7 +49,7 @@ export async function fetchCharacters({
   dispatch,
   search,
 }: BaseAction & { search: string }): Promise<void> {
-  return fetchCatalogList<CharacterCardEntity>({
+  return fetchCatalogList<CharactersListResponse>({
     listPath: '/api/characters',
     name: fetchCharacters.name,
     onError: (errorMessage) => setCharactersError({ dispatch, errorMessage, search }),

@@ -1,4 +1,8 @@
-import type { MechanicalDesignerCardEntity, PageMeta } from '@/api';
+import type {
+  MechanicalDesignerCardEntity,
+  MechanicalDesignersListResponse,
+  PageMeta,
+} from '@/api';
 import {
   REQUEST_MECHANICAL_DESIGNERS, // force formatting
   SET_MECHANICAL_DESIGNERS,
@@ -52,7 +56,7 @@ export async function fetchMechanicalDesigners({
   dispatch,
   search,
 }: BaseAction & { search: string }): Promise<void> {
-  return fetchCatalogList<MechanicalDesignerCardEntity>({
+  return fetchCatalogList<MechanicalDesignersListResponse>({
     listPath: '/api/mechanical-designers',
     name: fetchMechanicalDesigners.name,
     onError: (errorMessage) =>

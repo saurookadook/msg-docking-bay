@@ -1,4 +1,4 @@
-import type { MobileSuitCardEntity, PageMeta } from '@/api';
+import type { MobileSuitCardEntity, MobileSuitsListResponse, PageMeta } from '@/api';
 import {
   REQUEST_MOBILE_SUITS, // force formatting
   SET_MOBILE_SUITS,
@@ -49,7 +49,7 @@ export async function fetchMobileSuits({
   dispatch,
   search,
 }: BaseAction & { search: string }): Promise<void> {
-  return fetchCatalogList<MobileSuitCardEntity>({
+  return fetchCatalogList<MobileSuitsListResponse>({
     listPath: '/api/mobile-suits',
     name: fetchMobileSuits.name,
     onError: (errorMessage) => setMobileSuitsError({ dispatch, errorMessage, search }),

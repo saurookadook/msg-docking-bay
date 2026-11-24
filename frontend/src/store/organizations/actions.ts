@@ -1,4 +1,8 @@
-import type { OrganizationCardEntity, PageMeta } from '@/api';
+import type {
+  OrganizationCardEntity,
+  OrganizationsListResponse,
+  PageMeta,
+} from '@/api';
 import {
   REQUEST_ORGANIZATIONS, // force formatting
   SET_ORGANIZATIONS,
@@ -52,7 +56,7 @@ export async function fetchOrganizations({
   dispatch,
   search,
 }: BaseAction & { search: string }): Promise<void> {
-  return fetchCatalogList<OrganizationCardEntity>({
+  return fetchCatalogList<OrganizationsListResponse>({
     listPath: '/api/organizations',
     name: fetchOrganizations.name,
     onError: (errorMessage) =>

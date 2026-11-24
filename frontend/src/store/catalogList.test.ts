@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockRx782Gundam, mockZakuII } from '@/__mocks__/mobileSuitMocks';
 import { mockMobileSuitGundam } from '@/__mocks__/workMocks';
-import type { MobileSuitCardEntity } from '@/api';
+import type { MobileSuitCardEntity, MobileSuitsListResponse } from '@/api';
 import { SafeFetchError } from '@/utils';
 
 import {
@@ -161,7 +161,7 @@ describe('fetchCatalogList', () => {
     const onError = vi.fn();
 
     await expect(
-      fetchCatalogList<MobileSuitCardEntity>({
+      fetchCatalogList<MobileSuitsListResponse>({
         listPath: '/api/mobile-suits',
         name: 'test',
         onError,
