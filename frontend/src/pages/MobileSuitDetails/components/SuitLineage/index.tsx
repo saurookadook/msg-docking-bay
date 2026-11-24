@@ -6,6 +6,7 @@ import { EntityLink } from '@/components';
 
 import type { Cite } from '../../utils/citations';
 import { buildLineage, type LineageGroup } from '../../utils/lineage';
+import { ModelNumber } from '../ModelNumber';
 
 import './styles.css';
 
@@ -29,9 +30,10 @@ function Groups({
                 className="suit-lineage-node"
                 key={`${relation_type}-${direction}-${mobile_suit.slug}`}
               >
-                {mobile_suit.model_number != null && (
-                  <span className="suit-lineage-model">{mobile_suit.model_number}</span>
-                )}
+                <ModelNumber
+                  className="suit-lineage-model"
+                  modelNumber={mobile_suit.model_number}
+                />
                 <EntityLink kind="mobileSuit" slug={mobile_suit.slug}>
                   {mobile_suit.name}
                 </EntityLink>
@@ -72,9 +74,10 @@ export function SuitLineage({ cite, suit }: SuitLineageProps) {
         )}
         <div className="suit-lineage-current">
           <p aria-current="page" className="suit-lineage-node">
-            {suit.model_number != null && (
-              <span className="suit-lineage-model">{suit.model_number}</span>
-            )}
+            <ModelNumber
+              className="suit-lineage-model"
+              modelNumber={suit.model_number}
+            />
             <span>{suit.name}</span>
           </p>
           {alternates.length > 0 && (

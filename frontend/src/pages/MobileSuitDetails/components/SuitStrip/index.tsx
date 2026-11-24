@@ -1,6 +1,8 @@
 import type { MobileSuitDetailEntity } from '@/api';
 import { VisualSlot } from '@/components';
 
+import { ModelNumber } from '../ModelNumber';
+
 import './styles.css';
 
 export type SuitStripProps = {
@@ -17,9 +19,7 @@ export function SuitStrip({ suit }: SuitStripProps) {
     <div aria-hidden="true" className="suit-strip">
       <VisualSlot className="suit-strip-visual" subject={suit.name} />
       <p className="stencil-label">
-        {suit.model_number != null && (
-          <span className="suit-strip-model">{suit.model_number}</span>
-        )}
+        <ModelNumber className="suit-strip-model" modelNumber={suit.model_number} />
         {suit.name}
       </p>
     </div>

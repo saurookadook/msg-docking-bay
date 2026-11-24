@@ -1,4 +1,5 @@
 export * from './HeightLineup';
+export * from './ModelNumber';
 export * from './SheetSummary';
 export * from './SpecSheetTabs';
 export * from './SuitAppearances';
