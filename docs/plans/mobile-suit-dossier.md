@@ -246,3 +246,56 @@ Run in `frontend/` (moon not on PATH):
   arrow keys move between tabs; lineage links open the related suit; unknown slug shows
   "Cage empty"; both shifts; phone width;
   no console errors.
+
+## As built (2026-11-23)
+
+Where the implementation differs from the steps above:
+
+- **Three extra commits.** `refactor(frontend): share the source kind labels` (before step 5)
+  moves `SOURCE_KIND_LABELS` to `constants`, since spec sheet keys and labels name the source
+  kind. `refactor(frontend): share the blueprint silhouette` (before step 8) moves the
+  `VisualSlot` path to `components/VisualSlot/blueprint.ts` for the height lineup.
+  `fix(frontend): keep part counts legible on the day shift` (after step 8) swaps the part
+  counts from `--color-accent` (a fill colour, unreadable on Day shift) to
+  `--color-readout-alt`.
+- **`useCatalogDetail` has no `guardDispatch` (D3).** The REQUEST dispatch defines the slug's
+  state, so the effect re-ran, its cleanup flipped the guard, and the SET was dropped. Each
+  slug's state is kept apart and the store is app-wide, so a late response is stored under its
+  own slug and replaces nothing. The store tests cover the old slug, the 404, a 503 and a 422
+  instead of a "stale response dropped" case.
+- **`numberCitations`, `citationKey` and `citationID`** live beside `SourceCitations`
+  (`components/SourceCitations/citationNumbers.ts`), not in the page's `utils/citations.ts`,
+  since F4's pages number their sources the same way. The page keeps `collectCitations`
+  (credits, then sheets, relations and appearances) and a fixed `SOURCE_ID_PREFIX`
+  (`mobile-suit-source`), not a `useId` prefix: there is one source list per page.
+- **The deck status bar is not sticky**, so the infobox sticks at `--space-3` from the top
+  with no overlap to manage (Q1 risk).
+- **Infobox (Q2):** a row whose part kind was inherited but holds nothing of its own use (the
+  Magnet Coating sheet's Frame) shows plain "DATA PENDING", not "per base spec". This landed
+  in step 6, with the tabs that make it reachable. Its `VisualSlot` is 4:3 with a fixed-height
+  blueprint, since the slot's 60% SVG height overflowed the aspect ratio in a flex column.
+- **Spec panel (Q6, D5):** each panel holds the sheet's name with its source mark, the ten
+  measurements, the height lineup, then the parts. The parts show all four kinds (armaments,
+  equipment, powerplant, materials), each "DATA PENDING" when empty.
+- **Lineage (Q7):** alternate versions from both directions share one "Alternate versions"
+  group. The section is headed "Variants & lineage", and the current suit is marked
+  `aria-current="page"`.
+- **Height lineup (Q8):** `utils/lineup.ts` lays the figures out in metres
+  (`lineupHeight`, `lineupLayout`). The lineup rescales when a suit is taller than 18 m (the
+  `TallSuit` story). The human is a plain head and body block.
+- **Stories:** page-local components have no stories of their own; the page's stories cover
+  them (`Default`, `NamedConfiguration`, `SingleSheet`, `TallSuit`, `OldSlug`, `Sparse`,
+  `NotFound`, `RequestFailed`, `Loading`). `CitationMark` has a story.
+- **Bundle:** the app's JS grows from 375 kB (117 kB gzip) after F2 to 397 kB (124 kB gzip).
+- **Mock mode outside the proxy** needs `APP_DOMAIN` and `PROXY_HTTPS_PORT` set:
+  `MOCK_API=true APP_DOMAIN=127.0.0.1 PROXY_HTTPS_PORT=5199 FRONTEND_PORT=5199 pnpm start:dev`.
+- **Browser check** ran in the app with `MOCK_API=true`, and in Storybook. Checked: roster row
+  → dossier; `/mobile-suits/rx-78-2?spec=magnet-coating` swaps to the current slug, keeping
+  `spec`, and Back skips the old URL; tab clicks and arrow keys move the selection and focus,
+  and the infobox follows; picking Base spec removes `spec`; a footnote mark targets its
+  source; the infobox stays pinned while scrolling; at 360 px (in an iframe, since the window
+  would not resize) the phone strip pins and nothing overflows; Day shift (which found the
+  part-count contrast); no console errors. Not checked: a full keyboard-only walk.
+- **Flaky F2 tests.** Under `pnpm test:cov` load, the roster tests "searches as the user
+  types" (`MobileSuitList`, `CharacterList`) timed out once and passed on four reruns. This PR
+  doesn't touch them.
