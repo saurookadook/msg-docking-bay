@@ -354,7 +354,7 @@ function listHandler<T>({
     if (errors.length > 0 || typeof q === 'object') return invalidQuery(errors);
 
     const filtered = items.filter((item) =>
-      applied.every(({ filter, value }) => filter.matches(item, value)),
+      applied.every(({ filter, value }) => filter.isMatch(item, value)),
     );
     return paginate(searchList({ columns, items: filtered, q }), request);
   };
@@ -416,7 +416,7 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
         workFilter(({ slug }) => mockMobileSuitDetails[slug]?.appearances),
         {
           allowed: Object.keys(UNIT_TYPE_LABELS),
-          matches: ({ unit_type }, value) => unit_type === value,
+          isMatch: ({ unit_type }, value) => unit_type === value,
           param: 'unit_type',
         },
       ],
@@ -465,7 +465,7 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
         continuityFilter(),
         {
           allowed: Object.keys(WORK_TYPE_LABELS),
-          matches: ({ work_type }, value) => work_type === value,
+          isMatch: ({ work_type }, value) => work_type === value,
           param: 'work_type',
         },
       ],

@@ -8,7 +8,7 @@ import type { Nullable } from '@/types';
  */
 export type ListFilter<T> = {
   allowed?: readonly string[];
-  matches: (item: T, value: string) => boolean;
+  isMatch: (item: T, value: string) => boolean;
   param: string;
 };
 
@@ -23,7 +23,7 @@ export function continuityFilter<
   T extends { continuity: Nullable<{ slug: string }> },
 >(): ListFilter<T> {
   return {
-    matches: ({ continuity }, slug) => continuity?.slug === slug,
+    isMatch: ({ continuity }, slug) => continuity?.slug === slug,
     param: 'continuity',
   };
 }
@@ -36,7 +36,7 @@ export function workFilter<T extends { slug: string }>(
   appearances: (item: T) => readonly { work: { slug: string } }[] | undefined,
 ): ListFilter<T> {
   return {
-    matches: (item, slug) =>
+    isMatch: (item, slug) =>
       appearances(item)?.some(({ work }) => work.slug === slug) ?? false,
     param: 'work',
   };
