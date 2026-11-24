@@ -10,8 +10,8 @@ import {
   createInitialListState,
   requestDetail,
   requestList,
-  setDetail,
   setDetailError,
+  setDetailUnderSlugs,
   setList,
   setListError,
 } from '@/store/catalogList';
@@ -30,15 +30,8 @@ const detailsBySlug: CombinedWorksStateSlice['detailsBySlug'] = [
     switch (action.type) {
       case REQUEST_WORK:
         return requestDetail(stateSlice, action.payload.works);
-      case SET_WORK: {
-        // NOTE: an old slug's work is stored under its current slug too, so swapping the
-        // URL to the current slug does not fetch it again.
-        const { detail, slug } = action.payload.works;
-        const storedState = setDetail(stateSlice, { detail, slug });
-        return detail.slug === slug
-          ? storedState
-          : setDetail(storedState, { detail, slug: detail.slug });
-      }
+      case SET_WORK:
+        return setDetailUnderSlugs(stateSlice, action.payload.works);
       case SET_WORK_ERROR:
         return setDetailError(stateSlice, action.payload.works);
       default:
