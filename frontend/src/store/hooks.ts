@@ -85,6 +85,12 @@ export function useContinuities(): ContinuitiesStateSlice {
   return continuities;
 }
 
+/** @description Every continuity as a filter select option, loaded once. */
+export function useContinuityOptions(): { label: string; value: string }[] {
+  const { continuities } = useContinuities();
+  return continuities.map(({ name, slug }) => ({ label: name, value: slug }));
+}
+
 /**
  * @description The filter bar chip for the URL's `work`, titled from the works slice.
  * An old slug is swapped in the URL for the work's current one, since the list

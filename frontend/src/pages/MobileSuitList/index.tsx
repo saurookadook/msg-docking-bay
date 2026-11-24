@@ -6,21 +6,16 @@ import {
   FilterBar,
   rosterColumnHelper,
 } from '@/components';
-import { UNIT_TYPE_LABELS } from '@/constants';
+import { UNIT_TYPE_LABELS, UNIT_TYPE_OPTIONS } from '@/constants';
 import {
   fetchMobileSuits,
   useCatalogList,
-  useContinuities,
+  useContinuityOptions,
   useWorkFilterChips,
   type AppState,
 } from '@/store';
 
 const LIST_KEYS = ['continuity', 'limit', 'offset', 'q', 'unit_type', 'work'] as const;
-
-const UNIT_TYPE_OPTIONS = Object.entries(UNIT_TYPE_LABELS).map(([value, label]) => ({
-  label,
-  value,
-}));
 
 const selectMobileSuits = (appState: AppState) => appState.mobileSuits.list;
 
@@ -35,7 +30,7 @@ export function MobileSuitList() {
     keys: LIST_KEYS,
     selectList: selectMobileSuits,
   });
-  const { continuities } = useContinuities();
+  const continuityOptions = useContinuityOptions();
   const workChips = useWorkFilterChips();
   const offset = list.meta?.offset ?? 0;
 
@@ -79,10 +74,7 @@ export function MobileSuitList() {
           selects={[
             {
               label: 'Continuity',
-              options: continuities.map(({ name, slug }) => ({
-                label: name,
-                value: slug,
-              })),
+              options: continuityOptions,
               param: 'continuity',
             },
             { label: 'Unit type', options: UNIT_TYPE_OPTIONS, param: 'unit_type' },

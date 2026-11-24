@@ -1,14 +1,14 @@
 import type { WorkCardEntity } from '@/api';
 import { CatalogRoster, EntityLink, FilterBar, rosterColumnHelper } from '@/components';
-import { WORK_TYPE_LABELS } from '@/constants';
-import { fetchWorks, useCatalogList, useContinuities, type AppState } from '@/store';
+import { WORK_TYPE_LABELS, WORK_TYPE_OPTIONS } from '@/constants';
+import {
+  fetchWorks,
+  useCatalogList,
+  useContinuityOptions,
+  type AppState,
+} from '@/store';
 
 const LIST_KEYS = ['continuity', 'limit', 'offset', 'q', 'work_type'] as const;
-
-const WORK_TYPE_OPTIONS = Object.entries(WORK_TYPE_LABELS).map(([value, label]) => ({
-  label,
-  value,
-}));
 
 const selectWorks = (appState: AppState) => appState.works.list;
 
@@ -49,7 +49,7 @@ export function WorkList() {
     keys: LIST_KEYS,
     selectList: selectWorks,
   });
-  const { continuities } = useContinuities();
+  const continuityOptions = useContinuityOptions();
 
   return (
     <CatalogRoster
@@ -62,10 +62,7 @@ export function WorkList() {
           selects={[
             {
               label: 'Continuity',
-              options: continuities.map(({ name, slug }) => ({
-                label: name,
-                value: slug,
-              })),
+              options: continuityOptions,
               param: 'continuity',
             },
             { label: 'Type', options: WORK_TYPE_OPTIONS, param: 'work_type' },

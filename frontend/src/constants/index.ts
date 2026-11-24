@@ -126,5 +126,21 @@ export const WORK_TYPE_LABELS = {
   other: 'Other',
 } as const satisfies Record<WorkType, string>;
 
+/** @description The unit types as filter select options, in the API's order. */
+export const UNIT_TYPE_OPTIONS = Object.entries(UNIT_TYPE_LABELS).map(
+  ([value, label]) => ({
+    label,
+    value,
+  }),
+);
+
+/** @description The work types as filter select options, in the API's order. */
+export const WORK_TYPE_OPTIONS = Object.entries(WORK_TYPE_LABELS).map(
+  ([value, label]) => ({
+    label,
+    value,
+  }),
+);
+
 /** @description How long the roster search waits after the last keystroke to search. */
 export const SEARCH_DEBOUNCE_MS = 300;

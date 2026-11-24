@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { UNIT_TYPE_LABELS } from '@/constants';
+import { UNIT_TYPE_OPTIONS } from '@/constants';
 
 import { FilterBar } from '.';
 
@@ -17,10 +17,7 @@ const meta = {
       },
       {
         label: 'Unit type',
-        options: Object.entries(UNIT_TYPE_LABELS).map(([value, label]) => ({
-          label,
-          value,
-        })),
+        options: UNIT_TYPE_OPTIONS,
         param: 'unit_type',
       },
     ],
