@@ -1,15 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { mockMobileSuitDetails, mockRx782Gundam } from '@/__mocks__/mobileSuitMocks';
+import { mockRx782GundamBaseSheet } from '@/__mocks__/mobileSuitMocks';
 
 import { HeightLineup } from '.';
 
-const [baseSheet] = mockMobileSuitDetails[mockRx782Gundam.slug]!.spec_sheets;
-
 describe('HeightLineup', () => {
   it('names the three heights, saying which height of the suit it drew', () => {
-    render(<HeightLineup name="Gundam" sheet={baseSheet!} />);
+    render(<HeightLineup name="Gundam" sheet={mockRx782GundamBaseSheet} />);
 
     expect(
       screen.getByRole('img', {
@@ -21,7 +19,10 @@ describe('HeightLineup', () => {
 
   it('uses the overall height when the sheet has one', () => {
     render(
-      <HeightLineup name="Gundam" sheet={{ ...baseSheet!, overall_height_m: 19.5 }} />,
+      <HeightLineup
+        name="Gundam"
+        sheet={{ ...mockRx782GundamBaseSheet, overall_height_m: 19.5 }}
+      />,
     );
 
     expect(
@@ -31,7 +32,10 @@ describe('HeightLineup', () => {
 
   it('draws nothing without a height', () => {
     const { container } = render(
-      <HeightLineup name="Gundam" sheet={{ ...baseSheet!, head_height_m: null }} />,
+      <HeightLineup
+        name="Gundam"
+        sheet={{ ...mockRx782GundamBaseSheet, head_height_m: null }}
+      />,
     );
 
     expect(container).toBeEmptyDOMElement();

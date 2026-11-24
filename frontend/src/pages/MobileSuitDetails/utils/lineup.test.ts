@@ -1,26 +1,31 @@
 import { describe, expect, it } from 'vitest';
 
-import { mockMobileSuitDetails, mockRx782Gundam } from '@/__mocks__/mobileSuitMocks';
+import { mockRx782GundamBaseSheet } from '@/__mocks__/mobileSuitMocks';
 
 import { lineupHeight, lineupLayout } from './lineup';
-
-const [baseSheet] = mockMobileSuitDetails[mockRx782Gundam.slug]!.spec_sheets;
 
 describe('lineup', () => {
   describe('lineupHeight', () => {
     it('prefers the overall height', () => {
-      expect(lineupHeight({ ...baseSheet!, overall_height_m: 19.5 })).toEqual({
+      expect(
+        lineupHeight({ ...mockRx782GundamBaseSheet, overall_height_m: 19.5 }),
+      ).toEqual({
         field: 'overall_height_m',
         metres: 19.5,
       });
     });
 
     it('falls back to the head height', () => {
-      expect(lineupHeight(baseSheet!)).toEqual({ field: 'head_height_m', metres: 18 });
+      expect(lineupHeight(mockRx782GundamBaseSheet)).toEqual({
+        field: 'head_height_m',
+        metres: 18,
+      });
     });
 
     it('gives null with neither, or no sheet', () => {
-      expect(lineupHeight({ ...baseSheet!, head_height_m: null })).toBeNull();
+      expect(
+        lineupHeight({ ...mockRx782GundamBaseSheet, head_height_m: null }),
+      ).toBeNull();
       expect(lineupHeight(null)).toBeNull();
     });
   });

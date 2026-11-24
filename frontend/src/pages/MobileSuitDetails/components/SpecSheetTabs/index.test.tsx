@@ -1,32 +1,23 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Server } from 'miragejs';
-import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { makeMirageServer } from '@/__mocks__/mirageServer';
-import { mockMobileSuitDetails, mockRx782Gundam } from '@/__mocks__/mobileSuitMocks';
+import {
+  mockMobileSuitDetails,
+  mockRx782Gundam,
+  mockRx782GundamBaseSheet,
+} from '@/__mocks__/mobileSuitMocks';
 import type { MobileSuitResponse } from '@/api';
-import { routerConfig } from '@/app/router';
-import { AppStoreProvider } from '@/store';
-
-/** @description Renders the app with a router the test can read and move. */
-function renderAt(initialEntries: string[]) {
-  const router = createMemoryRouter(routerConfig, { initialEntries });
-  render(
-    <AppStoreProvider>
-      <RouterProvider router={router} />
-    </AppStoreProvider>,
-  );
-  return router;
-}
+import {
+  getListItemTexts,
+  getSpecPlateValue,
+  renderWithProviders,
+} from '@/utils/testing';
 
 async function findSpecifications() {
   return screen.findByRole('region', { name: 'Specifications' });
-}
-
-function plateValue(plate: HTMLElement, label: string) {
-  return within(plate).getByText(label, { selector: 'dt' }).nextElementSibling;
 }
 
 const RX782_PATH = `/mobile-suits/${mockRx782Gundam.slug}`;
@@ -40,7 +31,7 @@ describe('SpecSheetTabs', () => {
 
   it('shows a tab per sheet, the first selected, in a labelled panel', async () => {
     server = makeMirageServer({ environment: 'test' });
-    renderAt([RX782_PATH]);
+    renderWithProviders({ initialEntries: [RX782_PATH] });
 
     const specifications = await findSpecifications();
     const tabs = within(specifications).getAllByRole('tab');
@@ -55,15 +46,19 @@ describe('SpecSheetTabs', () => {
     const panel = within(specifications).getByRole('tabpanel', { name: 'Base spec' });
     expect(tabs[0]).toHaveAttribute('aria-controls', panel.id);
     const measurements = within(panel).getByLabelText('Measurements');
-    expect(plateValue(measurements, 'Turn time')).toHaveTextContent('1.5 s');
-    expect(plateValue(measurements, 'Overall height')).toHaveTextContent(
-      'DATA PENDING',
-    );
+    expect(
+      getSpecPlateValue({ label: 'Turn time', plate: measurements }),
+    ).toHaveTextContent('1.5 s');
+    expect(
+      getSpecPlateValue({ label: 'Overall height', plate: measurements }),
+    ).toHaveTextContent('DATA PENDING');
   });
 
   it('picks a sheet into ?spec= without a new history entry, and the infobox follows', async () => {
     server = makeMirageServer({ environment: 'test' });
-    const router = renderAt(['/mobile-suits', RX782_PATH]);
+    const { router } = renderWithProviders({
+      initialEntries: ['/mobile-suits', RX782_PATH],
+    });
     const user = userEvent.setup();
 
     await user.click(
@@ -73,10 +68,12 @@ describe('SpecSheetTabs', () => {
     expect(router.state.location.search).toBe('?spec=magnet-coating');
     const panel = screen.getByRole('tabpanel', { name: 'Magnet Coating' });
     const measurements = within(panel).getByLabelText('Measurements');
-    expect(plateValue(measurements, 'Turn time')).toHaveTextContent(/^1\.1 s$/);
-    expect(plateValue(measurements, 'Gross weight')).toHaveTextContent(
-      '60,000 kgper base spec',
-    );
+    expect(
+      getSpecPlateValue({ label: 'Turn time', plate: measurements }),
+    ).toHaveTextContent(/^1\.1 s$/);
+    expect(
+      getSpecPlateValue({ label: 'Gross weight', plate: measurements }),
+    ).toHaveTextContent('60,000 kgper base spec');
     expect(
       within(panel).getByRole('heading', {
         level: 4,
@@ -86,10 +83,12 @@ describe('SpecSheetTabs', () => {
     const infobox = screen.getByRole('complementary', { name: 'Unit data' });
     expect(within(infobox).getByText('Magnet Coating')).toBeVisible();
     const summary = within(infobox).getByLabelText('Spec summary');
-    expect(plateValue(summary, 'Armor')).toHaveTextContent(
+    expect(getSpecPlateValue({ label: 'Armor', plate: summary })).toHaveTextContent(
       'Luna Titanium Alloyper base spec',
     );
-    expect(plateValue(summary, 'Frame')).toHaveTextContent(/^DATA PENDING$/);
+    expect(getSpecPlateValue({ label: 'Frame', plate: summary })).toHaveTextContent(
+      /^DATA PENDING$/,
+    );
 
     await user.click(screen.getByRole('tab', { name: 'Base spec' }));
     expect(router.state.location.search).toBe('');
@@ -100,7 +99,7 @@ describe('SpecSheetTabs', () => {
 
   it('moves between tabs with the arrow, Home and End keys', async () => {
     server = makeMirageServer({ environment: 'test' });
-    const router = renderAt([RX782_PATH]);
+    const { router } = renderWithProviders({ initialEntries: [RX782_PATH] });
     const user = userEvent.setup();
 
     const [baseTab, magnetCoatingTab] = within(await findSpecifications()).getAllByRole(
@@ -131,13 +130,11 @@ describe('SpecSheetTabs', () => {
 
   it('groups armaments by mount and equipment by fit, with counts and notes', async () => {
     server = makeMirageServer({ environment: 'test' });
-    renderAt([RX782_PATH]);
+    renderWithProviders({ initialEntries: [RX782_PATH] });
 
     const panel = within(await findSpecifications()).getByRole('tabpanel');
     const listText = (name: string) =>
-      within(within(panel).getByRole('list', { name }))
-        .getAllByRole('listitem')
-        .map(({ textContent }) => textContent);
+      getListItemTexts(within(panel).getByRole('list', { name }));
 
     expect(listText('Fixed')).toEqual(['2 ×60mm Vulcan Gun']);
     expect(listText('Handheld')).toEqual([
@@ -157,7 +154,7 @@ describe('SpecSheetTabs', () => {
 
   it('shows one sheet without tabs, and a missing part kind as pending', async () => {
     server = makeMirageServer({ environment: 'test' });
-    renderAt(['/mobile-suits/ms-06f-zaku-ii']);
+    renderWithProviders({ initialEntries: ['/mobile-suits/ms-06f-zaku-ii'] });
 
     const specifications = await findSpecifications();
     expect(within(specifications).queryByRole('tablist')).not.toBeInTheDocument();
@@ -171,9 +168,7 @@ describe('SpecSheetTabs', () => {
       within(specifications).getByRole('region', { name: 'Powerplant' }),
     ).toHaveTextContent('DATA PENDING');
     expect(
-      within(within(specifications).getByRole('list', { name: 'Optional' }))
-        .getAllByRole('listitem')
-        .map(({ textContent }) => textContent),
+      getListItemTexts(within(specifications).getByRole('list', { name: 'Optional' })),
     ).toEqual(['2 ×3-tube Missile Podfixed', 'MMP-80 90mm Machine Gunhandheld']);
   });
 
@@ -187,14 +182,13 @@ describe('SpecSheetTabs', () => {
         }));
       },
     });
-    renderAt([RX782_PATH]);
+    renderWithProviders({ initialEntries: [RX782_PATH] });
 
     expect(await findSpecifications()).toHaveTextContent('SpecificationsDATA PENDING');
   });
 
   it('lists optional equipment apart from standard', async () => {
     const rx782 = mockMobileSuitDetails[mockRx782Gundam.slug]!;
-    const [baseSheet] = rx782.spec_sheets;
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
@@ -203,15 +197,17 @@ describe('SpecSheetTabs', () => {
             ...rx782,
             spec_sheets: [
               {
-                ...baseSheet!,
-                equipment: [{ ...baseSheet!.equipment[0]!, fit: 'optional' }],
+                ...mockRx782GundamBaseSheet,
+                equipment: [
+                  { ...mockRx782GundamBaseSheet.equipment[0]!, fit: 'optional' },
+                ],
               },
             ],
           },
         }));
       },
     });
-    renderAt([RX782_PATH]);
+    renderWithProviders({ initialEntries: [RX782_PATH] });
 
     const specifications = await findSpecifications();
     expect(

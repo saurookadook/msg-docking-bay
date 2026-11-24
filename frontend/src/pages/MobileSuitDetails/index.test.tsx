@@ -1,6 +1,5 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { Response as MirageResponse, type Server } from 'miragejs';
-import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { makeMirageServer } from '@/__mocks__/mirageServer';
@@ -8,20 +7,18 @@ import {
   mockMobileSuitDetails,
   mockRx7802Gundam,
   mockRx782Gundam,
+  mockRx782GundamBaseSheet,
 } from '@/__mocks__/mobileSuitMocks';
 import type { MobileSuitResponse } from '@/api';
-import { routerConfig } from '@/app/router';
-import { AppStoreProvider } from '@/store';
 import { safeFetch } from '@/utils';
-import { renderWithProviders } from '@/utils/testing';
+import {
+  getListItemTexts,
+  getSpecPlateValue,
+  renderWithProviders,
+} from '@/utils/testing';
 
 async function findDossier(name: string | RegExp = 'Gundam') {
   return screen.findByRole('region', { name });
-}
-
-function plateValue(plate: HTMLElement, label: string) {
-  const term = within(plate).getByText(label, { selector: 'dt' });
-  return term.nextElementSibling as HTMLElement;
 }
 
 describe('MobileSuitDetails', () => {
@@ -55,30 +52,46 @@ describe('MobileSuitDetails', () => {
     expect(within(infobox).getByText('Base spec')).toBeVisible();
 
     const summary = within(infobox).getByLabelText('Spec summary');
-    expect(plateValue(summary, 'Head height')).toHaveTextContent('18 m');
-    expect(plateValue(summary, 'Gross weight')).toHaveTextContent('60,000 kg');
-    expect(plateValue(summary, 'Powerplant')).toHaveTextContent(
-      'Minovsky Ultracompact Fusion Reactor',
+    expect(
+      getSpecPlateValue({ label: 'Head height', plate: summary }),
+    ).toHaveTextContent('18 m');
+    expect(
+      getSpecPlateValue({ label: 'Gross weight', plate: summary }),
+    ).toHaveTextContent('60,000 kg');
+    expect(
+      getSpecPlateValue({ label: 'Powerplant', plate: summary }),
+    ).toHaveTextContent('Minovsky Ultracompact Fusion Reactor');
+    expect(getSpecPlateValue({ label: 'Armor', plate: summary })).toHaveTextContent(
+      'Luna Titanium Alloy',
     );
-    expect(plateValue(summary, 'Armor')).toHaveTextContent('Luna Titanium Alloy');
-    expect(plateValue(summary, 'Frame')).toHaveTextContent('DATA PENDING');
+    expect(getSpecPlateValue({ label: 'Frame', plate: summary })).toHaveTextContent(
+      'DATA PENDING',
+    );
 
     const credits = within(infobox).getByLabelText('Credits');
     expect(
-      within(plateValue(credits, 'Designer')).getByRole('link', {
-        name: 'Kunio Okawara',
-      }),
+      within(getSpecPlateValue({ label: 'Designer', plate: credits })).getByRole(
+        'link',
+        {
+          name: 'Kunio Okawara',
+        },
+      ),
     ).toHaveAttribute('href', '/mechanical-designers/kunio-okawara');
     expect(
-      within(plateValue(credits, 'Manufacturer')).getByRole('link', {
-        name: 'Earth Federation',
-      }),
+      within(getSpecPlateValue({ label: 'Manufacturer', plate: credits })).getByRole(
+        'link',
+        {
+          name: 'Earth Federation',
+        },
+      ),
     ).toHaveAttribute('href', '/organizations/earth-federation');
-    expect(plateValue(credits, 'Operator')).toHaveTextContent('DATA PENDING');
-    expect(plateValue(credits, 'Pilot')).toHaveTextContent(
+    expect(getSpecPlateValue({ label: 'Operator', plate: credits })).toHaveTextContent(
+      'DATA PENDING',
+    );
+    expect(getSpecPlateValue({ label: 'Pilot', plate: credits })).toHaveTextContent(
       'Amuro Ray (Mobile Suit Gundam)',
     );
-    expect(plateValue(credits, 'Debut')).toHaveTextContent(
+    expect(getSpecPlateValue({ label: 'Debut', plate: credits })).toHaveTextContent(
       'Mobile Suit Gundam · Episodes 1–43',
     );
   });
@@ -92,7 +105,10 @@ describe('MobileSuitDetails', () => {
     const infobox = await screen.findByRole('complementary', { name: 'Unit data' });
     expect(within(infobox).getByText('Magnet Coating')).toBeVisible();
     expect(
-      plateValue(within(infobox).getByLabelText('Spec summary'), 'Gross weight'),
+      getSpecPlateValue({
+        label: 'Gross weight',
+        plate: within(infobox).getByLabelText('Spec summary'),
+      }),
     ).toHaveTextContent('60,000 kgper base spec');
   });
 
@@ -109,8 +125,7 @@ describe('MobileSuitDetails', () => {
     renderWithProviders({ initialEntries: ['/mobile-suits/rx-78-2-gundam'] });
 
     const appearances = await screen.findByRole('region', { name: 'Appearances' });
-    const items = within(appearances).getAllByRole('listitem');
-    expect(items.map(({ textContent }) => textContent)).toEqual([
+    expect(getListItemTexts(appearances)).toEqual([
       'Mobile Suit Gundam[1]TV series · 1979 · Episodes 1–43Debut',
       'Mobile Suit Gundam I[1]Film · 1981',
     ]);
@@ -121,7 +136,9 @@ describe('MobileSuitDetails', () => {
     renderWithProviders({ initialEntries: ['/mobile-suits/rx-78-2-gundam'] });
 
     const registry = await screen.findByLabelText('Registry');
-    expect(plateValue(registry, 'Other names')).toHaveTextContent('DATA PENDING');
+    expect(
+      getSpecPlateValue({ label: 'Other names', plate: registry }),
+    ).toHaveTextContent('DATA PENDING');
     for (const title of ['History', 'Gallery', 'Trivia']) {
       expect(screen.getByRole('region', { name: title })).toHaveTextContent(
         'DATA PENDING',
@@ -147,21 +164,18 @@ describe('MobileSuitDetails', () => {
 
     const credits = screen.getByLabelText('Credits');
     expect(
-      within(plateValue(credits, 'Pilot')).getByRole('link', { name: 'Source 1' }),
+      within(getSpecPlateValue({ label: 'Pilot', plate: credits })).getByRole('link', {
+        name: 'Source 1',
+      }),
     ).toHaveAttribute('href', '#mobile-suit-source-1');
   });
 
   it('swaps an old slug for the current one, keeping the search, without refetching', async () => {
     server = makeMirageServer({ environment: 'test' });
     const fetchSpy = vi.spyOn(safeFetch, 'call');
-    const router = createMemoryRouter(routerConfig, {
+    const { router } = renderWithProviders({
       initialEntries: ['/mobile-suits', '/mobile-suits/rx-78-2?spec=magnet-coating'],
     });
-    render(
-      <AppStoreProvider>
-        <RouterProvider router={router} />
-      </AppStoreProvider>,
-    );
 
     await findDossier();
     await waitFor(() =>
@@ -233,8 +247,10 @@ describe('MobileSuitDetails', () => {
     const dossier = await findDossier();
     expect(within(dossier).getByText('Mobile Suit', { selector: 'p' })).toBeVisible();
     const credits = within(dossier).getByLabelText('Credits');
-    expect(plateValue(credits, 'Pilot')).toHaveTextContent('DATA PENDING');
-    expect(plateValue(credits, 'Debut')).toHaveTextContent(
+    expect(getSpecPlateValue({ label: 'Pilot', plate: credits })).toHaveTextContent(
+      'DATA PENDING',
+    );
+    expect(getSpecPlateValue({ label: 'Debut', plate: credits })).toHaveTextContent(
       'It Moves? Gundam, Follow Your Dreams!',
     );
   });
@@ -245,12 +261,14 @@ describe('MobileSuitDetails', () => {
 
     const credits = await screen.findByLabelText('Credits');
     expect(
-      within(plateValue(credits, 'Designers'))
+      within(getSpecPlateValue({ label: 'Designers', plate: credits }))
         .getAllByRole('link')
         .filter((link) => !link.getAttribute('href')!.startsWith('#'))
         .map(({ textContent }) => textContent),
     ).toEqual(['Hajime Katoki', 'Kunio Okawara']);
-    expect(plateValue(credits, 'Pilot')).toHaveTextContent(/^Amuro Ray\[1\]$/);
+    expect(getSpecPlateValue({ label: 'Pilot', plate: credits })).toHaveTextContent(
+      /^Amuro Ray\[1\]$/,
+    );
   });
 
   it('shows a suit with no sheet, model number, Japanese name or continuity', async () => {
@@ -275,13 +293,16 @@ describe('MobileSuitDetails', () => {
     expect(within(dossier).getByText('No model number')).toBeVisible();
     expect(within(dossier).getByText('Mobile Suit', { selector: 'p' })).toBeVisible();
     const summary = within(dossier).getByLabelText('Spec summary');
-    expect(plateValue(summary, 'Overall height')).toHaveTextContent('DATA PENDING');
-    expect(plateValue(summary, 'Powerplant')).toHaveTextContent('DATA PENDING');
+    expect(
+      getSpecPlateValue({ label: 'Overall height', plate: summary }),
+    ).toHaveTextContent('DATA PENDING');
+    expect(
+      getSpecPlateValue({ label: 'Powerplant', plate: summary }),
+    ).toHaveTextContent('DATA PENDING');
   });
 
   it('prefers the overall height, and counts powerplants and frame materials', async () => {
     const rx782 = mockMobileSuitDetails[mockRx782Gundam.slug]!;
-    const [baseSheet] = rx782.spec_sheets;
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
@@ -290,17 +311,21 @@ describe('MobileSuitDetails', () => {
             ...rx782,
             spec_sheets: [
               {
-                ...baseSheet!,
+                ...mockRx782GundamBaseSheet,
                 materials: [
                   {
-                    ...baseSheet!.materials[0]!,
+                    ...mockRx782GundamBaseSheet.materials[0]!,
                     material: { name: 'Gundarium', slug: 'gundarium' },
                     material_use: 'frame',
                   },
                 ],
                 overall_height_m: 19.5,
                 powerplants: [
-                  { ...baseSheet!.powerplants[0]!, quantity_max: 2, quantity_min: 2 },
+                  {
+                    ...mockRx782GundamBaseSheet.powerplants[0]!,
+                    quantity_max: 2,
+                    quantity_min: 2,
+                  },
                 ],
               },
             ],
@@ -311,11 +336,17 @@ describe('MobileSuitDetails', () => {
     renderWithProviders({ initialEntries: [`/mobile-suits/${rx782.slug}`] });
 
     const summary = await screen.findByLabelText('Spec summary');
-    expect(plateValue(summary, 'Overall height')).toHaveTextContent('19.5 m');
-    expect(plateValue(summary, 'Powerplant')).toHaveTextContent(
-      '2 × Minovsky Ultracompact Fusion Reactor',
+    expect(
+      getSpecPlateValue({ label: 'Overall height', plate: summary }),
+    ).toHaveTextContent('19.5 m');
+    expect(
+      getSpecPlateValue({ label: 'Powerplant', plate: summary }),
+    ).toHaveTextContent('2 × Minovsky Ultracompact Fusion Reactor');
+    expect(getSpecPlateValue({ label: 'Frame', plate: summary })).toHaveTextContent(
+      'Gundarium',
     );
-    expect(plateValue(summary, 'Frame')).toHaveTextContent('Gundarium');
-    expect(plateValue(summary, 'Armor')).toHaveTextContent('DATA PENDING');
+    expect(getSpecPlateValue({ label: 'Armor', plate: summary })).toHaveTextContent(
+      'DATA PENDING',
+    );
   });
 });

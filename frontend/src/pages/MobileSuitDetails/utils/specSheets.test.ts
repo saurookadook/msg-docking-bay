@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
 import { mockWikidataSource } from '@/__mocks__/catalogMocks';
-import { mockMobileSuitDetails, mockRx782Gundam } from '@/__mocks__/mobileSuitMocks';
+import {
+  mockRx782GundamBaseSheet,
+  mockRx782GundamMagnetCoatingSheet,
+} from '@/__mocks__/mobileSuitMocks';
 import type { MobileSuitSpecSheetEntity } from '@/api';
 
 import { selectSpecSheetIndex, specSheetEntries } from './specSheets';
 
-const [baseSheet, magnetCoatingSheet] =
-  mockMobileSuitDetails[mockRx782Gundam.slug]!.spec_sheets;
+const baseSheet = mockRx782GundamBaseSheet;
+const magnetCoatingSheet = mockRx782GundamMagnetCoatingSheet;
 
 function sheet(values: Partial<MobileSuitSpecSheetEntity>): MobileSuitSpecSheetEntity {
-  return { ...baseSheet!, ...values };
+  return { ...baseSheet, ...values };
 }
 
 /** @description The `?spec=` keys and tab labels the sheets get. */
@@ -25,14 +28,14 @@ function namesOf(sheets: MobileSuitSpecSheetEntity[]) {
 describe('specSheets', () => {
   describe('specSheetEntries', () => {
     it('names the base sheet and each configuration', () => {
-      const sheets = [baseSheet!, magnetCoatingSheet!];
+      const sheets = [baseSheet, magnetCoatingSheet];
 
       expect(namesOf(sheets).keys).toEqual(['base', 'magnet-coating']);
       expect(namesOf(sheets).labels).toEqual(['Base spec', 'Magnet Coating']);
     });
 
     it('adds the source kind when two sheets share a name', () => {
-      const sheets = [baseSheet!, sheet({ source: mockWikidataSource })];
+      const sheets = [baseSheet, sheet({ source: mockWikidataSource })];
 
       expect(namesOf(sheets).keys).toEqual(['base-gundam-wiki', 'base-wikidata']);
       expect(namesOf(sheets).labels).toEqual([
@@ -55,14 +58,14 @@ describe('specSheets', () => {
     });
 
     it('labels two same-named sheets from one kind of source by place', () => {
-      expect(namesOf([baseSheet!, sheet({})]).labels).toEqual([
+      expect(namesOf([baseSheet, sheet({})]).labels).toEqual([
         'Base spec (Gundam Wiki) 1',
         'Base spec (Gundam Wiki) 2',
       ]);
     });
 
     it('keys a configuration with no ASCII letters by its place', () => {
-      expect(namesOf([baseSheet!, sheet({ configuration: '強化型' })]).keys).toEqual([
+      expect(namesOf([baseSheet, sheet({ configuration: '強化型' })]).keys).toEqual([
         'base',
         'sheet-2',
       ]);
@@ -75,7 +78,7 @@ describe('specSheets', () => {
       [null, 0],
       ['unknown', 0],
     ])('picks %o as sheet %i', (spec, index) => {
-      const entries = specSheetEntries([baseSheet!, magnetCoatingSheet!]);
+      const entries = specSheetEntries([baseSheet, magnetCoatingSheet]);
       expect(selectSpecSheetIndex({ entries, spec })).toBe(index);
     });
   });

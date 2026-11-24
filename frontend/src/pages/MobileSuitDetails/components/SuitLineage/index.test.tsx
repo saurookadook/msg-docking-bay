@@ -11,16 +11,15 @@ import {
   mockZakuII,
 } from '@/__mocks__/mobileSuitMocks';
 import type { MobileSuitResponse } from '@/api';
-import { renderWithProviders } from '@/utils/testing';
+import { getListItemTexts, renderWithProviders } from '@/utils/testing';
 
 async function findLineage() {
   return screen.findByRole('region', { name: 'Variants & lineage' });
 }
 
-function nodeTexts(lineage: HTMLElement, group: string) {
-  return within(within(lineage).getByRole('list', { name: group }))
-    .getAllByRole('listitem')
-    .map(({ textContent }) => textContent);
+/** @description The text of each node in the lineage group with this label. */
+function nodeTexts({ group, lineage }: { group: string; lineage: HTMLElement }) {
+  return getListItemTexts(within(lineage).getByRole('list', { name: group }));
 }
 
 describe('SuitLineage', () => {
@@ -38,7 +37,7 @@ describe('SuitLineage', () => {
     expect(
       within(lineage).getByText('Gundam', { selector: 'span' }).parentElement,
     ).toHaveAttribute('aria-current', 'page');
-    expect(nodeTexts(lineage, 'Alternate versions')).toEqual([
+    expect(nodeTexts({ group: 'Alternate versions', lineage })).toEqual([
       'RX-78-02Gundam[2]',
       'RX-78F00Gundam[3]',
     ]);
@@ -87,8 +86,10 @@ describe('SuitLineage', () => {
         .getAllByRole('heading', { level: 4 })
         .map(({ textContent }) => textContent),
     ).toEqual(['Developed from', 'Upgraded into']);
-    expect(nodeTexts(lineage, 'Developed from')).toEqual(['RX-78-2Gundam[1]']);
-    expect(nodeTexts(lineage, 'Upgraded into')).toEqual(['Gundam[1]']);
+    expect(nodeTexts({ group: 'Developed from', lineage })).toEqual([
+      'RX-78-2Gundam[1]',
+    ]);
+    expect(nodeTexts({ group: 'Upgraded into', lineage })).toEqual(['Gundam[1]']);
   });
 
   it('is left out for a suit with no relations', async () => {

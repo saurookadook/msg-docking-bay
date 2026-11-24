@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Response as MirageResponse, type Server } from 'miragejs';
 
-import { mockMobileSuitDetails, mockRx782Gundam } from '@/__mocks__/mobileSuitMocks';
+import { mockRx782Gundam, mockRx782GundamDetail } from '@/__mocks__/mobileSuitMocks';
 import type { MobileSuitResponse } from '@/api';
 
 import { MobileSuitDetails } from '.';
@@ -35,7 +35,7 @@ export const SingleSheet: Story = {
 export const TallSuit: Story = {
   parameters: {
     mirage: (server: Server) => {
-      const rx782 = mockMobileSuitDetails[mockRx782Gundam.slug]!;
+      const rx782 = mockRx782GundamDetail;
       server.get('/mobile-suits/:mobile_suit_slug', (): MobileSuitResponse => ({
         data: {
           ...rx782,
@@ -78,7 +78,7 @@ export const Loading: Story = {
       server.get(
         '/mobile-suits/:mobile_suit_slug',
         (): MobileSuitResponse => ({
-          data: mockMobileSuitDetails[mockRx782Gundam.slug]!,
+          data: mockRx782GundamDetail,
         }),
         { timing: 60 * 60_000 },
       );
