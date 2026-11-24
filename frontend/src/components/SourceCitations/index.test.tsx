@@ -39,6 +39,28 @@ describe('SourceCitations', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
   });
 
+  it('numbers each entry and gives it the id its marks link to', () => {
+    render(
+      <SourceCitations
+        citations={[mockSources.rx782Gundam, mockWikidataSource]}
+        idPrefix="dossier-source"
+      />,
+    );
+
+    const entries = screen.getAllByRole('listitem');
+    expect(entries.map(({ id }) => id)).toEqual([
+      'dossier-source-1',
+      'dossier-source-2',
+    ]);
+    expect(entries[1]).toHaveTextContent(/^\[2\]Wikidata/);
+  });
+
+  it('gives its entries no ids without an id prefix', () => {
+    render(<SourceCitations citations={[mockSources.rx782Gundam]} />);
+
+    expect(screen.getByRole('listitem')).not.toHaveAttribute('id');
+  });
+
   it('renders nothing without citations', () => {
     const { container } = render(<SourceCitations citations={[]} />);
 
