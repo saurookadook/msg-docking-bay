@@ -11,19 +11,26 @@ import '@/app/App.css';
 export type MirageParameters = {
   /** @description Route overrides for this story's Mirage server. */
   mirage?: MirageRouteOverrides;
+  /**
+   * @description The route pattern the story is mounted at, so a page reads its params
+   * (`/mobile-suits/:mobileSuitSlug`). Defaults to `*`.
+   */
+  path?: string;
   /** @description The path the story's memory router starts at. */
   route?: string;
 };
 
 function StoryRouter({
   initialEntry,
+  path,
   Story,
 }: {
   initialEntry: string;
+  path: string;
   Story: React.ComponentType;
 }) {
   const [router] = useState(() =>
-    createMemoryRouter([{ path: '*', element: <Story /> }], {
+    createMemoryRouter([{ path, element: <Story /> }], {
       initialEntries: [initialEntry],
     }),
   );
@@ -34,6 +41,7 @@ const withAppProviders: Decorator = (Story, { parameters }) => (
   <AppStoreProvider>
     <StoryRouter
       initialEntry={(parameters as MirageParameters).route ?? '/'}
+      path={(parameters as MirageParameters).path ?? '*'}
       Story={Story}
     />
   </AppStoreProvider>
