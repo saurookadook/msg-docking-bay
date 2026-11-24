@@ -76,6 +76,7 @@ export function useCatalogList<Card>({
  * @note Details stay in the store, so returning to a page shows it without refetching.
  * No guard drops a late response: each slug's state is kept apart, so one that lands
  * after the page moved on is stored under its own slug and replaces nothing.
+ * `slug` is the entity's URL slug from the route, which may be an old one.
  */
 export function useCatalogDetail<Detail>({
   fetchDetail,

@@ -72,7 +72,10 @@ export async function fetchMobileSuits({
   });
 }
 
-/** @description Marks the mobile suit under `slug` as loading. */
+/**
+ * @description Marks the mobile suit under `slug` as loading.
+ * @note `slug` is the suit's URL slug (`rx-78-2-gundam`), as asked for: an old one too.
+ */
 export function requestMobileSuit({
   dispatch,
   slug,
@@ -80,7 +83,10 @@ export function requestMobileSuit({
   return dispatch({ type: REQUEST_MOBILE_SUIT, payload: { mobileSuits: { slug } } });
 }
 
-/** @description Stores the mobile suit fetched for `slug`. */
+/**
+ * @description Stores the mobile suit fetched for `slug`.
+ * @note `slug` is the suit's URL slug (`rx-78-2-gundam`), as asked for: an old one too.
+ */
 export function setMobileSuit({
   detail,
   dispatch,
@@ -92,7 +98,11 @@ export function setMobileSuit({
   });
 }
 
-/** @description Stores the error for the mobile suit under `slug`; `isNotFound` marks a 404. */
+/**
+ * @description Stores the error for the mobile suit under `slug`; `isNotFound` marks a
+ * 404.
+ * @note `slug` is the suit's URL slug (`rx-78-2-gundam`), as asked for: an old one too.
+ */
 export function setMobileSuitError({
   dispatch,
   errorMessage,
@@ -109,6 +119,7 @@ export function setMobileSuitError({
  * @description Requests `GET /api/mobile-suits/{mobile_suit_slug}` and stores the suit
  * under `slug`, the slug asked for. An old slug stores the renamed suit, whose `slug` is
  * current, under both.
+ * @note `slug` is the suit's URL slug (`rx-78-2-gundam`), not its model number.
  */
 export async function fetchMobileSuit({
   dispatch,
