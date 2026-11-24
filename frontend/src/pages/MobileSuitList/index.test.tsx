@@ -7,20 +7,13 @@ import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockZakuII } from '@/__mocks__/mobileSuitMocks';
 import type { MobileSuitsListResponse } from '@/api';
 import { safeFetch } from '@/utils';
-import { renderWithProviders } from '@/utils/testing';
+import { findRowHeaderTexts, renderWithProviders } from '@/utils/testing';
 
 async function findRoster() {
   return screen.findByRole('region', { name: 'Mobile Suits' });
 }
 
-async function findRowNames(): Promise<string[]> {
-  const table = await screen.findByRole('table', {
-    name: /Mobile suits in their cages/,
-  });
-  return within(table)
-    .getAllByRole('rowheader')
-    .map(({ textContent }) => textContent ?? '');
-}
+const TABLE_NAME = /Mobile suits in their cages/;
 
 describe('MobileSuitList', () => {
   let server: Server;
@@ -61,13 +54,15 @@ describe('MobileSuitList', () => {
     renderWithProviders({ initialEntries: ['/mobile-suits'] });
     const user = userEvent.setup();
 
-    await findRowNames();
+    await findRowHeaderTexts({ tableName: TABLE_NAME });
     await user.selectOptions(
       await screen.findByRole('combobox', { name: 'Continuity' }),
       await screen.findByRole('option', { name: 'Universal Century' }),
     );
 
-    await waitFor(async () => expect(await findRowNames()).toHaveLength(3));
+    await waitFor(async () =>
+      expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toHaveLength(3),
+    );
   });
 
   it('searches as the user types', async () => {
@@ -80,7 +75,9 @@ describe('MobileSuitList', () => {
       'zaku',
     );
 
-    await waitFor(async () => expect(await findRowNames()).toEqual(['Zaku II']));
+    await waitFor(async () =>
+      expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toEqual(['Zaku II']),
+    );
   });
 
   it("titles an old work slug's chip and filters by the current slug", async () => {
@@ -93,7 +90,10 @@ describe('MobileSuitList', () => {
       }),
     ).toBeInTheDocument();
     await waitFor(async () =>
-      expect(await findRowNames()).toEqual(['Gundam', 'Zaku II']),
+      expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toEqual([
+        'Gundam',
+        'Zaku II',
+      ]),
     );
   });
 
@@ -103,7 +103,9 @@ describe('MobileSuitList', () => {
       initialEntries: ['/mobile-suits?work=msg&limit=1&offset=1'],
     });
 
-    await waitFor(async () => expect(await findRowNames()).toEqual(['Zaku II']));
+    await waitFor(async () =>
+      expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toEqual(['Zaku II']),
+    );
   });
 
   it('shows an unknown work, and the empty roster with a way out', async () => {
@@ -120,7 +122,10 @@ describe('MobileSuitList', () => {
     );
     await user.click(await screen.findByRole('link', { name: 'Clear filters' }));
 
-    expect(await findRowNames()).toEqual(['Gundam', 'Gundam']);
+    expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toEqual([
+      'Gundam',
+      'Gundam',
+    ]);
     expect(
       screen.queryByRole('list', { name: 'Active filters' }),
     ).not.toBeInTheDocument();
@@ -143,10 +148,15 @@ describe('MobileSuitList', () => {
     });
     const user = userEvent.setup();
 
-    expect(await findRowNames()).toEqual(['Gundam', 'Gundam']);
+    expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toEqual([
+      'Gundam',
+      'Gundam',
+    ]);
     await user.click(screen.getByRole('link', { name: 'Next' }));
 
-    await waitFor(async () => expect(await findRowNames()).toEqual(['Zaku II']));
+    await waitFor(async () =>
+      expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toEqual(['Zaku II']),
+    );
     expect(
       screen.getByRole('cell', { name: 'MS DECK 01 · CAGE 03' }),
     ).toBeInTheDocument();

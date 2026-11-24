@@ -1,19 +1,12 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Server } from 'miragejs';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { makeMirageServer } from '@/__mocks__/mirageServer';
-import { renderWithProviders } from '@/utils/testing';
+import { findRowHeaderTexts, renderWithProviders } from '@/utils/testing';
 
-async function findRowNames(): Promise<string[]> {
-  const table = await screen.findByRole('table', {
-    name: 'Mechanical designers, by name',
-  });
-  return within(table)
-    .getAllByRole('rowheader')
-    .map(({ textContent }) => textContent ?? '');
-}
+const TABLE_NAME = 'Mechanical designers, by name';
 
 describe('DesignerList', () => {
   let server: Server;
@@ -27,7 +20,7 @@ describe('DesignerList', () => {
     renderWithProviders({ initialEntries: ['/mechanical-designers'] });
     const user = userEvent.setup();
 
-    expect(await findRowNames()).toEqual([
+    expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toEqual([
       'Hajime Katoki',
       'Kunio Okawara',
       'Masaki Kawahara',
@@ -38,7 +31,11 @@ describe('DesignerList', () => {
       screen.getByRole('searchbox', { name: 'Search designers' }),
       'okawara',
     );
-    await waitFor(async () => expect(await findRowNames()).toEqual(['Kunio Okawara']));
+    await waitFor(async () =>
+      expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toEqual([
+        'Kunio Okawara',
+      ]),
+    );
     expect(screen.getByRole('link', { name: 'Kunio Okawara' })).toHaveAttribute(
       'href',
       '/mechanical-designers/kunio-okawara',

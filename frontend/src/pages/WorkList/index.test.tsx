@@ -7,16 +7,9 @@ import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockItMoves, mockMobileSuitGundam } from '@/__mocks__/workMocks';
 import type { ContinuitiesListResponse, WorksListResponse } from '@/api';
 import { safeFetch } from '@/utils';
-import { renderWithProviders } from '@/utils/testing';
+import { findRowHeaderTexts, renderWithProviders } from '@/utils/testing';
 
-async function findRowTitles(): Promise<string[]> {
-  const table = await screen.findByRole('table', {
-    name: 'Works, first released first',
-  });
-  return within(table)
-    .getAllByRole('rowheader')
-    .map(({ textContent }) => textContent ?? '');
-}
+const TABLE_NAME = 'Works, first released first';
 
 describe('WorkList', () => {
   let server: Server;
@@ -29,7 +22,7 @@ describe('WorkList', () => {
     server = makeMirageServer({ environment: 'test' });
     renderWithProviders({ initialEntries: ['/works'] });
 
-    expect(await findRowTitles()).toHaveLength(5);
+    expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toHaveLength(5);
     const firstRow = screen.getAllByRole('row')[1]!;
     expect(
       within(firstRow)
@@ -44,10 +37,12 @@ describe('WorkList', () => {
     renderWithProviders({ initialEntries: ['/works'] });
     const user = userEvent.setup();
 
-    await findRowTitles();
+    await findRowHeaderTexts({ tableName: TABLE_NAME });
     await user.selectOptions(screen.getByRole('combobox', { name: 'Type' }), 'Film');
 
-    await waitFor(async () => expect(await findRowTitles()).toHaveLength(1));
+    await waitFor(async () =>
+      expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toHaveLength(1),
+    );
   });
 
   it('asks for the continuities once, even when there are none', async () => {
@@ -66,7 +61,7 @@ describe('WorkList', () => {
       );
     await waitFor(() => expect(continuityCallIndexes()).toHaveLength(1));
     await fetchSpy.mock.results[continuityCallIndexes()[0]!]?.value;
-    await findRowTitles();
+    await findRowHeaderTexts({ tableName: TABLE_NAME });
 
     expect(continuityCallIndexes()).toHaveLength(1);
   });

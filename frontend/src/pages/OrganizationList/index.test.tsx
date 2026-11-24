@@ -1,18 +1,13 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import type { Server } from 'miragejs';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockPrincipalityOfZeonRef, mockZeonic } from '@/__mocks__/peopleMocks';
 import type { OrganizationsListResponse } from '@/api';
-import { renderWithProviders } from '@/utils/testing';
+import { findRowHeaderTexts, renderWithProviders } from '@/utils/testing';
 
-async function findRowNames(): Promise<string[]> {
-  const table = await screen.findByRole('table', { name: 'Organizations, by name' });
-  return within(table)
-    .getAllByRole('rowheader')
-    .map(({ textContent }) => textContent ?? '');
-}
+const TABLE_NAME = 'Organizations, by name';
 
 describe('OrganizationList', () => {
   let server: Server;
@@ -25,7 +20,7 @@ describe('OrganizationList', () => {
     server = makeMirageServer({ environment: 'test' });
     renderWithProviders({ initialEntries: ['/organizations'] });
 
-    expect(await findRowNames()).toHaveLength(3);
+    expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toHaveLength(3);
     expect(screen.getAllByRole('cell', { name: '—' })).toHaveLength(3);
   });
 
@@ -50,6 +45,8 @@ describe('OrganizationList', () => {
     server = makeMirageServer({ environment: 'test' });
     renderWithProviders({ initialEntries: ['/organizations?work=mobile-suit-gundam'] });
 
-    await waitFor(async () => expect(await findRowNames()).toHaveLength(2));
+    await waitFor(async () =>
+      expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toHaveLength(2),
+    );
   });
 });

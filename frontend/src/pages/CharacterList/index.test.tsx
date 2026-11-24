@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Server } from 'miragejs';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -6,14 +6,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockAmuroRay } from '@/__mocks__/peopleMocks';
 import type { CharactersListResponse } from '@/api';
-import { renderWithProviders } from '@/utils/testing';
+import { findRowHeaderTexts, renderWithProviders } from '@/utils/testing';
 
-async function findRowNames(): Promise<string[]> {
-  const table = await screen.findByRole('table', { name: 'Personnel files, by name' });
-  return within(table)
-    .getAllByRole('rowheader')
-    .map(({ textContent }) => textContent ?? '');
-}
+const TABLE_NAME = 'Personnel files, by name';
 
 describe('CharacterList', () => {
   let server: Server;
@@ -26,7 +21,7 @@ describe('CharacterList', () => {
     server = makeMirageServer({ environment: 'test' });
     renderWithProviders({ initialEntries: ['/characters'] });
 
-    expect(await findRowNames()).toHaveLength(2);
+    expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toHaveLength(2);
     expect(screen.getAllByRole('link', { name: mockAmuroRay.name })[0]).toHaveAttribute(
       'href',
       `/characters/${mockAmuroRay.slug}`,
@@ -43,7 +38,9 @@ describe('CharacterList', () => {
       initialEntries: ['/characters?work=mobile-suit-gundam-the-origin'],
     });
 
-    await waitFor(async () => expect(await findRowNames()).toHaveLength(1));
+    await waitFor(async () =>
+      expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toHaveLength(1),
+    );
     expect(
       await screen.findByRole('button', {
         name: /^Remove the work filter: Mobile Suit Gundam: The Origin/,
@@ -76,6 +73,8 @@ describe('CharacterList', () => {
       'origin',
     );
 
-    await waitFor(async () => expect(await findRowNames()).toHaveLength(1));
+    await waitFor(async () =>
+      expect(await findRowHeaderTexts({ tableName: TABLE_NAME })).toHaveLength(1),
+    );
   });
 });
