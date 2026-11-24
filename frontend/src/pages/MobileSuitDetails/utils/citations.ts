@@ -7,8 +7,9 @@ export type Cite = (source: SourceCitationEntity) => React.ReactElement;
 export const SOURCE_ID_PREFIX = 'mobile-suit-source';
 
 /**
- * @description Every source the dossier cites, in the order its sections show them:
- * the infobox's credits, then the spec sheets, the lineage and the appearances.
+ * @description Every source the dossier cites, in the order a reader meets them: the
+ * spec sheets (the infobox names the selected one first), then the infobox's credits,
+ * the lineage and the appearances.
  * @note Duplicates stay; `numberCitations` numbers each distinct source once.
  */
 export function collectCitations({
@@ -20,10 +21,10 @@ export function collectCitations({
   spec_sheets,
 }: MobileSuitDetailEntity): SourceCitationEntity[] {
   return [
+    ...spec_sheets,
     ...designers,
     ...organizations,
     ...pilots,
-    ...spec_sheets,
     ...relations,
     ...appearances,
   ].map(({ source }) => source);
