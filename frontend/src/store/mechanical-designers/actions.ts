@@ -11,6 +11,7 @@ import {
 import { fetchCatalogList } from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
 
+/** @description Marks the designers list as loading for `query`. */
 export function requestMechanicalDesigners({
   dispatch,
   query,
@@ -21,6 +22,7 @@ export function requestMechanicalDesigners({
   });
 }
 
+/** @description Stores one page of designers for `query`, unless a newer request has replaced it. */
 export function setMechanicalDesigners({
   dispatch,
   items,
@@ -37,6 +39,7 @@ export function setMechanicalDesigners({
   });
 }
 
+/** @description Stores the error for `query`, unless a newer request has replaced it. */
 export function setMechanicalDesignersError({
   dispatch,
   errorMessage,

@@ -1,4 +1,4 @@
-// What every catalog slice shares: the state of one paged list and of the details
+// NOTE: what every catalog slice shares: the state of one paged list and of the details
 // fetched by slug, the transitions their field reducers make, and the fetch they run.
 import type { PageMeta, ValidationError } from '@/api';
 import type { Nullable } from '@/types';
@@ -25,6 +25,7 @@ export type ListRequestPayload = { query: string };
 export type ListSetPayload<Card> = { items: Card[]; meta: PageMeta; query: string };
 export type ListErrorPayload = { errorMessage: string; query: string };
 
+/** @description A catalog list before its first request: empty, with no query. */
 export function createInitialListState<Card>(): ListState<Card> {
   return {
     errorMessage: null,
@@ -90,6 +91,7 @@ export type DetailErrorPayload = {
 /** @description Details by the slug they were requested with, old or current. */
 export type DetailsBySlug<Detail> = Record<string, DetailState<Detail>>;
 
+/** @description Marks the detail under `slug` as loading, keeping any detail already shown. */
 export function requestDetail<Detail>(
   stateSlice: DetailsBySlug<Detail>,
   { slug }: DetailRequestPayload,
@@ -105,6 +107,7 @@ export function requestDetail<Detail>(
   };
 }
 
+/** @description Stores the detail fetched for `slug`. */
 export function setDetail<Detail>(
   stateSlice: DetailsBySlug<Detail>,
   { detail, slug }: DetailSetPayload<Detail>,
@@ -115,6 +118,7 @@ export function setDetail<Detail>(
   };
 }
 
+/** @description Stores the error for `slug`'s detail, with `detail` set to `null`. */
 export function setDetailError<Detail>(
   stateSlice: DetailsBySlug<Detail>,
   { errorMessage, isNotFound, slug }: DetailErrorPayload,

@@ -11,6 +11,7 @@ import {
 import { fetchCatalogList } from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
 
+/** @description Marks the organizations list as loading for `query`. */
 export function requestOrganizations({
   dispatch,
   query,
@@ -21,6 +22,7 @@ export function requestOrganizations({
   });
 }
 
+/** @description Stores one page of organizations for `query`, unless a newer request has replaced it. */
 export function setOrganizations({
   dispatch,
   items,
@@ -37,6 +39,7 @@ export function setOrganizations({
   });
 }
 
+/** @description Stores the error for `query`, unless a newer request has replaced it. */
 export function setOrganizationsError({
   dispatch,
   errorMessage,

@@ -17,6 +17,7 @@ import { catalogErrorMessage, fetchCatalogList } from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
 import { safeFetch, SafeFetchError } from '@/utils';
 
+/** @description Marks the works list as loading for `query`. */
 export function requestWorks({
   dispatch,
   query,
@@ -24,6 +25,7 @@ export function requestWorks({
   return dispatch({ type: REQUEST_WORKS, payload: { works: { query } } });
 }
 
+/** @description Stores one page of works for `query`, unless a newer request has replaced it. */
 export function setWorks({
   dispatch,
   items,
@@ -33,6 +35,7 @@ export function setWorks({
   return dispatch({ type: SET_WORKS, payload: { works: { items, meta, query } } });
 }
 
+/** @description Stores the error for `query`, unless a newer request has replaced it. */
 export function setWorksError({
   dispatch,
   errorMessage,
@@ -62,10 +65,12 @@ export async function fetchWorks({
   });
 }
 
+/** @description Marks the work under `slug` as loading. */
 export function requestWork({ dispatch, slug }: BaseAction & { slug: string }): void {
   return dispatch({ type: REQUEST_WORK, payload: { works: { slug } } });
 }
 
+/** @description Stores the work fetched for `slug`. */
 export function setWork({
   detail,
   dispatch,
@@ -74,6 +79,7 @@ export function setWork({
   return dispatch({ type: SET_WORK, payload: { works: { detail, slug } } });
 }
 
+/** @description Stores the error for the work under `slug`; `isNotFound` marks a 404. */
 export function setWorkError({
   dispatch,
   errorMessage,

@@ -7,6 +7,7 @@ import {
 import { fetchCatalogList } from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
 
+/** @description Marks the personnel list as loading for `query`. */
 export function requestCharacters({
   dispatch,
   query,
@@ -14,6 +15,7 @@ export function requestCharacters({
   return dispatch({ type: REQUEST_CHARACTERS, payload: { characters: { query } } });
 }
 
+/** @description Stores one page of personnel for `query`, unless a newer request has replaced it. */
 export function setCharacters({
   dispatch,
   items,
@@ -30,6 +32,7 @@ export function setCharacters({
   });
 }
 
+/** @description Stores the error for `query`, unless a newer request has replaced it. */
 export function setCharactersError({
   dispatch,
   errorMessage,

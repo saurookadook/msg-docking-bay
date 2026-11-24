@@ -8,10 +8,12 @@ import { catalogErrorMessage } from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
 import { safeFetch } from '@/utils';
 
+/** @description Marks the continuities as loading. */
 export function requestContinuities({ dispatch }: BaseAction): void {
   return dispatch({ type: REQUEST_CONTINUITIES });
 }
 
+/** @description Stores every continuity, for the continuity filters. */
 export function setContinuities({
   continuities,
   dispatch,
@@ -22,6 +24,7 @@ export function setContinuities({
   });
 }
 
+/** @description Stores the error from the continuities request. */
 export function setContinuitiesError({
   dispatch,
   errorMessage,

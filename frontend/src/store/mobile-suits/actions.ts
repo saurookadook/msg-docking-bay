@@ -7,6 +7,7 @@ import {
 import { fetchCatalogList } from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
 
+/** @description Marks the mobile suits list as loading for `query`. */
 export function requestMobileSuits({
   dispatch,
   query,
@@ -14,6 +15,7 @@ export function requestMobileSuits({
   return dispatch({ type: REQUEST_MOBILE_SUITS, payload: { mobileSuits: { query } } });
 }
 
+/** @description Stores one page of mobile suits for `query`, unless a newer request has replaced it. */
 export function setMobileSuits({
   dispatch,
   items,
@@ -30,6 +32,7 @@ export function setMobileSuits({
   });
 }
 
+/** @description Stores the error for `query`, unless a newer request has replaced it. */
 export function setMobileSuitsError({
   dispatch,
   errorMessage,
