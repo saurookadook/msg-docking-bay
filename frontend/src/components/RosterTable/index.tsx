@@ -11,8 +11,6 @@ export type RosterTableProps<Row extends { slug: string }> = Omit<
 > & {
   caption: string;
   columns: RosterColumns<Row>;
-  /** @description The column whose cell names the row (a `<th scope="row">`). */
-  rowHeaderColumnID: string;
   rows: readonly Row[];
 };
 
@@ -25,7 +23,6 @@ export function RosterTable<Row extends { slug: string }>({
   caption,
   className,
   columns,
-  rowHeaderColumnID,
   rows,
   ...props
 }: RosterTableProps<Row>) {
@@ -57,7 +54,7 @@ export function RosterTable<Row extends { slug: string }>({
               const { header } = cell.column.columnDef;
               const label = typeof header === 'string' ? header : undefined;
               const content = <table.FlexRender cell={cell} />;
-              return cell.column.id === rowHeaderColumnID ? (
+              return cell.column.columnDef.meta?.isRowHeader === true ? (
                 <th data-label={label} key={cell.id} scope="row">
                   {content}
                 </th>

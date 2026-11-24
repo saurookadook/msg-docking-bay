@@ -21,6 +21,7 @@ const columns = helper.columns([
       </EntityLink>
     ),
     header: 'Name',
+    meta: { isRowHeader: true },
   }),
   helper.accessor('parent_organization', {
     cell: ({ getValue }) => {
@@ -55,7 +56,6 @@ export function OrganizationList() {
       heading="Organizations"
       id="organization-list"
       list={list}
-      rowHeaderColumnID="name"
     />
   );
 }

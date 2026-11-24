@@ -8,7 +8,7 @@ type Unit = { name: string; slug: string; unitType: string };
 
 const helper = rosterColumnHelper<Unit>();
 const columns = helper.columns([
-  helper.accessor('name', { header: 'Name' }),
+  helper.accessor('name', { header: 'Name', meta: { isRowHeader: true } }),
   helper.accessor('unitType', { header: 'Unit type' }),
 ]);
 
@@ -19,14 +19,7 @@ const mockUnits: Unit[] = [
 
 describe('RosterTable', () => {
   it('renders a captioned table, one row per entity in the given order', () => {
-    render(
-      <RosterTable
-        caption="Cage roster"
-        columns={columns}
-        rowHeaderColumnID="name"
-        rows={mockUnits}
-      />,
-    );
+    render(<RosterTable caption="Cage roster" columns={columns} rows={mockUnits} />);
 
     const table = screen.getByRole('table', { name: 'Cage roster' });
     expect(
@@ -42,14 +35,7 @@ describe('RosterTable', () => {
   });
 
   it('labels each cell with its header for the stacked phone layout', () => {
-    render(
-      <RosterTable
-        caption="Cage roster"
-        columns={columns}
-        rowHeaderColumnID="name"
-        rows={mockUnits}
-      />,
-    );
+    render(<RosterTable caption="Cage roster" columns={columns} rows={mockUnits} />);
 
     expect(screen.getAllByRole('cell')[0]).toHaveAttribute('data-label', 'Unit type');
     expect(screen.getAllByRole('rowheader')[0]).toHaveAttribute('data-label', 'Name');
@@ -57,13 +43,15 @@ describe('RosterTable', () => {
 
   it('leaves a cell unlabelled when its header is not plain text', () => {
     const columnsWithNodeHeader = helper.columns([
-      helper.accessor('name', { header: () => <span>Name</span> }),
+      helper.accessor('name', {
+        header: () => <span>Name</span>,
+        meta: { isRowHeader: true },
+      }),
     ]);
     render(
       <RosterTable
         caption="Cage roster"
         columns={columnsWithNodeHeader}
-        rowHeaderColumnID="name"
         rows={mockUnits}
       />,
     );

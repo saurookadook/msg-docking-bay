@@ -10,7 +10,7 @@ import { rosterColumnHelper } from './rosterColumns';
 const helper = rosterColumnHelper<MobileSuitCardEntity>();
 const columns = helper.columns([
   helper.accessor('model_number', { header: 'Model number' }),
-  helper.accessor('name', { header: 'Name' }),
+  helper.accessor('name', { header: 'Name', meta: { isRowHeader: true } }),
   helper.accessor('unit_type', {
     cell: ({ getValue }) => UNIT_TYPE_LABELS[getValue()],
     header: 'Unit type',
@@ -27,7 +27,6 @@ const meta = {
   args: {
     caption: 'Cage roster',
     columns,
-    rowHeaderColumnID: 'name',
     rows: mockMobileSuits,
   },
 } satisfies Meta<typeof RosterTable<MobileSuitCardEntity>>;

@@ -10,7 +10,7 @@ import { CatalogRoster } from '.';
 const columnHelper = rosterColumnHelper<MobileSuitCardEntity>();
 const columns = columnHelper.columns([
   columnHelper.accessor('model_number', { header: 'Model number' }),
-  columnHelper.accessor('name', { header: 'Name' }),
+  columnHelper.accessor('name', { header: 'Name', meta: { isRowHeader: true } }),
 ]);
 
 const mockLoadedList = {
@@ -31,7 +31,6 @@ const meta = {
     heading: 'Mobile Suits',
     id: 'mobile-suits',
     list: mockLoadedList,
-    rowHeaderColumnID: 'name',
   },
 } satisfies Meta<typeof CatalogRoster<MobileSuitCardEntity>>;
 

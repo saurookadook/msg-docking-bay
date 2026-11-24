@@ -25,7 +25,6 @@ export type CatalogRosterProps<Row extends { slug: string }> = Omit<
   heading: string;
   id: string;
   list: ListState<Row>;
-  rowHeaderColumnID: string;
 };
 
 /**
@@ -43,7 +42,6 @@ export function CatalogRoster<Row extends { slug: string }>({
   heading,
   id,
   list,
-  rowHeaderColumnID,
   ...props
 }: CatalogRosterProps<Row>) {
   const [searchParams] = useSearchParams();
@@ -87,7 +85,6 @@ export function CatalogRoster<Row extends { slug: string }>({
           caption={caption}
           className={classNames({ stale: requestInProgress })}
           columns={columns}
-          rowHeaderColumnID={rowHeaderColumnID}
           rows={items}
         />
       )}

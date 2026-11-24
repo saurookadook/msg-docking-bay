@@ -30,6 +30,7 @@ const columns = helper.columns([
       </EntityLink>
     ),
     header: 'Title',
+    meta: { isRowHeader: true },
   }),
   helper.accessor('work_type', {
     cell: ({ getValue }) => WORK_TYPE_LABELS[getValue()],
@@ -72,7 +73,6 @@ export function WorkList() {
       heading="Works"
       id="work-list"
       list={list}
-      rowHeaderColumnID="title"
     />
   );
 }

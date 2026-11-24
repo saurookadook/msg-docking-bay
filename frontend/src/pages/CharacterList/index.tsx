@@ -21,6 +21,7 @@ const columns = helper.columns([
       </EntityLink>
     ),
     header: 'Name',
+    meta: { isRowHeader: true },
   }),
   helper.accessor('name_ja', {
     cell: ({ getValue }) => <span lang="ja">{getValue() ?? '—'}</span>,
@@ -46,7 +47,6 @@ export function CharacterList() {
       heading="Personnel"
       id="character-list"
       list={list}
-      rowHeaderColumnID="name"
     />
   );
 }

@@ -51,6 +51,7 @@ export function MobileSuitList() {
         </EntityLink>
       ),
       header: 'Name',
+      meta: { isRowHeader: true },
     }),
     helper.accessor('unit_type', {
       cell: ({ getValue }) => UNIT_TYPE_LABELS[getValue()],
@@ -84,7 +85,6 @@ export function MobileSuitList() {
       heading="Mobile Suits"
       id="mobile-suit-list"
       list={list}
-      rowHeaderColumnID="name"
     />
   );
 }
