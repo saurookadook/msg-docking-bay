@@ -24,7 +24,7 @@ function Groups({
       {groups.map(({ label, relations }) => (
         <div className="suit-lineage-group" key={label}>
           <h4 className="stencil-label">{label}</h4>
-          <ul aria-label={label}>
+          <ul aria-label={label} className="plain-list">
             {relations.map(({ direction, mobile_suit, relation_type, source }) => (
               <li
                 className="suit-lineage-node"

@@ -146,7 +146,7 @@ export function SuitParts({ sheet }: SuitPartsProps) {
             groups.map(({ items, label }) => (
               <div className="suit-parts-group" key={label}>
                 {label !== title ? <h5 className="stencil-label">{label}</h5> : null}
-                <ul aria-label={label}>
+                <ul aria-label={label} className="plain-list">
                   {items.map(({ detail, key, name, quantity }) => (
                     <li key={key}>
                       {quantity != null && (

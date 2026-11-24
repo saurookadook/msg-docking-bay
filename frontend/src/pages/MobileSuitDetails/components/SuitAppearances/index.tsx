@@ -29,7 +29,7 @@ export function SuitAppearances({ appearances, cite }: SuitAppearancesProps) {
       <h3 className="stencil-label" id={headingID}>
         Appearances
       </h3>
-      <ul>
+      <ul className="plain-list">
         {appearances.map(({ first_episode, is_debut, last_episode, source, work }) => {
           const episodes = formatEpisodes({ first_episode, last_episode });
           const year = work.start_date?.slice(0, 4);

@@ -7,7 +7,7 @@ export type Entry = { content: React.ReactNode; key: string };
 export function entryList(entries: Entry[]): Nullable<React.ReactElement> {
   if (entries.length === 0) return null;
   return (
-    <ul className="suit-infobox-list">
+    <ul className="suit-infobox-list plain-list">
       {entries.map(({ content, key }) => (
         <li key={key}>{content}</li>
       ))}
