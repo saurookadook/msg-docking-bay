@@ -5,8 +5,9 @@ import { DeckPanel, SpecPlate } from '@/components';
 import type { Nullable } from '@/types';
 
 import type { Cite } from '../../utils/citations';
-import { formatMeasurement, MEASUREMENTS } from '../../utils/format';
+import { MEASUREMENTS } from '../../utils/format';
 import type { SpecSheetSelection } from '../../utils/hooks';
+import { measurementItem } from '../../utils/sheetParts';
 import { SPEC_PARAM, type SpecSheetEntry } from '../../utils/specSheets';
 import { HeightLineup } from '../HeightLineup';
 import { SuitParts } from '../SuitParts';
@@ -34,11 +35,7 @@ function SheetContents({
       </h4>
       <SpecPlate
         aria-label="Measurements"
-        items={MEASUREMENT_FIELDS.map((field) => ({
-          isInherited: sheet.inherited_fields.includes(field),
-          label: MEASUREMENTS[field].label,
-          value: formatMeasurement({ field, value: sheet[field] }),
-        }))}
+        items={MEASUREMENT_FIELDS.map((field) => measurementItem({ field, sheet }))}
       />
       <HeightLineup name={name} sheet={sheet} />
       <SuitParts sheet={sheet} />

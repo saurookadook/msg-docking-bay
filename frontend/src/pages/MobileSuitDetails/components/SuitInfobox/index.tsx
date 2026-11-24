@@ -7,12 +7,17 @@ import { EntityLink, SpecPlate, VisualSlot, type SpecPlateItem } from '@/compone
 import type { Nullable } from '@/types';
 
 import type { Cite } from '../../utils/citations';
+import { formatEpisodes } from '../../utils/format';
+import { lineupHeight } from '../../utils/lineup';
 import {
-  formatEpisodes,
-  formatMeasurement,
-  formatQuantity,
-  MEASUREMENTS,
-} from '../../utils/format';
+  MATERIAL_USE_LABELS,
+  MATERIAL_USES,
+  materialItems,
+  measurementItem,
+  partText,
+  powerplantItems,
+  type PartItem,
+} from '../../utils/sheetParts';
 import type { SpecSheetEntry } from '../../utils/specSheets';
 
 import './styles.css';
@@ -46,66 +51,29 @@ function workNote(work: Nullable<{ title: string }>) {
 
 /** @description The selected sheet's headline numbers and parts. */
 function sheetItems(sheet: Nullable<MobileSuitSpecSheetEntity>): SpecPlateItem[] {
-  const heightField =
-    sheet?.overall_height_m == null && sheet?.head_height_m != null
-      ? 'head_height_m'
-      : 'overall_height_m';
-  const isInherited = (field: MobileSuitSpecSheetEntity['inherited_fields'][number]) =>
-    sheet?.inherited_fields.includes(field) ?? false;
   const partsInherited = (kind: MobileSuitSpecSheetEntity['inherited_parts'][number]) =>
     sheet?.inherited_parts.includes(kind) ?? false;
-  const materials = (use: 'armor' | 'frame') =>
-    entryList(
-      (sheet?.materials ?? [])
-        .filter(({ material_use }) => material_use === use)
-        .map(({ material }) => ({ content: material.name, key: material.slug })),
-    );
+  const partList = (items: PartItem[]) =>
+    entryList(items.map((item) => ({ content: partText(item), key: item.key })));
 
   return [
-    {
-      isInherited: isInherited(heightField),
-      label: MEASUREMENTS[heightField].label,
-      value: formatMeasurement({
-        field: heightField,
-        value: sheet?.[heightField] ?? null,
-      }),
-    },
-    {
-      isInherited: isInherited('gross_weight_kg'),
-      label: MEASUREMENTS.gross_weight_kg.label,
-      value: formatMeasurement({
-        field: 'gross_weight_kg',
-        value: sheet?.gross_weight_kg ?? null,
-      }),
-    },
+    measurementItem({ field: lineupHeight(sheet)?.field ?? 'overall_height_m', sheet }),
+    measurementItem({ field: 'gross_weight_kg', sheet }),
     {
       isInherited: partsInherited('powerplants'),
       label: 'Powerplant',
-      value: entryList(
-        (sheet?.powerplants ?? []).map((listing) => {
-          const quantity = formatQuantity(listing);
-          return {
-            content:
-              quantity == null
-                ? listing.powerplant.name
-                : `${quantity} ${listing.powerplant.name}`,
-            key: listing.powerplant.slug,
-          };
-        }),
-      ),
+      value: partList(powerplantItems(sheet)),
     },
-    {
+    ...MATERIAL_USES.map((use) => ({
       isInherited: partsInherited('materials'),
-      label: 'Armor',
-      value: materials('armor'),
-    },
-    {
-      isInherited: partsInherited('materials'),
-      label: 'Frame',
-      value: materials('frame'),
-    },
+      label: MATERIAL_USE_LABELS[use],
+      value: partList(materialItems({ sheet, use })),
+    })),
     // NOTE: a part kind is inherited whole, so a row with nothing of its own use stays pending.
-  ].map((item) => ({ ...item, isInherited: item.isInherited && item.value != null }));
+  ].map((item) => ({
+    ...item,
+    isInherited: item.isInherited === true && item.value != null,
+  }));
 }
 
 export type SuitInfoboxProps = {

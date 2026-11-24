@@ -8,17 +8,19 @@ import type {
 import type { Nullable } from '@/types';
 
 import { formatQuantity } from '../../utils/format';
+import {
+  MATERIAL_USE_LABELS,
+  MATERIAL_USES,
+  materialItems,
+  powerplantItems,
+  type PartItem,
+} from '../../utils/sheetParts';
 
 import './styles.css';
 
 type PartGroup = {
   label: string;
-  items: {
-    key: string;
-    quantity: Nullable<string>;
-    name: string;
-    detail: Nullable<string>;
-  }[];
+  items: PartItem[];
 };
 
 const ARMAMENT_GROUPS: { label: string; mounts: ArmamentMount[] }[] = [
@@ -44,7 +46,7 @@ function detailOf(...parts: (Nullable<string> | undefined)[]): Nullable<string> 
   return present.length === 0 ? null : present.join(' · ');
 }
 
-function armamentItem(listing: ArmamentListingEntity) {
+function armamentItem(listing: ArmamentListingEntity): PartItem {
   return {
     detail: detailOf(OPTIONAL_MOUNT_LABELS[listing.mount], listing.note),
     key: `${listing.mount}-${listing.armament.slug}`,
@@ -94,12 +96,7 @@ function partKinds(sheet: MobileSuitSpecSheetEntity): {
     {
       groups: nonEmpty([
         {
-          items: sheet.powerplants.map((listing) => ({
-            detail: listing.note,
-            key: listing.powerplant.slug,
-            name: listing.powerplant.name,
-            quantity: formatQuantity(listing),
-          })),
+          items: powerplantItems(sheet),
           label: 'Powerplant',
         },
       ]),
@@ -108,16 +105,9 @@ function partKinds(sheet: MobileSuitSpecSheetEntity): {
     },
     {
       groups: nonEmpty(
-        (['armor', 'frame'] as const).map((use) => ({
-          items: sheet.materials
-            .filter(({ material_use }) => material_use === use)
-            .map(({ material, note }) => ({
-              detail: note,
-              key: material.slug,
-              name: material.name,
-              quantity: null,
-            })),
-          label: use === 'armor' ? 'Armor' : 'Frame',
+        MATERIAL_USES.map((use) => ({
+          items: materialItems({ sheet, use }),
+          label: MATERIAL_USE_LABELS[use],
         })),
       ),
       kind: 'materials',
