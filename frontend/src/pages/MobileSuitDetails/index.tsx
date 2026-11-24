@@ -20,6 +20,7 @@ import {
   SuitAppearances,
   SuitHeader,
   SuitInfobox,
+  SuitLineage,
   SuitStrip,
 } from './components';
 import { collectCitations, SOURCE_ID_PREFIX } from './utils/citations';
@@ -86,6 +87,7 @@ function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
           items={REGISTRY_ITEMS}
         />
         <SpecSheetTabs cite={cite} selected={selected} sheets={suit.spec_sheets} />
+        <SuitLineage cite={cite} suit={suit} />
         <SuitAppearances appearances={suit.appearances} cite={cite} />
         {PENDING_SECTIONS.map((title) => (
           <PendingSection key={title} title={title} />
