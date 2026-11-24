@@ -1,17 +1,11 @@
 import classNames from 'classnames';
 import { useId } from 'react';
 
-import type { SourceCitationEntity, SourceKind } from '@/api';
+import type { SourceCitationEntity } from '@/api';
+import { SOURCE_KIND_LABELS } from '@/constants';
 
 import { citationID, citationKey } from './citationNumbers';
 import './styles.css';
-
-const SOURCE_KIND_LABELS: Record<SourceKind, string> = {
-  fandom_page: 'Gundam Wiki',
-  wikidata_item: 'Wikidata',
-  wikipedia_en_page: 'Wikipedia (EN)',
-  wikipedia_ja_page: 'Wikipedia (JA)',
-};
 
 export type SourceCitationsProps = React.HTMLAttributes<HTMLElement> & {
   /** @description Distinct citations, in footnote order (`numberCitations`). */
