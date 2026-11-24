@@ -42,7 +42,7 @@
     }
 
     & .suit-parts-quantity {
-        color: var(--color-accent);
+        color: var(--color-readout-alt);
     }
 
     & .suit-parts-detail {
