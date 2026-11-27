@@ -1,4 +1,3 @@
-import { useId } from 'react';
 import { useParams } from 'react-router';
 
 import type { MobileSuitDetailEntity, SourceCitationEntity } from '@/api';
@@ -8,8 +7,10 @@ import {
   DossierHeader,
   DossierLayout,
   DossierStrip,
+  PendingSection,
   SourceCitations,
   SpecPlate,
+  WorkAppearances,
 } from '@/components';
 import { UNIT_TYPE_LABELS } from '@/constants';
 import { NotFound } from '@/pages/NotFound';
@@ -17,17 +18,9 @@ import { fetchMobileSuit, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
 import { numberCitations } from '@/utils';
 
-import {
-  PendingPanel,
-  SpecSheetTabs,
-  SuitAppearances,
-  SuitInfobox,
-  SuitLineage,
-} from './components';
+import { SpecSheetTabs, SuitInfobox, SuitLineage } from './components';
 import { collectCitations, SOURCE_ID_PREFIX } from './utils/citations';
 import { useSpecSheetSelection } from './utils/hooks';
-
-import './styles.css';
 
 const selectMobileSuitDetails = (appState: AppState) =>
   appState.mobileSuits.detailsBySlug;
@@ -44,19 +37,6 @@ const REGISTRY_ITEMS = [
 
 /** @description Wiki sections the catalog does not hold yet. */
 const PENDING_SECTIONS = ['History', 'Gallery', 'Trivia'];
-
-/** @description A section shown as an empty slot until its data is ingested. */
-function PendingSection({ title }: { title: string }) {
-  const headingID = useId();
-  return (
-    <section aria-labelledby={headingID} className="pending-section">
-      <h3 className="stencil-label" id={headingID}>
-        {title}
-      </h3>
-      <PendingPanel />
-    </section>
-  );
-}
 
 /** @description The dossier for a loaded suit. */
 function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
@@ -92,7 +72,7 @@ function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
       />
       <SpecSheetTabs cite={cite} name={suit.name} selection={selection} />
       <SuitLineage cite={cite} suit={suit} />
-      <SuitAppearances appearances={suit.appearances} cite={cite} />
+      <WorkAppearances appearances={suit.appearances} cite={cite} />
       {PENDING_SECTIONS.map((title) => (
         <PendingSection key={title} title={title} />
       ))}

@@ -1,5 +1,6 @@
 export * from './citationNumbers';
 export * from './entityPath';
+export * from './formatRange';
 export * from './listSearch';
 export * from './logger';
 export * from './safeFetch';

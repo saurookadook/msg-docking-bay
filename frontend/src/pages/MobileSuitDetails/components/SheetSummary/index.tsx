@@ -1,9 +1,13 @@
 import type { MobileSuitSpecSheetEntity } from '@/api';
-import { SpecPlate, type SpecPlateItem } from '@/components';
+import {
+  entryList,
+  SpecPlate,
+  type Cite,
+  type Entry,
+  type SpecPlateItem,
+} from '@/components';
 import type { Nullable } from '@/types';
 
-import type { Cite } from '../../utils/citations';
-import { entryList, type Entry } from '../../utils/entryList';
 import { lineupHeight } from '../../utils/lineup';
 import {
   MATERIAL_USE_LABELS,

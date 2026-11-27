@@ -3,12 +3,15 @@ import type {
   MobileSuitOrganizationRole,
   SourceCitationEntity,
 } from '@/api';
-import { EntityLink, SpecPlate, type SpecPlateItem } from '@/components';
+import {
+  EntityLink,
+  entryList,
+  SpecPlate,
+  type Cite,
+  type SpecPlateItem,
+} from '@/components';
 import type { Nullable } from '@/types';
-
-import type { Cite } from '../../utils/citations';
-import { entryList } from '../../utils/entryList';
-import { formatEpisodes } from '../../utils/format';
+import { formatEpisodes } from '@/utils';
 
 import './styles.css';
 

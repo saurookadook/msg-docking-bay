@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  formatEpisodes,
-  formatMeasurement,
-  formatMetres,
-  formatQuantity,
-} from './format';
+import { formatMeasurement, formatMetres, formatQuantity } from './format';
 
 describe('format', () => {
   describe('formatMeasurement', () => {
@@ -40,18 +35,6 @@ describe('format', () => {
       [null, null, null],
     ])('formats %o to %o as %o', (quantity_min, quantity_max, formatted) => {
       expect(formatQuantity({ quantity_max, quantity_min })).toBe(formatted);
-    });
-  });
-
-  describe('formatEpisodes', () => {
-    it.each([
-      [1, 43, 'Episodes 1–43'],
-      [5, 5, 'Episode 5'],
-      [3, null, 'From episode 3'],
-      [null, 9, 'To episode 9'],
-      [null, null, null],
-    ])('formats %o to %o as %o', (first_episode, last_episode, formatted) => {
-      expect(formatEpisodes({ first_episode, last_episode })).toBe(formatted);
     });
   });
 });

@@ -1,8 +1,7 @@
 import type { MobileSuitDetailEntity } from '@/api';
-import { VisualSlot } from '@/components';
+import { VisualSlot, type Cite } from '@/components';
 import type { Nullable } from '@/types';
 
-import type { Cite } from '../../utils/citations';
 import type { SpecSheetEntry } from '../../utils/specSheets';
 import { SheetSummary } from '../SheetSummary';
 import { SuitCredits } from '../SuitCredits';

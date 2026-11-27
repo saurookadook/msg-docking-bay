@@ -2,9 +2,8 @@ import classNames from 'classnames';
 import { useId } from 'react';
 
 import type { MobileSuitDetailEntity } from '@/api';
-import { EntityLink } from '@/components';
+import { EntityLink, type Cite } from '@/components';
 
-import type { Cite } from '../../utils/citations';
 import { buildLineage, type LineageGroup } from '../../utils/lineage';
 import { ModelNumber } from '../ModelNumber';
 
@@ -28,7 +27,7 @@ function LineageTierGroups({
           <ul aria-label={label} className="plain-list">
             {relations.map(({ direction, mobile_suit, relation_type, source }) => (
               <li
-                className="suit-lineage-node"
+                className="tier-node"
                 key={`${relation_type}-${direction}-${mobile_suit.slug}`}
               >
                 <ModelNumber
@@ -69,7 +68,7 @@ export function SuitLineage({ cite, suit }: SuitLineageProps) {
       <h3 className="stencil-label" id={headingID}>
         Variants &amp; lineage
       </h3>
-      <div className="suit-lineage-tree">
+      <div className="tier-tree">
         {ancestors.length > 0 && (
           <LineageTierGroups
             cite={cite}
@@ -78,7 +77,7 @@ export function SuitLineage({ cite, suit }: SuitLineageProps) {
           />
         )}
         <div className="suit-lineage-current">
-          <p aria-current="page" className="suit-lineage-node">
+          <p aria-current="page" className="tier-node">
             <ModelNumber
               className="suit-lineage-model"
               modelNumber={suit.model_number}
