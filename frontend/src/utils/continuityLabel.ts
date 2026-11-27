@@ -7,7 +7,7 @@ import { joinParts } from './joinParts';
  * of their works, for a header's class line: `Universal Century · Cosmic Era`.
  * @returns `null` when no appearance has a continuity
  */
-export function continuityNames(
+export function continuityLabel(
   appearances: readonly { work: { continuity: Nullable<{ name: string }> } }[],
 ): Nullable<string> {
   const names = appearances.flatMap(({ work }) =>

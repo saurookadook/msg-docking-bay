@@ -16,7 +16,7 @@ import {
 import { NotFound } from '@/pages/NotFound';
 import { fetchCharacter, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
-import { continuityNames } from '@/utils';
+import { continuityLabel } from '@/utils';
 
 import { QualifiedUnits } from './components';
 import { collectCitations, SOURCE_ID_PREFIX } from './utils/citations';
@@ -58,7 +58,7 @@ function PersonnelFile({ character }: { character: CharacterDetailEntity }) {
     <DossierLayout
       header={
         <DossierHeader
-          classLine={continuityNames(character.appearances) ?? 'Personnel'}
+          classLine={continuityLabel(character.appearances) ?? 'Personnel'}
           eyebrow={FRAMING}
           headingID={HEADING_ID}
           name={character.name}

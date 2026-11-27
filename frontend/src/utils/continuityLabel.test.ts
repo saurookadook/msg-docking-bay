@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { continuityNames } from './continuityNames';
+import { continuityLabel } from './continuityLabel';
 
 const mockUniversalCentury = { name: 'Universal Century' };
 const mockCosmicEra = { name: 'Cosmic Era' };
 
-describe('continuityNames', () => {
+describe('continuityLabel', () => {
   it('names each continuity once, in the order of the works', () => {
     expect(
-      continuityNames([
+      continuityLabel([
         { work: { continuity: mockUniversalCentury } },
         { work: { continuity: mockCosmicEra } },
         { work: { continuity: mockUniversalCentury } },
@@ -17,7 +17,7 @@ describe('continuityNames', () => {
   });
 
   it('gives null when no work has a continuity', () => {
-    expect(continuityNames([{ work: { continuity: null } }])).toBeNull();
-    expect(continuityNames([])).toBeNull();
+    expect(continuityLabel([{ work: { continuity: null } }])).toBeNull();
+    expect(continuityLabel([])).toBeNull();
   });
 });

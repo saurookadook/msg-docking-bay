@@ -18,7 +18,7 @@ import {
 import { NotFound } from '@/pages/NotFound';
 import { fetchOrganization, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
-import { continuityNames } from '@/utils';
+import { continuityLabel } from '@/utils';
 
 import { OrgChart, RoleSuits } from './components';
 import { collectCitations, SOURCE_ID_PREFIX } from './utils/citations';
@@ -70,7 +70,7 @@ function FactionRegistry({ organization }: { organization: OrganizationDetailEnt
     <DossierLayout
       header={
         <DossierHeader
-          classLine={continuityNames(organization.appearances) ?? 'Faction'}
+          classLine={continuityLabel(organization.appearances) ?? 'Faction'}
           eyebrow={FRAMING}
           headingID={HEADING_ID}
           name={name}
