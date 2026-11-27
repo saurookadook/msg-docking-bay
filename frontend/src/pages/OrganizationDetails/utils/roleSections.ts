@@ -14,23 +14,25 @@ export type RoleSection = {
   title: string;
 };
 
+/** @description The search param a role section's pager writes: `<role>_offset`. */
+export const offsetParamFor = (role: MobileSuitOrganizationRole) => `${role}_offset`;
+
 /**
  * @description The API query for one role section: its `role`, the page's `limit`, and
- * the section's own offset param as `offset`, sorted by key.
+ * the section's own offset param (`offsetParamFor`) as `offset`, sorted by key.
  * @example
  * ```ts
- * roleSectionQuery({ offsetParam: 'operator_offset', role: 'operator' })(
+ * roleSectionQuery({ role: 'operator' })(
  *   new URLSearchParams('operator_offset=50&offset=4'),
  * ); // 'offset=50&role=operator'
  * ```
  */
 export function roleSectionQuery({
-  offsetParam,
   role,
 }: {
-  offsetParam: string;
   role: MobileSuitOrganizationRole;
 }): (searchParams: URLSearchParams) => string {
+  const offsetParam = offsetParamFor(role);
   return (searchParams) => {
     const apiParams = new URLSearchParams();
     const limit = searchParams.get('limit')?.trim() ?? '';
@@ -49,11 +51,10 @@ function roleSection({
   role: MobileSuitOrganizationRole;
   title: string;
 }): RoleSection {
-  const offsetParam = `${role}_offset`;
   return {
-    apiQuery: roleSectionQuery({ offsetParam, role }),
+    apiQuery: roleSectionQuery({ role }),
     fetchSubList: (args) => fetchOrganizationMobileSuits({ ...args, role }),
-    offsetParam,
+    offsetParam: offsetParamFor(role),
     role,
     selectList: (appState) => appState.organizations.mobileSuitsByRole[role],
     title,

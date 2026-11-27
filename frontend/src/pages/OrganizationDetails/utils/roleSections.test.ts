@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { roleSectionQuery } from './roleSections';
+import { offsetParamFor, roleSectionQuery } from './roleSections';
+
+describe('offsetParamFor', () => {
+  it('names the param after the role', () => {
+    expect(offsetParamFor('developer')).toBe('developer_offset');
+  });
+});
 
 describe('roleSectionQuery', () => {
-  const operatorQuery = roleSectionQuery({
-    offsetParam: 'operator_offset',
-    role: 'operator',
-  });
+  const operatorQuery = roleSectionQuery({ role: 'operator' });
 
   it("reads the section's own offset and the page's limit, ignoring other params", () => {
     expect(
