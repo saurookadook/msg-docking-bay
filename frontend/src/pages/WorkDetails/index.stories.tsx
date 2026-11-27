@@ -34,44 +34,39 @@ export const Default: Story = {};
 /** @description A film: its run reads "Released", and it compiles the series. */
 export const Film: Story = { parameters: { route: '/works/mobile-suit-gundam-i' } };
 
-/** @description Every relation group at once, which the seed data has one type of. */
+/** @description Each relation type, in each direction. */
+const RELATION_PAIRS = (
+  [
+    'sequel_of',
+    'compilation_of',
+    'adaptation_of',
+    'remake_of',
+    'side_story_of',
+  ] as const
+).flatMap((relation_type) =>
+  (['outgoing', 'incoming'] as const).map((direction) => ({
+    direction,
+    relation_type,
+  })),
+);
+
+/**
+ * @description Every relation group at once (all ten type × direction pairs), which the
+ * seed data has one of.
+ */
 export const ManyRelations: Story = {
   parameters: {
     mirage: (server: Server) => {
-      const source = mockSources.mobileSuitGundamI;
       server.get('/works/:work_slug', (): WorkResponse => ({
         data: {
           ...mockWork('mobile-suit-gundam'),
-          relations: [
-            {
-              created_at: mockNow,
-              direction: 'incoming',
-              relation_type: 'sequel_of',
-              source,
-              work: mockTheOrigin,
-            },
-            {
-              created_at: mockNow,
-              direction: 'incoming',
-              relation_type: 'remake_of',
-              source,
-              work: mockTheOrigin,
-            },
-            {
-              created_at: mockNow,
-              direction: 'incoming',
-              relation_type: 'side_story_of',
-              source,
-              work: mockTheOriginAdvent,
-            },
-            {
-              created_at: mockNow,
-              direction: 'outgoing',
-              relation_type: 'adaptation_of',
-              source,
-              work: mockTheOriginAdvent,
-            },
-          ],
+          relations: RELATION_PAIRS.map(({ direction, relation_type }, index) => ({
+            created_at: mockNow,
+            direction,
+            relation_type,
+            source: mockSources.mobileSuitGundamI,
+            work: index % 2 === 0 ? mockTheOrigin : mockTheOriginAdvent,
+          })),
         },
       }));
     },
