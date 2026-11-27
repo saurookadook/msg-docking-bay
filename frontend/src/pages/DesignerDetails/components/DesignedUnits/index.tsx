@@ -1,13 +1,12 @@
 import type { DesignedMobileSuitEntity } from '@/api';
 import {
   DetailSection,
-  EntityLink,
+  mobileSuitColumns,
   RosterBody,
   rosterColumnHelper,
   type Cite,
   type RosterColumns,
 } from '@/components';
-import { UNIT_TYPE_LABELS } from '@/constants';
 import type { ListState } from '@/store';
 import { citationKey } from '@/utils';
 
@@ -15,33 +14,18 @@ const helper = rosterColumnHelper<DesignedMobileSuitEntity>();
 
 /** @description The designed units' columns, with each credit cited. */
 function designedColumns(cite: Cite): RosterColumns<DesignedMobileSuitEntity> {
-  return helper.columns([
-    helper.accessor(({ mobile_suit }) => mobile_suit.model_number ?? '—', {
-      header: 'Model number',
-      id: 'model_number',
+  return [
+    ...mobileSuitColumns<DesignedMobileSuitEntity>({
+      marks: ({ source }) => cite(source),
+      suitOf: ({ mobile_suit }) => mobile_suit,
     }),
-    helper.accessor(({ mobile_suit }) => mobile_suit.name, {
-      cell: ({ getValue, row }) => (
-        <>
-          <EntityLink kind="mobileSuit" slug={row.original.mobile_suit.slug}>
-            {getValue()}
-          </EntityLink>
-          {cite(row.original.source)}
-        </>
-      ),
-      header: 'Name',
-      id: 'name',
-      meta: { isRowHeader: true },
-    }),
-    helper.accessor(({ mobile_suit }) => UNIT_TYPE_LABELS[mobile_suit.unit_type], {
-      header: 'Unit type',
-      id: 'unit_type',
-    }),
-    helper.accessor(({ mobile_suit }) => mobile_suit.continuity?.name ?? '—', {
-      header: 'Continuity',
-      id: 'continuity',
-    }),
-  ]);
+    ...helper.columns([
+      helper.accessor(({ mobile_suit }) => mobile_suit.continuity?.name ?? '—', {
+        header: 'Continuity',
+        id: 'continuity',
+      }),
+    ]),
+  ];
 }
 
 /** @description A credit's row key: one suit can be credited by two sources. */

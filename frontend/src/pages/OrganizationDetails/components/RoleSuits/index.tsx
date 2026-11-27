@@ -2,13 +2,12 @@ import { useId } from 'react';
 
 import type { OrganizationMobileSuitEntity } from '@/api';
 import {
-  EntityLink,
+  mobileSuitColumns,
   RosterBody,
   rosterColumnHelper,
   type Cite,
   type RosterColumns,
 } from '@/components';
-import { UNIT_TYPE_LABELS } from '@/constants';
 import type { ListState } from '@/store';
 import { citationKey } from '@/utils';
 
@@ -20,44 +19,27 @@ const helper = rosterColumnHelper<OrganizationMobileSuitEntity>();
 
 /** @description The role section's columns, with each suit's links cited. */
 function roleColumns(cite: Cite): RosterColumns<OrganizationMobileSuitEntity> {
-  return helper.columns([
-    helper.accessor(({ mobile_suit }) => mobile_suit.model_number ?? '—', {
-      header: 'Model number',
-      id: 'model_number',
-    }),
-    helper.accessor(({ mobile_suit }) => mobile_suit.name, {
-      cell: ({ getValue, row }) => {
-        const { links, mobile_suit } = row.original;
-        const sources = [
+  return [
+    ...mobileSuitColumns<OrganizationMobileSuitEntity>({
+      marks: ({ links }) =>
+        // NOTE: one mark per distinct source, though a suit can have several links.
+        [
           ...new Map(links.map(({ source }) => [citationKey(source), source])).values(),
-        ];
-        return (
-          <>
-            <EntityLink kind="mobileSuit" slug={mobile_suit.slug}>
-              {getValue()}
-            </EntityLink>
-            {sources.map((source) => (
-              <span key={citationKey(source)}>{cite(source)}</span>
-            ))}
-          </>
-        );
-      },
-      header: 'Name',
-      id: 'name',
-      meta: { isRowHeader: true },
+        ].map((source) => <span key={citationKey(source)}>{cite(source)}</span>),
+      suitOf: ({ mobile_suit }) => mobile_suit,
     }),
-    helper.accessor(({ mobile_suit }) => UNIT_TYPE_LABELS[mobile_suit.unit_type], {
-      header: 'Unit type',
-      id: 'unit_type',
-    }),
-    helper.accessor(
-      ({ links }) => {
-        const titles = links.flatMap(({ work }) => (work == null ? [] : [work.title]));
-        return titles.length === 0 ? 'All works' : [...new Set(titles)].join(', ');
-      },
-      { header: 'Works', id: 'works' },
-    ),
-  ]);
+    ...helper.columns([
+      helper.accessor(
+        ({ links }) => {
+          const titles = links.flatMap(({ work }) =>
+            work == null ? [] : [work.title],
+          );
+          return titles.length === 0 ? 'All works' : [...new Set(titles)].join(', ');
+        },
+        { header: 'Works', id: 'works' },
+      ),
+    ]),
+  ];
 }
 
 export type RoleSuitsProps = {

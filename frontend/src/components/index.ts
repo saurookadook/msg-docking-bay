@@ -16,6 +16,7 @@ export * from './PendingPanel';
 export * from './Readout';
 export * from './RosterBody';
 export * from './RosterTable';
+export * from './RosterTable/mobileSuitColumns';
 export * from './RosterTable/rosterColumns';
 export * from './ShiftToggle';
 export * from './SourceCitations';
