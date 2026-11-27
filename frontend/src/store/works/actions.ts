@@ -21,7 +21,7 @@ import {
 import {
   fetchCatalogDetail,
   fetchCatalogList,
-  subListKey,
+  fetchCatalogSubList,
   type SubListRequest,
 } from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
@@ -162,7 +162,7 @@ export function setWorkMobileSuitsError({
 
 /**
  * @description Requests one page of `GET /api/works/{work_slug}/mobile-suits` for
- * `query` (the API query string, without `?`) and stores it under `subListKey`.
+ * `query` (the API query string, without `?`) and stores it under `subListKey` (`fetchCatalogSubList`).
  * @note `slug` is the work's current slug, from its loaded detail.
  */
 export async function fetchWorkMobileSuits({
@@ -170,15 +170,13 @@ export async function fetchWorkMobileSuits({
   query,
   slug,
 }: BaseAction & SubListRequest): Promise<void> {
-  const requestKey = subListKey({ query, slug });
-  return fetchCatalogList<WorkMobileSuitsListResponse>({
-    listPath: `/api/works/${encodeURIComponent(slug)}/mobile-suits`,
+  return fetchCatalogSubList<WorkMobileSuitsListResponse>({
     name: fetchWorkMobileSuits.name,
-    onError: (errorMessage) =>
-      setWorkMobileSuitsError({ dispatch, errorMessage, query: requestKey }),
-    onRequest: () => requestWorkMobileSuits({ dispatch, query: requestKey }),
-    onSuccess: ({ data, meta }) =>
-      setWorkMobileSuits({ dispatch, items: data, meta, query: requestKey }),
+    onError: (payload) => setWorkMobileSuitsError({ dispatch, ...payload }),
+    onRequest: (payload) => requestWorkMobileSuits({ dispatch, ...payload }),
+    onSuccess: (payload) => setWorkMobileSuits({ dispatch, ...payload }),
+    parentPath: '/api/works',
     query,
+    slug,
   });
 }

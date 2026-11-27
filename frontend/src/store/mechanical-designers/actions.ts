@@ -21,7 +21,7 @@ import {
 import {
   fetchCatalogDetail,
   fetchCatalogList,
-  subListKey,
+  fetchCatalogSubList,
   type SubListRequest,
 } from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
@@ -195,7 +195,7 @@ export function setMechanicalDesignerMobileSuitsError({
 
 /**
  * @description Requests one page of `GET /api/mechanical-designers/{mechanical_designer_slug}/mobile-suits` for
- * `query` (the API query string, without `?`) and stores it under `subListKey`.
+ * `query` (the API query string, without `?`) and stores it under `subListKey` (`fetchCatalogSubList`).
  * @note `slug` is the designer's current slug, from its loaded detail.
  */
 export async function fetchMechanicalDesignerMobileSuits({
@@ -203,25 +203,15 @@ export async function fetchMechanicalDesignerMobileSuits({
   query,
   slug,
 }: BaseAction & SubListRequest): Promise<void> {
-  const requestKey = subListKey({ query, slug });
-  return fetchCatalogList<MechanicalDesignerMobileSuitsListResponse>({
-    listPath: `/api/mechanical-designers/${encodeURIComponent(slug)}/mobile-suits`,
+  return fetchCatalogSubList<MechanicalDesignerMobileSuitsListResponse>({
     name: fetchMechanicalDesignerMobileSuits.name,
-    onError: (errorMessage) =>
-      setMechanicalDesignerMobileSuitsError({
-        dispatch,
-        errorMessage,
-        query: requestKey,
-      }),
-    onRequest: () =>
-      requestMechanicalDesignerMobileSuits({ dispatch, query: requestKey }),
-    onSuccess: ({ data, meta }) =>
-      setMechanicalDesignerMobileSuits({
-        dispatch,
-        items: data,
-        meta,
-        query: requestKey,
-      }),
+    onError: (payload) =>
+      setMechanicalDesignerMobileSuitsError({ dispatch, ...payload }),
+    onRequest: (payload) =>
+      requestMechanicalDesignerMobileSuits({ dispatch, ...payload }),
+    onSuccess: (payload) => setMechanicalDesignerMobileSuits({ dispatch, ...payload }),
+    parentPath: '/api/mechanical-designers',
     query,
+    slug,
   });
 }

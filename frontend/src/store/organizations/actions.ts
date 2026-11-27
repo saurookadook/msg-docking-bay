@@ -22,7 +22,7 @@ import {
 import {
   fetchCatalogDetail,
   fetchCatalogList,
-  subListKey,
+  fetchCatalogSubList,
   type SubListRequest,
 } from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
@@ -209,27 +209,15 @@ export async function fetchOrganizationMobileSuits({
   role,
   slug,
 }: BaseAction & RoleSection & SubListRequest): Promise<void> {
-  const requestKey = subListKey({ query, slug });
-  return fetchCatalogList<OrganizationMobileSuitsListResponse>({
-    listPath: `/api/organizations/${encodeURIComponent(slug)}/mobile-suits`,
+  return fetchCatalogSubList<OrganizationMobileSuitsListResponse>({
     name: fetchOrganizationMobileSuits.name,
-    onError: (errorMessage) =>
-      setOrganizationMobileSuitsError({
-        dispatch,
-        errorMessage,
-        query: requestKey,
-        role,
-      }),
-    onRequest: () =>
-      requestOrganizationMobileSuits({ dispatch, query: requestKey, role }),
-    onSuccess: ({ data, meta }) =>
-      setOrganizationMobileSuits({
-        dispatch,
-        items: data,
-        meta,
-        query: requestKey,
-        role,
-      }),
+    onError: (payload) =>
+      setOrganizationMobileSuitsError({ dispatch, ...payload, role }),
+    onRequest: (payload) =>
+      requestOrganizationMobileSuits({ dispatch, ...payload, role }),
+    onSuccess: (payload) => setOrganizationMobileSuits({ dispatch, ...payload, role }),
+    parentPath: '/api/organizations',
     query,
+    slug,
   });
 }

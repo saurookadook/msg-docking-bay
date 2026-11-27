@@ -254,6 +254,39 @@ export async function fetchCatalogList<Response extends ListPage<unknown>>({
 }
 
 /**
+ * @description Requests one page of a parent's sub-list (`<parentPath>/{slug}/mobile-suits`)
+ * for `query`, as `fetchCatalogList` does, with every payload keyed by `subListKey`.
+ * Each slice's `fetch<Kind>MobileSuits` wraps it with its own actions.
+ * @note `slug` is the parent's current slug, from its loaded detail.
+ */
+export async function fetchCatalogSubList<Response extends ListPage<unknown>>({
+  name,
+  onError,
+  onRequest,
+  onSuccess,
+  parentPath,
+  query,
+  slug,
+}: SubListRequest & {
+  name: string;
+  onError: (payload: ListErrorPayload) => void;
+  onRequest: (payload: ListRequestPayload) => void;
+  onSuccess: (payload: ListSetPayload<Response['data'][number]>) => void;
+  /** @description The parent kind's API path, like `/api/works`. */
+  parentPath: string;
+}): Promise<void> {
+  const key = subListKey({ query, slug });
+  return fetchCatalogList<Response>({
+    listPath: `${parentPath}/${encodeURIComponent(slug)}/mobile-suits`,
+    name,
+    onError: (errorMessage) => onError({ errorMessage, query: key }),
+    onRequest: () => onRequest({ query: key }),
+    onSuccess: ({ data, meta }) => onSuccess({ items: data, meta, query: key }),
+    query,
+  });
+}
+
+/**
  * @description Requests one entity's detail: dispatches the request, then the detail or
  * the error, with `isNotFound` set on a 404. Each slice's `fetch<Kind>` wraps it with its
  * own actions.
