@@ -235,6 +235,26 @@ Utilities
     text-transform: uppercase;
 }
 
+/* A sub-heading under a section's stencilled heading, in the muted text color. */
+.muted-label {
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+/* A muted, monospaced aside to an item: its type, year, model number or work. */
+.meta-note {
+    color: var(--color-text-muted);
+    font-family: var(--font-family-mono);
+    font-size: 0.875rem;
+}
+
+/* A row of items that wraps onto more lines as it fills. */
+.wrap-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
 /* Hidden on screen, still read by assistive technology. */
 .visually-hidden {
     block-size: 1px;

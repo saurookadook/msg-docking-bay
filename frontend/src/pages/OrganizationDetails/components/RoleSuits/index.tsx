@@ -75,7 +75,7 @@ export function RoleSuits({ cite, list, section }: RoleSuitsProps) {
 
   return (
     <section aria-labelledby={headingID} className="role-suits">
-      <h4 className="stencil-label" id={headingID}>
+      <h4 className="stencil-label muted-label" id={headingID}>
         {section.title}
       </h4>
       <RosterBody

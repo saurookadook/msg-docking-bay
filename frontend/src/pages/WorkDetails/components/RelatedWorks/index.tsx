@@ -33,15 +33,15 @@ export function RelatedWorks({ cite, relations }: RelatedWorksProps) {
       <div className="related-works-groups">
         {groups.map(({ key, label, relations: grouped }) => (
           <div className="related-works-group" key={key}>
-            <h4 className="stencil-label">{label}</h4>
-            <ul aria-label={label} className="plain-list">
+            <h4 className="stencil-label muted-label">{label}</h4>
+            <ul aria-label={label} className="plain-list wrap-list">
               {grouped.map(({ source, work }) => (
                 <li className="tier-node" key={work.slug}>
                   <EntityLink kind="work" slug={work.slug}>
                     {work.title}
                   </EntityLink>
                   {cite(source)}
-                  <span className="related-works-meta">
+                  <span className="meta-note">
                     {joinParts([
                       WORK_TYPE_LABELS[work.work_type],
                       yearOf(work.start_date),

@@ -56,7 +56,7 @@ export function WorkAppearances({ appearances, cite }: WorkAppearancesProps) {
                   {work.title}
                 </EntityLink>
                 {cite(source)}
-                <span className="work-appearances-meta">
+                <span className="meta-note">
                   {joinParts([
                     WORK_TYPE_LABELS[work.work_type],
                     yearOf(work.start_date),

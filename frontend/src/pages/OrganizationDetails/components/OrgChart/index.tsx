@@ -28,8 +28,8 @@ export function OrgChart({ organization }: OrgChartProps) {
       <div className="tier-tree">
         {parent_organization != null && (
           <div className="org-chart-tier">
-            <h4 className="stencil-label">Parent</h4>
-            <ul aria-label="Parent" className="plain-list">
+            <h4 className="stencil-label muted-label">Parent</h4>
+            <ul aria-label="Parent" className="plain-list wrap-list">
               <li className="tier-node">
                 <EntityLink kind="organization" slug={parent_organization.slug}>
                   {parent_organization.name}
@@ -45,8 +45,8 @@ export function OrgChart({ organization }: OrgChartProps) {
         </div>
         {child_organizations.length > 0 && (
           <div className="org-chart-tier">
-            <h4 className="stencil-label">Units</h4>
-            <ul aria-label="Units" className="plain-list">
+            <h4 className="stencil-label muted-label">Units</h4>
+            <ul aria-label="Units" className="plain-list wrap-list">
               {child_organizations.map((child) => (
                 <li className="tier-node" key={child.slug}>
                   <EntityLink kind="organization" slug={child.slug}>
