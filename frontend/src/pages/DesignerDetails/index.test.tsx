@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import { type Server } from 'miragejs';
+import type { Server } from 'miragejs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { mockNow, mockSources, mockWikidataSource } from '@/__mocks__/catalogMocks';
