@@ -224,3 +224,54 @@ Run in `frontend/` (moon not on PATH):
   its own; footnotes jump to their source; unknown slugs show "Cage empty"; the dossier is
   unchanged after the refactors; both shifts; 360 px with the strip pinned; no console
   errors beyond `safeFetch`'s logged 404.
+
+## As built (2026-11-26)
+
+Where the implementation differs from the steps above:
+
+- **Four extra commits.**
+  - `refactor(frontend): share the appearances' continuity names` (before step 8):
+    `continuityNames` in `@/utils`, since the personnel file and the faction registry both
+    build their class line from their appearances' continuities.
+  - `fix(frontend): drop another parent's suits when its sub-list loads` (before step 9):
+    a sub-list request moved its key to the new parent but kept the old parent's rows, so a
+    related-work link briefly listed the previous work's suits. The step 9 page test caught
+    it; `requestSubList` now keeps rows only for another page of the same parent.
+  - `refactor(frontend): name sub-list rows from their column's accessor` and
+    `test(frontend): cover sparse sub-list rows and late responses` (after step 10): the
+    coverage pass found the Name columns' accessors unused, and untested branches (no model
+    number, a work-tagged link, a late response after leaving a work).
+- **`CatalogDetail` takes a `notFound` element (Q1).** Each page passes `<NotFound />`, so
+  `components/` never imports from `pages/` (`NotFound` imports the components barrel).
+- **`DossierLayout` wraps each slot** in a grid-area `div`; the strip's wrapper is the
+  sticky one, and an `aside` in the infobox slot gets the dossier's column spacing (step 7).
+- **`RosterTable` gains `getRowID`** (step 4), defaulting to the row's `slug`: organization
+  rows have no slug, and a designer's credits can list one suit twice (one row per source).
+- **`ORGANIZATION_ROLE_LABELS` moved to `constants`** in step 6, since Mirage's `role`
+  filter needs the roles too; `SuitCredits` reads it.
+- **Mirage `role` filter (Q5).** `subListHandler`'s `list` takes the query and may return a
+  `ValidationError`; the role check lives in `organizationMocks.ts`
+  (`listOrganizationMobileSuitsMock`), keeping `endpoints.ts` under 500 lines (496).
+- **Sub-list keys (Q2).** Each role section's API query carries its own `role=`
+  (`roleSectionQuery`), so the key `useCatalogSubList` checks matches the one stored.
+  The hook returns a loading list while the stored page belongs to another parent or query.
+- **Lineage CSS (D1)** became the `tier-tree` and `tier-node` utilities in `index.css`; the
+  org chart, related works and qualified units use them.
+- **Page details settled while building:**
+  - The class line under each name is the appearances' continuities, or "Personnel" /
+    "Faction" when none has one; the work's is its type and continuity; the designer's is
+    "Mechanical designer".
+  - An unknown parent organization or parent work reads "None on file", as do an empty
+    qualified-units rack and an empty sub-list (not "DATA PENDING").
+  - An organization link with no work reads "All works" in the role sections' Works column.
+  - The work's sub-list carries no sources, so the operation log cites only its relations.
+- **Bundle:** the app's JS grows from 398 kB (124 kB gzip) after F3 to 420 kB (129 kB gzip).
+  `build-storybook` prints its chunk-size advisory; not compared with `main`.
+- **Browser check** in the app with `MOCK_API=true`: `/works/msg`,
+  `/organizations/earth-federation-universal-century` and `/characters/amuro` swap to their
+  current slugs; the faction registry's three role sections (one table, two "None on
+  file"); the designer's credits paged with `?limit=1` (Next goes to `offset=1`, and the
+  source list follows the page); Day shift on the personnel file; the dossier's
+  Magnet Coating tab with its sticky infobox, unchanged by the refactors; at 360 px (in an
+  iframe) the operation log's strip pins at the top with no overflow; no console errors.
+  Not checked: a full keyboard-only walk, and Night shift on the new pages.
