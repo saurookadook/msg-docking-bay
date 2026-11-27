@@ -13,10 +13,28 @@ export type ListState<Card> = {
   errorMessage: Nullable<string>;
   items: Card[];
   meta: Nullable<PageMeta>;
-  /** @description The API query string, without `?`, of the last request. */
+  /**
+   * @description The API query string, without `?`, of the last request. For a
+   * sub-list, `subListKey`'s `<parent slug>?<query>`, so another parent's page is
+   * dropped too.
+   */
   query: Nullable<string>;
   requestInProgress: boolean;
 };
+
+/**
+ * @description One sub-list page request: the parent's current slug, and the API query
+ * string, without `?`.
+ */
+export type SubListRequest = { query: string; slug: string };
+
+/**
+ * @description The `query` a sub-list (`/{slug}/mobile-suits`) stores its page under: the
+ * parent's slug and the API query, so a page for another parent never replaces this one.
+ */
+export function subListKey({ query, slug }: SubListRequest): string {
+  return `${slug}?${query}`;
+}
 
 /** @description A catalog list route's 200 body: one page of cards and its paging. */
 export type ListPage<Card> = { data: Card[]; meta: PageMeta };
@@ -45,6 +63,28 @@ export function requestList<Card>(
   { query }: ListRequestPayload,
 ): ListState<Card> {
   return { ...stateSlice, errorMessage: null, requestInProgress: true, query };
+}
+
+/** @description The parent slug a `subListKey` belongs to: everything before its `?`. */
+function subListParent(key: Nullable<string>): Nullable<string> {
+  if (key == null) return null;
+  const queryStart = key.indexOf('?');
+  return queryStart === -1 ? key : key.slice(0, queryStart);
+}
+
+/**
+ * @description Starts loading a sub-list page (`query` is a `subListKey`). Another page
+ * of the same parent keeps the current rows until the new ones arrive, as `requestList`
+ * does; another parent's rows are dropped at once, so they never show on its page.
+ */
+export function requestSubList<Card>(
+  stateSlice: ListState<Card>,
+  { query }: ListRequestPayload,
+): ListState<Card> {
+  if (subListParent(stateSlice.query) === subListParent(query)) {
+    return requestList(stateSlice, { query });
+  }
+  return { ...createInitialListState<Card>(), requestInProgress: true, query };
 }
 
 /** @description Stores a page, unless a newer request has replaced its query. */
@@ -211,6 +251,39 @@ export async function fetchCatalogList<Response extends ListPage<unknown>>({
   }
   // NOTE: called outside the try, so a store bug surfaces instead of reading as a failed request.
   return onSuccess(responseData);
+}
+
+/**
+ * @description Requests one page of a parent's sub-list (`<parentPath>/{slug}/mobile-suits`)
+ * for `query`, as `fetchCatalogList` does, with every payload keyed by `subListKey`.
+ * Each slice's `fetch<Kind>MobileSuits` wraps it with its own actions.
+ * @note `slug` is the parent's current slug, from its loaded detail.
+ */
+export async function fetchCatalogSubList<Response extends ListPage<unknown>>({
+  name,
+  onError,
+  onRequest,
+  onSuccess,
+  parentPath,
+  query,
+  slug,
+}: SubListRequest & {
+  name: string;
+  onError: (payload: ListErrorPayload) => void;
+  onRequest: (payload: ListRequestPayload) => void;
+  onSuccess: (payload: ListSetPayload<Response['data'][number]>) => void;
+  /** @description The parent kind's API path, like `/api/works`. */
+  parentPath: string;
+}): Promise<void> {
+  const key = subListKey({ query, slug });
+  return fetchCatalogList<Response>({
+    listPath: `${parentPath}/${encodeURIComponent(slug)}/mobile-suits`,
+    name,
+    onError: (errorMessage) => onError({ errorMessage, query: key }),
+    onRequest: () => onRequest({ query: key }),
+    onSuccess: ({ data, meta }) => onSuccess({ items: data, meta, query: key }),
+    query,
+  });
 }
 
 /**

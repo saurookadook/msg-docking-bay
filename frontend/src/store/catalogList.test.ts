@@ -13,6 +13,7 @@ import {
   fetchCatalogList,
   requestDetail,
   requestList,
+  requestSubList,
   setDetail,
   setDetailError,
   setList,
@@ -89,6 +90,42 @@ describe('catalogList', () => {
         meta: null,
         requestInProgress: false,
         query: 'unit_type=tank',
+      });
+    });
+  });
+
+  describe('sub-list transitions', () => {
+    const shown = setList(
+      requestSubList(createInitialListState<MobileSuitCardEntity>(), {
+        query: 'mobile-suit-gundam?',
+      }),
+      { items: [mockRx782Gundam], meta: mockPageMeta, query: 'mobile-suit-gundam?' },
+    );
+
+    it('keeps the shown rows while another page of the same parent loads', () => {
+      expect(requestSubList(shown, { query: 'mobile-suit-gundam?offset=50' })).toEqual({
+        errorMessage: null,
+        items: [mockRx782Gundam],
+        meta: mockPageMeta,
+        query: 'mobile-suit-gundam?offset=50',
+        requestInProgress: true,
+      });
+    });
+
+    it('reads a key with no query as its parent alone', () => {
+      const bare = { ...shown, query: 'mobile-suit-gundam' };
+      expect(
+        requestSubList(bare, { query: 'mobile-suit-gundam?offset=50' }).items,
+      ).toEqual([mockRx782Gundam]);
+    });
+
+    it("drops another parent's rows as soon as the new parent's page is asked for", () => {
+      expect(requestSubList(shown, { query: 'mobile-suit-gundam-i?' })).toEqual({
+        errorMessage: null,
+        items: [],
+        meta: null,
+        query: 'mobile-suit-gundam-i?',
+        requestInProgress: true,
       });
     });
   });

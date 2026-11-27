@@ -2,14 +2,18 @@ import type { RouteObject } from 'react-router';
 
 import { Root } from '@/layouts';
 import {
+  CharacterDetails,
   CharacterList,
+  DesignerDetails,
   DesignerList,
   HealthCheck,
   Home,
   MobileSuitDetails,
   MobileSuitList,
   NotFound,
+  OrganizationDetails,
   OrganizationList,
+  WorkDetails,
   WorkList,
 } from '@/pages';
 
@@ -22,11 +26,21 @@ export const routerConfig: RouteObject[] = [
       { index: true, element: <Home /> },
       { path: 'health-check', element: <HealthCheck /> },
       { path: 'characters', element: <CharacterList /> },
+      { path: 'characters/:characterSlug', element: <CharacterDetails /> },
       { path: 'mechanical-designers', element: <DesignerList /> },
+      {
+        path: 'mechanical-designers/:mechanicalDesignerSlug',
+        element: <DesignerDetails />,
+      },
       { path: 'mobile-suits', element: <MobileSuitList /> },
       { path: 'mobile-suits/:mobileSuitSlug', element: <MobileSuitDetails /> },
       { path: 'organizations', element: <OrganizationList /> },
+      {
+        path: 'organizations/:organizationSlug',
+        element: <OrganizationDetails />,
+      },
       { path: 'works', element: <WorkList /> },
+      { path: 'works/:workSlug', element: <WorkDetails /> },
       { path: '*', element: <NotFound /> },
     ],
   },

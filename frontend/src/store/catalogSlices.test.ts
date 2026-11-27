@@ -7,13 +7,19 @@ import { mockMobileSuitGundam } from '@/__mocks__/workMocks';
 import type { HTTPValidationError } from '@/api';
 
 import {
+  fetchCharacter,
   fetchCharacters,
   fetchContinuities,
+  fetchMechanicalDesigner,
+  fetchMechanicalDesignerMobileSuits,
   fetchMechanicalDesigners,
   fetchMobileSuit,
   fetchMobileSuits,
+  fetchOrganization,
+  fetchOrganizationMobileSuits,
   fetchOrganizations,
   fetchWork,
+  fetchWorkMobileSuits,
   fetchWorks,
 } from './actions';
 import { appReducer, initialAppState, type AppState } from './reducer';
@@ -253,6 +259,238 @@ describe('catalog slices', () => {
       });
     },
   );
+
+  describe.each([
+    {
+      currentSlug: 'amuro-ray',
+      failedMessage: 'The character request failed.',
+      fetchDetail: fetchCharacter,
+      name: 'fetchCharacter',
+      notFoundMessage: 'Character not found',
+      oldSlug: 'amuro',
+      route: '/characters/:character_slug',
+      slice: 'characters',
+    },
+    {
+      currentSlug: 'earth-federation',
+      failedMessage: 'The organization request failed.',
+      fetchDetail: fetchOrganization,
+      name: 'fetchOrganization',
+      notFoundMessage: 'Organization not found',
+      oldSlug: 'earth-federation-universal-century',
+      route: '/organizations/:organization_slug',
+      slice: 'organizations',
+    },
+    {
+      currentSlug: 'hajime-katoki',
+      failedMessage: 'The mechanical designer request failed.',
+      fetchDetail: fetchMechanicalDesigner,
+      name: 'fetchMechanicalDesigner',
+      notFoundMessage: 'Mechanical designer not found',
+      oldSlug: 'katoki-hajime',
+      route: '/mechanical-designers/:mechanical_designer_slug',
+      slice: 'mechanicalDesigners',
+    },
+  ] as const)(
+    '$name',
+    ({
+      currentSlug,
+      failedMessage,
+      fetchDetail,
+      notFoundMessage,
+      oldSlug,
+      route,
+      slice,
+    }) => {
+      describe('when the slug is old', () => {
+        it('stores it under itself and under the current one', async () => {
+          server = makeMirageServer({ environment: 'test' });
+
+          const { detailsBySlug } = (
+            await run(({ dispatch }) => fetchDetail({ dispatch, slug: oldSlug }))
+          )[slice];
+
+          const stored = {
+            detail: expect.objectContaining({ slug: currentSlug }),
+            errorMessage: null,
+            isNotFound: false,
+            requestInProgress: false,
+          };
+          expect(detailsBySlug[oldSlug]).toEqual(stored);
+          expect(detailsBySlug[currentSlug]).toEqual(stored);
+        });
+      });
+
+      describe('when the slug is unknown', () => {
+        it('marks it as not found', async () => {
+          server = makeMirageServer({ environment: 'test' });
+
+          const { detailsBySlug } = (
+            await run(({ dispatch }) => fetchDetail({ dispatch, slug: 'char-aznable' }))
+          )[slice];
+
+          expect(detailsBySlug['char-aznable']).toEqual({
+            detail: null,
+            errorMessage: notFoundMessage,
+            isNotFound: true,
+            requestInProgress: false,
+          });
+        });
+      });
+
+      describe('when the request fails', () => {
+        it('marks it as an error, not a 404', async () => {
+          server = makeMirageServer({
+            environment: 'test',
+            overrides: (mirage) => {
+              mirage.get(route, () => new MirageResponse(503, {}, {}));
+            },
+          });
+
+          const { detailsBySlug } = (
+            await run(({ dispatch }) => fetchDetail({ dispatch, slug: currentSlug }))
+          )[slice];
+
+          expect(detailsBySlug[currentSlug]).toMatchObject({
+            detail: null,
+            errorMessage: failedMessage,
+            isNotFound: false,
+          });
+        });
+      });
+    },
+  );
+
+  describe('fetchWorkMobileSuits', () => {
+    describe('when a page loads', () => {
+      it('stores it under the work slug and query', async () => {
+        server = makeMirageServer({ environment: 'test' });
+
+        const { mobileSuits } = (
+          await run(({ dispatch }) =>
+            fetchWorkMobileSuits({
+              dispatch,
+              query: 'limit=1',
+              slug: 'mobile-suit-gundam',
+            }),
+          )
+        ).works;
+
+        expect(mobileSuits).toMatchObject({
+          errorMessage: null,
+          items: [{ is_debut: true, slug: 'rx-78-2-gundam' }],
+          meta: { limit: 1, offset: 0, total: 2 },
+          query: 'mobile-suit-gundam?limit=1',
+          requestInProgress: false,
+        });
+      });
+    });
+
+    describe('when the work is unknown', () => {
+      it('stores the error', async () => {
+        server = makeMirageServer({ environment: 'test' });
+
+        const { mobileSuits } = (
+          await run(({ dispatch }) =>
+            fetchWorkMobileSuits({ dispatch, query: '', slug: 'turn-a-gundam' }),
+          )
+        ).works;
+
+        expect(mobileSuits).toMatchObject({
+          errorMessage: 'Work not found',
+          items: [],
+          query: 'turn-a-gundam?',
+        });
+      });
+    });
+  });
+
+  describe('fetchMechanicalDesignerMobileSuits', () => {
+    describe('when a page loads', () => {
+      it("stores it under the designer's slug and query", async () => {
+        server = makeMirageServer({ environment: 'test' });
+
+        const { mobileSuits } = (
+          await run(({ dispatch }) =>
+            fetchMechanicalDesignerMobileSuits({
+              dispatch,
+              query: 'limit=1&offset=2',
+              slug: 'kunio-okawara',
+            }),
+          )
+        ).mechanicalDesigners;
+
+        expect(mobileSuits).toMatchObject({
+          errorMessage: null,
+          items: [{ mobile_suit: { slug: 'ms-06f-zaku-ii' } }],
+          meta: { limit: 1, offset: 2, total: 3 },
+          query: 'kunio-okawara?limit=1&offset=2',
+          requestInProgress: false,
+        });
+      });
+    });
+
+    describe('when the designer is unknown', () => {
+      it('stores the error', async () => {
+        server = makeMirageServer({ environment: 'test' });
+
+        const { mobileSuits } = (
+          await run(({ dispatch }) =>
+            fetchMechanicalDesignerMobileSuits({
+              dispatch,
+              query: '',
+              slug: 'turn-a-gundam',
+            }),
+          )
+        ).mechanicalDesigners;
+
+        expect(mobileSuits).toMatchObject({
+          errorMessage: 'Mechanical designer not found',
+          items: [],
+          query: 'turn-a-gundam?',
+        });
+      });
+    });
+  });
+
+  describe('fetchOrganizationMobileSuits', () => {
+    describe('when two roles load', () => {
+      it("stores each role's suits in its own section", async () => {
+        server = makeMirageServer({ environment: 'test' });
+
+        const { mobileSuitsByRole } = (
+          await run(async ({ dispatch }) => {
+            await fetchOrganizationMobileSuits({
+              dispatch,
+              query: 'role=manufacturer',
+              role: 'manufacturer',
+              slug: 'earth-federation',
+            });
+            await fetchOrganizationMobileSuits({
+              dispatch,
+              query: 'role=operator',
+              role: 'operator',
+              slug: 'earth-federation',
+            });
+          })
+        ).organizations;
+
+        expect(mobileSuitsByRole.manufacturer).toMatchObject({
+          items: [{ mobile_suit: { slug: 'rx-78-2-gundam' } }],
+          meta: { total: 1 },
+          query: 'earth-federation?role=manufacturer',
+        });
+        expect(mobileSuitsByRole.operator).toMatchObject({
+          items: [],
+          meta: { total: 0 },
+          query: 'earth-federation?role=operator',
+        });
+        expect(mobileSuitsByRole.developer).toEqual(
+          initialAppState.organizations.mobileSuitsByRole.developer,
+        );
+      });
+    });
+  });
 
   it('loads every continuity, or the error', async () => {
     server = makeMirageServer({ environment: 'test' });

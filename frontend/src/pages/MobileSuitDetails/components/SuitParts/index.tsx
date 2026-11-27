@@ -6,6 +6,7 @@ import type {
   SpecSheetPartKind,
 } from '@/api';
 import type { Nullable } from '@/types';
+import { joinParts } from '@/utils';
 
 import { formatQuantity } from '../../utils/format';
 import {
@@ -47,8 +48,8 @@ const EQUIPMENT_GROUPS: { label: string; fit: EquipmentFit }[] = [
 
 /** @description A listing's note and how it is carried, as one muted line. */
 function detailOf(...parts: Nullable<string>[]): Nullable<string> {
-  const present = parts.filter((part) => part != null);
-  return present.length === 0 ? null : present.join(' · ');
+  const detail = joinParts(parts);
+  return detail === '' ? null : detail;
 }
 
 function armamentItem(listing: ArmamentListingEntity): PartItem {

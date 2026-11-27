@@ -16,14 +16,22 @@ function LocationReadout() {
 
 // NOTE: Pagination is not a route in routerConfig, so it can't be reached through
 // WithMemoryRouter (TEST-17); a catch-all route renders it in a real router instead.
-function renderPagination({ meta, url }: { meta: PageMeta; url: string }) {
+function renderPagination({
+  meta,
+  offsetParam,
+  url,
+}: {
+  meta: PageMeta;
+  offsetParam?: string;
+  url: string;
+}) {
   const router = createMemoryRouter(
     [
       {
         path: '*',
         element: (
           <>
-            <Pagination meta={meta} />
+            <Pagination meta={meta} offsetParam={offsetParam} />
             <LocationReadout />
           </>
         ),
@@ -82,6 +90,26 @@ describe('Pagination', () => {
     });
 
     expect(screen.getByText('None of 120')).toBeVisible();
+  });
+
+  it('pages through its own offset param, leaving the page offset alone', async () => {
+    const user = userEvent.setup();
+    renderPagination({
+      meta: { limit: 2, offset: 2, total: 5 },
+      offsetParam: 'operator_offset',
+      url: '/organizations/earth-federation?offset=4&operator_offset=2',
+    });
+
+    await user.click(screen.getByRole('link', { name: 'Next' }));
+    expect(screen.getByRole('status', { name: 'Location' })).toHaveTextContent(
+      '/organizations/earth-federation?offset=4&operator_offset=4',
+    );
+
+    // NOTE: the meta stays at offset 2, so Previous goes to the first page.
+    await user.click(screen.getByRole('link', { name: 'Previous' }));
+    expect(screen.getByRole('status', { name: 'Location' })).toHaveTextContent(
+      /^\/organizations\/earth-federation\?offset=4$/,
+    );
   });
 
   it('renders nothing when every row fits on one page', () => {

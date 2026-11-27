@@ -2,13 +2,17 @@
 // other copy (see `catalogMocks.ts`). The cards are in `peopleMocks.ts`.
 import type {
   CitedWorkEntity,
+  MobileSuitOrganizationRole,
   OrganizationCardEntity,
   OrganizationDetailEntity,
   OrganizationMobileSuitEntity,
+  ValidationError,
 } from '@/api';
+import { ORGANIZATION_ROLE_LABELS } from '@/constants';
 
 import { mockSources } from './catalogMocks';
 import { createCitedWorkMock } from './characterMocks';
+import { enumMessage } from './listFilters';
 import { creditsBySuit } from './mobileSuitMocks';
 import {
   findBySlugOrRedirect,
@@ -86,14 +90,20 @@ export function findOrganizationMock(
  * @description An organization's suits, as
  * `GET /api/organizations/{organization_slug}/mobile-suits` lists them: one item per
  * suit, in `mockMobileSuits` order (by name), with its links in the suit fixture's order.
- * @note `role` is not applied: Mirage filters are opt-in (D7).
+ * A `role` keeps only the suits with that role, and only those links, as the API does.
  */
-export function findOrganizationMobileSuitsMock(
-  organizationSlug: string,
-): OrganizationMobileSuitEntity[] {
+export function findOrganizationMobileSuitsMock({
+  organizationSlug,
+  role,
+}: {
+  organizationSlug: string;
+  role?: MobileSuitOrganizationRole;
+}): OrganizationMobileSuitEntity[] {
   return creditsBySuit({
     credits: ({ organizations }) => organizations,
-    matches: ({ organization }) => organization.slug === organizationSlug,
+    matches: (credit) =>
+      credit.organization.slug === organizationSlug &&
+      (role == null || credit.role === role),
   }).map(({ card, credits }) => ({
     links: credits.map(({ created_at, role, source, work }) => ({
       created_at,
@@ -103,4 +113,32 @@ export function findOrganizationMobileSuitsMock(
     })),
     mobile_suit: card,
   }));
+}
+
+/** @description Whether a query value is a role an organization's suit list takes. */
+function isOrganizationRole(value: unknown): value is MobileSuitOrganizationRole {
+  return typeof value === 'string' && Object.hasOwn(ORGANIZATION_ROLE_LABELS, value);
+}
+
+/**
+ * @description An organization's suits for the route's `role` query value, or FastAPI's
+ * error for a role it doesn't know.
+ * @note `slug` is the organization's current slug: the route resolves it first.
+ */
+export function findOrganizationMobileSuitsForQueryMock({
+  role,
+  slug,
+}: {
+  role: unknown;
+  slug: string;
+}): OrganizationMobileSuitEntity[] | ValidationError {
+  if (role == null) return findOrganizationMobileSuitsMock({ organizationSlug: slug });
+  if (isOrganizationRole(role)) {
+    return findOrganizationMobileSuitsMock({ organizationSlug: slug, role });
+  }
+  return {
+    loc: ['query', 'role'],
+    msg: enumMessage(Object.keys(ORGANIZATION_ROLE_LABELS)),
+    type: 'enum',
+  };
 }

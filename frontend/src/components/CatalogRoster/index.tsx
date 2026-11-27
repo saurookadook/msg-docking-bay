@@ -1,14 +1,7 @@
 import classNames from 'classnames';
 import { Link, useSearchParams } from 'react-router';
 
-import {
-  DeckPanel,
-  Pagination,
-  RosterTable,
-  StatusLamp,
-  StencilHeading,
-  type RosterColumns,
-} from '@/components';
+import { RosterBody, StencilHeading, type RosterColumns } from '@/components';
 import type { ListState } from '@/store';
 
 import './styles.css';
@@ -29,9 +22,7 @@ export type CatalogRosterProps<Row extends { slug: string }> = Omit<
 
 /**
  * @description A catalog list page's frame: its heading and filters, then the roster
- * with its status, error, empty state and page links.
- * @note The status region keeps one short message, so a live search announces the
- * result count rather than every request.
+ * with its status, error, empty state and page links (`RosterBody`).
  */
 export function CatalogRoster<Row extends { slug: string }>({
   caption,
@@ -45,7 +36,6 @@ export function CatalogRoster<Row extends { slug: string }>({
   ...props
 }: CatalogRosterProps<Row>) {
   const [searchParams] = useSearchParams();
-  const { errorMessage, items, meta, requestInProgress } = list;
   const headingID = `${id}-title`;
   const limit = searchParams.get('limit');
 
@@ -60,35 +50,19 @@ export function CatalogRoster<Row extends { slug: string }>({
         {heading}
       </StencilHeading>
       {filterBar}
-      <p className="catalog-roster-status" role="status">
-        {requestInProgress ? (
-          <StatusLamp status="busy">Scanning the deck</StatusLamp>
-        ) : (
-          meta != null && `${meta.total} on file`
-        )}
-      </p>
-      {errorMessage != null && (
-        <p className="catalog-roster-error" role="alert">
-          {errorMessage}
-        </p>
-      )}
-      {errorMessage == null && meta != null && items.length === 0 && (
-        <DeckPanel className="catalog-roster-empty">
-          <p>No entries match these filters.</p>
-          <Link to={{ search: limit == null ? '' : `?limit=${limit}` }}>
-            Clear filters
-          </Link>
-        </DeckPanel>
-      )}
-      {items.length > 0 && (
-        <RosterTable
-          caption={caption}
-          className={classNames({ stale: requestInProgress })}
-          columns={columns}
-          rows={items}
-        />
-      )}
-      {meta != null && <Pagination meta={meta} />}
+      <RosterBody
+        caption={caption}
+        columns={columns}
+        emptyState={
+          <>
+            <p>No entries match these filters.</p>
+            <Link to={{ search: limit == null ? '' : `?limit=${limit}` }}>
+              Clear filters
+            </Link>
+          </>
+        }
+        list={list}
+      />
     </section>
   );
 }

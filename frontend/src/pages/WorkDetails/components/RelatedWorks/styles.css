@@ -1,0 +1,13 @@
+.related-works {
+    & .related-works-groups {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+    }
+
+    & .related-works-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+    }
+}

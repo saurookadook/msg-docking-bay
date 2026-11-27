@@ -1,16 +1,14 @@
 import { useId, useRef } from 'react';
 import { useSearchParams } from 'react-router';
 
-import { SpecPlate } from '@/components';
+import { PendingPanel, SpecPlate, type Cite } from '@/components';
 import type { Nullable } from '@/types';
 
-import type { Cite } from '../../utils/citations';
 import { MEASUREMENTS } from '../../utils/format';
 import type { SpecSheetSelection } from '../../utils/hooks';
 import { measurementItem } from '../../utils/sheetParts';
 import { SPEC_PARAM, type SpecSheetEntry } from '../../utils/specSheets';
 import { HeightLineup } from '../HeightLineup';
-import { PendingPanel } from '../PendingPanel';
 import { SuitParts } from '../SuitParts';
 
 import './styles.css';

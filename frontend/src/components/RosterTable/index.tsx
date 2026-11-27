@@ -1,30 +1,48 @@
-import { useTable } from '@tanstack/react-table';
+import { useTable, type RowData } from '@tanstack/react-table';
 import classNames from 'classnames';
 
 import { ROSTER_FEATURES, type RosterColumns } from './rosterColumns';
 
 import './styles.css';
 
-export type RosterTableProps<Row extends { slug: string }> = Omit<
+export type RosterTableProps<Row extends RowData> = Omit<
   React.TableHTMLAttributes<HTMLTableElement>,
   'children'
 > & {
   caption: string;
   columns: RosterColumns<Row>;
+  /**
+   * @description Each row's unique key. Defaults to the row's `slug`; give one for rows
+   * that have none, or that list one entity twice (one row per credit).
+   */
+  getRowID?: (row: Row) => string;
   rows: readonly Row[];
 };
 
 /**
- * @description A catalog roster: one table row per entity, keyed by its slug, in the
- * order the API sent them.
+ * @description A row's `slug`, the default row key.
+ * @note It throws for a row with no `slug`: such a roster must pass `getRowID`.
+ */
+function rowSlug(row: unknown): string {
+  if (typeof row === 'object' && row != null && 'slug' in row) {
+    const { slug } = row;
+    if (typeof slug === 'string') return slug;
+  }
+  throw new TypeError("[rowSlug] : a row with no string 'slug' needs a getRowID");
+}
+
+/**
+ * @description A catalog roster: one table row per entity, keyed by its slug (or
+ * `getRowID`), in the order the API sent them.
  * @note On a phone each row stacks, and each cell shows its column's header as a label.
  * The explicit roles keep the table's semantics where the phone layout's flex display
  * would otherwise strip them (Safari).
  */
-export function RosterTable<Row extends { slug: string }>({
+export function RosterTable<Row extends RowData>({
   caption,
   className,
   columns,
+  getRowID = rowSlug,
   rows,
   ...props
 }: RosterTableProps<Row>) {
@@ -32,7 +50,7 @@ export function RosterTable<Row extends { slug: string }>({
     columns,
     data: rows,
     features: ROSTER_FEATURES,
-    getRowId: ({ slug }) => slug,
+    getRowId: (row) => getRowID(row),
   });
 
   return (

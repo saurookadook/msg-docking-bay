@@ -1,8 +1,5 @@
 import type { MobileSuitDetailEntity, SourceCitationEntity } from '@/api';
 
-/** @description Renders the footnote mark for a fact's source. */
-export type Cite = (source: SourceCitationEntity) => React.ReactElement;
-
 /** @description The `idPrefix` linking the dossier's marks to its source list. */
 export const SOURCE_ID_PREFIX = 'mobile-suit-source';
 

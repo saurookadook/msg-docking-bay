@@ -33,8 +33,8 @@ import {
   mockMobileSuits,
 } from './mobileSuitMocks';
 import {
-  findOrganizationMobileSuitsMock,
   findOrganizationMock,
+  findOrganizationMobileSuitsForQueryMock,
   mockOrganizationDetails,
 } from './organizationMocks';
 import {
@@ -293,9 +293,17 @@ function detailHandler<T>({
   };
 }
 
+/** @description Whether a sub-list's `list` gave its items, not a validation error. */
+function isItemList<Item>(
+  value: readonly Item[] | ValidationError,
+): value is readonly Item[] {
+  return Array.isArray(value);
+}
+
 /**
  * @description A sub-list route's handler (`/{slug}/mobile-suits`): it finds the parent,
- * then pages its list. An unknown parent is the route's 404.
+ * then pages its list. An unknown parent is the route's 404; a filter `list` rejects is
+ * the route's 422.
  * @note The parent is resolved first, so an old slug lists the renamed row's items (D2).
  */
 function subListHandler<Parent, Item>({
@@ -305,15 +313,18 @@ function subListHandler<Parent, Item>({
   param,
 }: {
   find: (slug: string) => Parent | undefined;
-  list: (parent: Parent) => readonly Item[];
+  list: (args: {
+    parent: Parent;
+    queryParams: Request['queryParams'];
+  }) => readonly Item[] | ValidationError;
   notFoundDetail: string;
   param: string;
 }): (request: Request) => { data: Item[]; meta: PageMeta } | MirageResponse {
   return (request) => {
     const parent = find(request.params[param] ?? '');
-    return parent === undefined
-      ? notFound(notFoundDetail)
-      : paginate(list(parent), request);
+    if (parent === undefined) return notFound(notFoundDetail);
+    const result = list({ parent, queryParams: request.queryParams });
+    return isItemList(result) ? paginate(result, request) : invalidQuery([result]);
   };
 }
 
@@ -403,7 +414,7 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
     path: '/api/mechanical-designers/{mechanical_designer_slug}/mobile-suits',
     handler: subListHandler({
       find: findMechanicalDesignerMock,
-      list: ({ slug }) => findMechanicalDesignerMobileSuitsMock(slug),
+      list: ({ parent: { slug } }) => findMechanicalDesignerMobileSuitsMock(slug),
       notFoundDetail: 'Mechanical designer not found',
       param: 'mechanical_designer_slug',
     }),
@@ -448,7 +459,8 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
     path: '/api/organizations/{organization_slug}/mobile-suits',
     handler: subListHandler({
       find: findOrganizationMock,
-      list: ({ slug }) => findOrganizationMobileSuitsMock(slug),
+      list: ({ parent: { slug }, queryParams: { role } }) =>
+        findOrganizationMobileSuitsForQueryMock({ role, slug }),
       notFoundDetail: 'Organization not found',
       param: 'organization_slug',
     }),
@@ -477,7 +489,7 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
     path: '/api/works/{work_slug}/mobile-suits',
     handler: subListHandler({
       find: findWorkMock,
-      list: ({ slug }) => findWorkMobileSuitsMock(slug),
+      list: ({ parent: { slug } }) => findWorkMobileSuitsMock(slug),
       notFoundDetail: 'Work not found',
       param: 'work_slug',
     }),

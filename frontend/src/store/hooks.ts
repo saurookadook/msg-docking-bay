@@ -2,9 +2,17 @@ import { use, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 
 import type { FilterBarChip } from '@/components';
+import type { Nullable } from '@/types';
 import { listSearch } from '@/utils';
 
-import type { DetailsBySlug, DetailState, ListState } from './catalogList';
+import {
+  createInitialListState,
+  subListKey,
+  type DetailsBySlug,
+  type DetailState,
+  type ListState,
+  type SubListRequest,
+} from './catalogList';
 import { AppStoreContext, type AppStoreContextValue } from './context';
 import { fetchContinuities } from './continuities/actions';
 import type { ContinuitiesStateSlice } from './continuities/reducer.types';
@@ -38,6 +46,24 @@ function guardDispatch({
 }
 
 /**
+ * @description Starts a fetch whose dispatches stop once the returned cleanup runs: an
+ * effect returns it, so a response that lands after the page moved on is dropped.
+ */
+function startGuardedFetch({
+  dispatch,
+  fetch,
+}: {
+  dispatch: AppDispatch;
+  fetch: (guardedDispatch: AppDispatch) => Promise<void>;
+}): () => void {
+  let isActive = true;
+  void fetch(guardDispatch({ dispatch, isActive: () => isActive }));
+  return () => {
+    isActive = false;
+  };
+}
+
+/**
  * @description Loads the catalog page the URL asks for, and returns it. The API query
  * is built from `keys` only, so other params never reach the API.
  * @note It refetches whenever that query changes; the slice drops a response for an
@@ -56,16 +82,14 @@ export function useCatalogList<Card>({
   const [searchParams] = useSearchParams();
   const query = listSearch({ keys, searchParams });
 
-  useEffect(() => {
-    let isActive = true;
-    void fetchList({
-      dispatch: guardDispatch({ dispatch: appDispatch, isActive: () => isActive }),
-      query,
-    });
-    return () => {
-      isActive = false;
-    };
-  }, [appDispatch, fetchList, query]);
+  useEffect(
+    () =>
+      startGuardedFetch({
+        dispatch: appDispatch,
+        fetch: (dispatch) => fetchList({ dispatch, query }),
+      }),
+    [appDispatch, fetchList, query],
+  );
 
   return selectList(appState);
 }
@@ -96,6 +120,56 @@ export function useCatalogDetail<Detail>({
   }, [appDispatch, fetchDetail, shouldFetch, slug]);
 
   return detailState;
+}
+
+const SUB_LIST_KEYS = ['limit', 'offset'] as const;
+
+/**
+ * @description A sub-list's default API query: the page's `limit` and `offset` from the
+ * URL, sorted by key.
+ */
+export const subListApiQuery = (searchParams: URLSearchParams) =>
+  listSearch({ keys: SUB_LIST_KEYS, searchParams });
+
+/**
+ * @description Loads the page of a parent's sub-list (`/{slug}/mobile-suits`) that the
+ * URL asks for, and returns it. It waits for `slug`: the parent's current slug, from its
+ * loaded detail, so an old-slug visit fetches once and a 404 comes from the detail.
+ * @returns a loading list while the stored page belongs to another parent or query, so
+ * the page never shows another parent's rows
+ * @note `fetchSubList` and `apiQuery` must be stable (module-level), or every render
+ * refetches. The effect's guard drops a response that lands after the page unmounts.
+ */
+export function useCatalogSubList<Item>({
+  apiQuery = subListApiQuery,
+  fetchSubList,
+  selectList,
+  slug,
+}: {
+  /**
+   * @description The API query string, without `?`, for the URL's search params;
+   * `subListApiQuery` by default.
+   */
+  apiQuery?: (searchParams: URLSearchParams) => string;
+  fetchSubList: (args: BaseAction & SubListRequest) => Promise<void>;
+  selectList: (appState: AppState) => ListState<Item>;
+  slug: Nullable<string>;
+}): ListState<Item> {
+  const { appDispatch, appState } = useAppStore();
+  const [searchParams] = useSearchParams();
+  const query = apiQuery(searchParams);
+  const list = selectList(appState);
+
+  useEffect(() => {
+    if (slug == null) return;
+    return startGuardedFetch({
+      dispatch: appDispatch,
+      fetch: (dispatch) => fetchSubList({ dispatch, query, slug }),
+    });
+  }, [appDispatch, fetchSubList, query, slug]);
+
+  if (slug != null && list.query === subListKey({ query, slug })) return list;
+  return { ...createInitialListState<Item>(), requestInProgress: true };
 }
 
 /** @description Every continuity, loaded once for the whole app. */
