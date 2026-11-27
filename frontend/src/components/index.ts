@@ -12,6 +12,7 @@ export * from './HazardStripe';
 export * from './Pagination';
 export * from './PendingPanel';
 export * from './Readout';
+export * from './RosterBody';
 export * from './RosterTable';
 export * from './RosterTable/rosterColumns';
 export * from './ShiftToggle';

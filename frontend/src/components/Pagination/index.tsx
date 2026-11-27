@@ -10,14 +10,21 @@ import './styles.css';
 
 export type PaginationProps = React.HTMLAttributes<HTMLElement> & {
   meta: PageMeta;
+  /** @description The search param holding the page's offset, for a page with several pagers. */
+  offsetParam?: string;
 };
 
 /**
  * @description Previous and next links for a paginated list. They change only the URL's
- * `offset`, keeping its other search params (filters, `q`).
+ * `offset` (or `offsetParam`), keeping its other search params (filters, `q`).
  * @returns nothing when every row fits on the first page
  */
-export function Pagination({ className, meta, ...props }: PaginationProps) {
+export function Pagination({
+  className,
+  meta,
+  offsetParam = 'offset',
+  ...props
+}: PaginationProps) {
   const [searchParams] = useSearchParams();
   const { firstRow, lastRow, nextOffset, previousOffset } = pageOffsets(meta);
 
@@ -26,9 +33,9 @@ export function Pagination({ className, meta, ...props }: PaginationProps) {
   function searchWithOffset(offset: number): string {
     const nextSearchParams = new URLSearchParams(searchParams);
     if (offset === 0) {
-      nextSearchParams.delete('offset');
+      nextSearchParams.delete(offsetParam);
     } else {
-      nextSearchParams.set('offset', String(offset));
+      nextSearchParams.set(offsetParam, String(offset));
     }
     const search = nextSearchParams.toString();
     return search === '' ? '' : `?${search}`;
