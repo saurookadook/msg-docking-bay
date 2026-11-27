@@ -37,7 +37,11 @@ function Frame({ state }: { state: DetailState<Detail> | undefined }) {
   );
 }
 
-/** @description Renders the frame at `/works/<slug><search>`. */
+/**
+ * @description Renders the frame at `/works/<slug><search>`.
+ * @note A stub route, not the app's `routerConfig`: this tests the frame alone, from the
+ * detail state it is given. Each page's test drives the real route and store.
+ */
 function renderFrame({
   search = '',
   slug,
