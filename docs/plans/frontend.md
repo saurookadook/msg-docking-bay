@@ -111,7 +111,7 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
   (`relations` as a small dev-tree: developed from / upgrade of / variants) ✅; **Appearances** ✅;
   **History**, **Gallery**, **Trivia** ⏳. Fun: **height lineup** silhouette vs a human and an 18 m
   reference frame.
-  *Amended 2026-11-23 (F3,* [`mobile-suit-dossier.md`](mobile-suit-dossier.md)*):* the infobox is a
+  _Amended 2026-11-23 (F3,_ [`mobile-suit-dossier.md`](mobile-suit-dossier.md)_):_ the infobox is a
   sticky column with the image on top (a slim sticky strip on phones) and follows the spec tab
   picked in `?spec=`; the ⏳ infobox rows move to a "Registry" plate under the header.
 - **Character** (wiki `Infobox/Character`). Name, `name_ja` ✅; appearances ✅; **mobile weapons
@@ -127,7 +127,7 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
 - **Every detail page:** `SourceCitations` lists each `SourceCitation`, labelled by `kind` (Gundam
   Wiki, Wikidata, Wikipedia EN/JA), linking its `url` and its `revision_url` when present, with the
   content license. A Gundam Wiki link appears only for `fandom_page` citations.
-  *Amended 2026-11-23 (F3 Q11):* the list is numbered and de-duplicated (by kind, URL and
+  _Amended 2026-11-23 (F3 Q11):_ the list is numbered and de-duplicated (by kind, URL and
   revision), and each sourced item on the page links to its entry with a footnote mark.
 
 ## Hangar mode (three.js)
@@ -148,12 +148,12 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
 - **Hologram panel** beside the cage: the `VisualSlot` image (later), model number, top stats, pilot
   cards — rendered as an HTML overlay (drei `Html`) so text stays crisp and selectable.
 - **Navigation:**
-  - Home deck = rows of cages for the current page of suits; continuity = which deck/bay.
-  - Search terminal on a console; picking a result **flies the camera along the crane rail** to that
+  + Home deck = rows of cages for the current page of suits; continuity = which deck/bay.
+  + Search terminal on a console; picking a result **flies the camera along the crane rail** to that
   cage (or loads the cage on demand).
-  - Suit detail = close-up orbit of that cage; Personnel/Organizations/Works pages = in-world terminal
+  + Suit detail = close-up orbit of that cage; Personnel/Organizations/Works pages = in-world terminal
   screens on the catwalk showing the same wiki content.
-  - **Launch sequence** ("Sortie"): mech walks to the catapult, Condition Red lights, catapult fires,
+  + **Launch sequence** ("Sortie"): mech walks to the catapult, Condition Red lights, catapult fires,
   then navigates to a random suit. `[Pilot name], launching!` uses the suit's first pilot from data.
 - **Performance:** instancing, one draw-call-light material set, `frameloop="demand"` when idle, DPR
   cap, dispose on unmount; budget ~60 fps on an integrated GPU with 24 cages.
@@ -198,7 +198,7 @@ Frontend:
   routes' nav signs. Plan: [`catalog-browser.md`](catalog-browser.md).
 - [ ] **F2b** `feat(frontend): pick a work in the filter bar` — an accessible combobox over
   `/api/works?q=` in `FilterBar`'s work slot, replacing the URL-only chip (after F2).
-- [ ] **F3** `feat(frontend): add the mobile suit dossier` — detail page, spec tabs, parts, lineage,
+- [x] **F3** `feat(frontend): add the mobile suit dossier` — detail page, spec tabs, parts, lineage,
   height lineup. Plan: [`mobile-suit-dossier.md`](mobile-suit-dossier.md).
 - [ ] **F4** `feat(frontend): add personnel, faction, operation and designer pages`.
 - [ ] **F5** `feat(frontend): add the deck search terminal` — `Ctrl/⌘+K` overlay + `/search` page
