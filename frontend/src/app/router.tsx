@@ -4,6 +4,7 @@ import { Root } from '@/layouts';
 import {
   CharacterDetails,
   CharacterList,
+  DesignerDetails,
   DesignerList,
   HealthCheck,
   Home,
@@ -27,6 +28,10 @@ export const routerConfig: RouteObject[] = [
       { path: 'characters', element: <CharacterList /> },
       { path: 'characters/:characterSlug', element: <CharacterDetails /> },
       { path: 'mechanical-designers', element: <DesignerList /> },
+      {
+        path: 'mechanical-designers/:mechanicalDesignerSlug',
+        element: <DesignerDetails />,
+      },
       { path: 'mobile-suits', element: <MobileSuitList /> },
       { path: 'mobile-suits/:mobileSuitSlug', element: <MobileSuitDetails /> },
       { path: 'organizations', element: <OrganizationList /> },

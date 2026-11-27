@@ -1,5 +1,6 @@
 export * from './CharacterDetails';
 export * from './CharacterList';
+export * from './DesignerDetails';
 export * from './DesignerList';
 export * from './HealthCheck';
 export * from './Home';
