@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router';
 
 import { Root } from '@/layouts';
 import {
+  CharacterDetails,
   CharacterList,
   DesignerList,
   HealthCheck,
@@ -22,6 +23,7 @@ export const routerConfig: RouteObject[] = [
       { index: true, element: <Home /> },
       { path: 'health-check', element: <HealthCheck /> },
       { path: 'characters', element: <CharacterList /> },
+      { path: 'characters/:characterSlug', element: <CharacterDetails /> },
       { path: 'mechanical-designers', element: <DesignerList /> },
       { path: 'mobile-suits', element: <MobileSuitList /> },
       { path: 'mobile-suits/:mobileSuitSlug', element: <MobileSuitDetails /> },

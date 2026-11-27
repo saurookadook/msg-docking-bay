@@ -1,3 +1,4 @@
+export * from './CharacterDetails';
 export * from './CharacterList';
 export * from './DesignerList';
 export * from './HealthCheck';
