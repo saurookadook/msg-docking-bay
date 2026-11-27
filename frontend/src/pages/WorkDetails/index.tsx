@@ -1,13 +1,13 @@
 import { useParams } from 'react-router';
 
-import type { SourceCitationEntity, WorkDetailEntity } from '@/api';
+import type { WorkDetailEntity } from '@/api';
 import {
   CatalogDetail,
-  CitationMark,
   DossierHeader,
   DossierLayout,
   DossierStrip,
   EntityLink,
+  numberedCitations,
   PendingSection,
   SourceCitations,
   SpecPlate,
@@ -17,7 +17,6 @@ import { WORK_TYPE_LABELS } from '@/constants';
 import { NotFound } from '@/pages/NotFound';
 import { fetchWork, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
-import { numberCitations } from '@/utils';
 
 import { RelatedWorks, WorkSuits } from './components';
 import { formatWorkDates, workDatesLabel } from './utils/dates';
@@ -38,12 +37,10 @@ const PENDING_SECTIONS = ['Staff', 'Characters', 'Plot'];
 function OperationLog({ work }: { work: WorkDetailEntity }) {
   const suits = useWorkSuits(work.slug);
   // NOTE: only relations are cited; the work's suit list carries no sources.
-  const { citations, numberOf } = numberCitations(
-    work.relations.map(({ source }) => source),
-  );
-  const cite = (source: SourceCitationEntity) => (
-    <CitationMark idPrefix={SOURCE_ID_PREFIX} number={numberOf(source)} />
-  );
+  const { citations, cite } = numberedCitations({
+    idPrefix: SOURCE_ID_PREFIX,
+    sources: work.relations.map(({ source }) => source),
+  });
   const { continuity, parent_work, title, title_ja, work_type } = work;
 
   return (

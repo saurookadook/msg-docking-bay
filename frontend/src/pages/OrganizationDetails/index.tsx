@@ -1,14 +1,14 @@
 import { useId } from 'react';
 import { useParams } from 'react-router';
 
-import type { OrganizationDetailEntity, SourceCitationEntity } from '@/api';
+import type { OrganizationDetailEntity } from '@/api';
 import {
   CatalogDetail,
-  CitationMark,
   DossierHeader,
   DossierLayout,
   DossierStrip,
   EntityLink,
+  numberedCitations,
   PendingSection,
   SourceCitations,
   SpecPlate,
@@ -18,7 +18,7 @@ import {
 import { NotFound } from '@/pages/NotFound';
 import { fetchOrganization, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
-import { continuityNames, numberCitations } from '@/utils';
+import { continuityNames } from '@/utils';
 
 import { OrgChart, RoleSuits } from './components';
 import { collectCitations, SOURCE_ID_PREFIX } from './utils/citations';
@@ -58,15 +58,13 @@ function FactionRegistry({ organization }: { organization: OrganizationDetailEnt
     { list: operated, section: OPERATED },
     { list: developed, section: DEVELOPED },
   ];
-  const { citations, numberOf } = numberCitations(
-    collectCitations({
+  const { citations, cite } = numberedCitations({
+    idPrefix: SOURCE_ID_PREFIX,
+    sources: collectCitations({
       organization,
       sections: sections.map(({ list }) => list.items),
     }),
-  );
-  const cite = (source: SourceCitationEntity) => (
-    <CitationMark idPrefix={SOURCE_ID_PREFIX} number={numberOf(source)} />
-  );
+  });
   const { name, parent_organization } = organization;
 
   return (

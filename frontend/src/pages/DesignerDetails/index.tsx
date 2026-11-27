@@ -1,12 +1,12 @@
 import { useParams } from 'react-router';
 
-import type { MechanicalDesignerDetailEntity, SourceCitationEntity } from '@/api';
+import type { MechanicalDesignerDetailEntity } from '@/api';
 import {
   CatalogDetail,
-  CitationMark,
   DossierHeader,
   DossierLayout,
   DossierStrip,
+  numberedCitations,
   SourceCitations,
   SpecPlate,
   VisualSlot,
@@ -14,7 +14,6 @@ import {
 import { NotFound } from '@/pages/NotFound';
 import { fetchMechanicalDesigner, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
-import { numberCitations } from '@/utils';
 
 import { DesignedUnits } from './components';
 import { useDesignedUnits } from './utils/hooks';
@@ -42,12 +41,10 @@ function EngineeringCredits({
 }) {
   const designed = useDesignedUnits(designer.slug);
   // NOTE: the detail carries no source; each credit on this page of suits does.
-  const { citations, numberOf } = numberCitations(
-    designed.items.map(({ source }) => source),
-  );
-  const cite = (source: SourceCitationEntity) => (
-    <CitationMark idPrefix={SOURCE_ID_PREFIX} number={numberOf(source)} />
-  );
+  const { citations, cite } = numberedCitations({
+    idPrefix: SOURCE_ID_PREFIX,
+    sources: designed.items.map(({ source }) => source),
+  });
 
   return (
     <DossierLayout

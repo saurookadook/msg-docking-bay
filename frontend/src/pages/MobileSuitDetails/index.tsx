@@ -1,12 +1,12 @@
 import { useParams } from 'react-router';
 
-import type { MobileSuitDetailEntity, SourceCitationEntity } from '@/api';
+import type { MobileSuitDetailEntity } from '@/api';
 import {
   CatalogDetail,
-  CitationMark,
   DossierHeader,
   DossierLayout,
   DossierStrip,
+  numberedCitations,
   PendingSection,
   SourceCitations,
   SpecPlate,
@@ -16,7 +16,6 @@ import { UNIT_TYPE_LABELS } from '@/constants';
 import { NotFound } from '@/pages/NotFound';
 import { fetchMobileSuit, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
-import { numberCitations } from '@/utils';
 
 import { SpecSheetTabs, SuitInfobox, SuitLineage } from './components';
 import { collectCitations, SOURCE_ID_PREFIX } from './utils/citations';
@@ -41,10 +40,10 @@ const PENDING_SECTIONS = ['History', 'Gallery', 'Trivia'];
 /** @description The dossier for a loaded suit. */
 function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
   const selection = useSpecSheetSelection(suit.spec_sheets);
-  const { citations, numberOf } = numberCitations(collectCitations(suit));
-  const cite = (source: SourceCitationEntity) => (
-    <CitationMark idPrefix={SOURCE_ID_PREFIX} number={numberOf(source)} />
-  );
+  const { citations, cite } = numberedCitations({
+    idPrefix: SOURCE_ID_PREFIX,
+    sources: collectCitations(suit),
+  });
   const { continuity, model_number, name, name_ja, unit_type } = suit;
 
   return (

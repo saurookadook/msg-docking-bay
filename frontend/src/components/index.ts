@@ -2,6 +2,7 @@ export * from './CageNumber';
 export * from './CatalogDetail';
 export * from './CatalogRoster';
 export * from './CitationMark';
+export * from './CitationMark/numberedCitations';
 export * from './DeckPanel';
 export * from './DossierHeader';
 export * from './DossierLayout';

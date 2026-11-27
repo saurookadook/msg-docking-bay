@@ -1,12 +1,12 @@
 import { useParams } from 'react-router';
 
-import type { CharacterDetailEntity, SourceCitationEntity } from '@/api';
+import type { CharacterDetailEntity } from '@/api';
 import {
   CatalogDetail,
-  CitationMark,
   DossierHeader,
   DossierLayout,
   DossierStrip,
+  numberedCitations,
   PendingSection,
   SourceCitations,
   SpecPlate,
@@ -16,7 +16,7 @@ import {
 import { NotFound } from '@/pages/NotFound';
 import { fetchCharacter, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
-import { continuityNames, numberCitations } from '@/utils';
+import { continuityNames } from '@/utils';
 
 import { QualifiedUnits } from './components';
 import { collectCitations, SOURCE_ID_PREFIX } from './utils/citations';
@@ -49,10 +49,10 @@ const PENDING_SECTIONS = [
 
 /** @description The personnel file for a loaded character. */
 function PersonnelFile({ character }: { character: CharacterDetailEntity }) {
-  const { citations, numberOf } = numberCitations(collectCitations(character));
-  const cite = (source: SourceCitationEntity) => (
-    <CitationMark idPrefix={SOURCE_ID_PREFIX} number={numberOf(source)} />
-  );
+  const { citations, cite } = numberedCitations({
+    idPrefix: SOURCE_ID_PREFIX,
+    sources: collectCitations(character),
+  });
 
   return (
     <DossierLayout
