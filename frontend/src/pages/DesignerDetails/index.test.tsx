@@ -24,7 +24,7 @@ const mockTwoSourceCredits: DesignedMobileSuitEntity[] = [
   },
 ];
 
-async function findCredits(name: string | RegExp = 'Kunio Okawara') {
+async function findCredits(name: string = 'Kunio Okawara') {
   return screen.findByRole('region', { name });
 }
 

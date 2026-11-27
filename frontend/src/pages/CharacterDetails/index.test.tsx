@@ -12,7 +12,7 @@ import {
   renderWithProviders,
 } from '@/utils/testing';
 
-async function findPersonnelFile(name: string | RegExp = 'Amuro Ray') {
+async function findPersonnelFile(name: string = 'Amuro Ray') {
   return screen.findByRole('region', { name });
 }
 

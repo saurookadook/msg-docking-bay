@@ -13,7 +13,7 @@ import type { OrganizationMobileSuitEntity, OrganizationResponse } from '@/api';
 import { safeFetch } from '@/utils';
 import { getSpecPlateValue, renderWithProviders } from '@/utils/testing';
 
-async function findRegistry(name: string | RegExp = 'Earth Federation') {
+async function findRegistry(name: string = 'Earth Federation') {
   return screen.findByRole('region', { name });
 }
 

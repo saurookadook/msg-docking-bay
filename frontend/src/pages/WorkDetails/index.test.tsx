@@ -11,7 +11,7 @@ import type { WorkResponse } from '@/api';
 import { safeFetch } from '@/utils';
 import { getSpecPlateValue, renderWithProviders } from '@/utils/testing';
 
-async function findLog(name: string | RegExp = 'Mobile Suit Gundam') {
+async function findLog(name: string = 'Mobile Suit Gundam') {
   return screen.findByRole('region', { name });
 }
 
