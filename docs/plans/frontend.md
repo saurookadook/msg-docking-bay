@@ -153,12 +153,12 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
 - **Hologram panel** beside the cage: the `VisualSlot` image (later), model number, top stats, pilot
   cards — rendered as an HTML overlay (drei `Html`) so text stays crisp and selectable.
 - **Navigation:**
-  - Home deck = rows of cages for the current page of suits; continuity = which deck/bay.
-  - Search terminal on a console; picking a result **flies the camera along the crane rail** to that
+  + Home deck = rows of cages for the current page of suits; continuity = which deck/bay.
+  + Search terminal on a console; picking a result **flies the camera along the crane rail** to that
   cage (or loads the cage on demand).
-  - Suit detail = close-up orbit of that cage; Personnel/Organizations/Works pages =
+  + Suit detail = close-up orbit of that cage; Personnel/Organizations/Works pages =
   in-world terminal screens on the catwalk showing the same wiki content.
-  - **Launch sequence** ("Sortie"): mech walks to the catapult, Condition Red lights,
+  + **Launch sequence** ("Sortie"): mech walks to the catapult, Condition Red lights,
   catapult fires, then navigates to a random suit. `[Pilot name], launching!` uses the suit's
   first pilot from data.
 - **Performance:** instancing, one draw-call-light material set, `frameloop="demand"` when idle, DPR
@@ -206,7 +206,7 @@ Frontend:
   `/api/works?q=` in `FilterBar`'s work slot, replacing the URL-only chip (after F2).
 - [x] **F3** `feat(frontend): add the mobile suit dossier` — detail page, spec tabs, parts, lineage,
   height lineup. Plan: [`mobile-suit-dossier.md`](mobile-suit-dossier.md).
-- [ ] **F4** `feat(frontend): add personnel, faction, operation and designer pages`.
+- [x] **F4** `feat(frontend): add personnel, faction, operation and designer pages`.
   Plan: [`entity-detail-pages.md`](entity-detail-pages.md).
 - [ ] **F5** `feat(frontend): add the deck search terminal` — `Ctrl/⌘+K` overlay + `/search` page
   and the status bar's key hint (needs BE-1).
