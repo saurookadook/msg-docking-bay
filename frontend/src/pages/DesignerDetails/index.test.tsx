@@ -106,6 +106,7 @@ describe('DesignerDetails', () => {
   });
 
   it('lists a suit credited by two sources on two rows', async () => {
+    /* START TEST SETUP */
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
@@ -116,6 +117,7 @@ describe('DesignerDetails', () => {
       },
     });
     renderWithProviders({ initialEntries: ['/mechanical-designers/kunio-okawara'] });
+    /* END TEST SETUP */
 
     const table = await findDesignedTable();
     expect(
@@ -132,6 +134,7 @@ describe('DesignerDetails', () => {
   });
 
   it('says so, and lists no sources, for a designer with no credits', async () => {
+    /* START TEST SETUP */
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
@@ -142,6 +145,7 @@ describe('DesignerDetails', () => {
       },
     });
     renderWithProviders({ initialEntries: ['/mechanical-designers/masaki-kawahara'] });
+    /* END TEST SETUP */
 
     const credits = await findCredits('Masaki Kawahara');
     const section = within(credits).getByRole('region', { name: 'Designed units' });

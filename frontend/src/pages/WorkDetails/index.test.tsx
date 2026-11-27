@@ -65,6 +65,7 @@ describe('WorkDetails', () => {
   });
 
   it('calls a film released, and links its parent work', async () => {
+    /* START TEST SETUP */
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
@@ -80,6 +81,7 @@ describe('WorkDetails', () => {
       },
     });
     renderWithProviders({ initialEntries: ['/works/mobile-suit-gundam-i'] });
+    /* END TEST SETUP */
 
     const plate = await screen.findByLabelText('Log');
     expect(getSpecPlateValue({ label: 'Released', plate })).toHaveTextContent(
@@ -93,6 +95,7 @@ describe('WorkDetails', () => {
   });
 
   it('shows pending dates and continuity for a work with neither', async () => {
+    /* START TEST SETUP */
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
@@ -107,6 +110,7 @@ describe('WorkDetails', () => {
     renderWithProviders({
       initialEntries: ['/works/it-moves-gundam-follow-your-dreams'],
     });
+    /* END TEST SETUP */
 
     const plate = await screen.findByLabelText('Log');
     expect(getSpecPlateValue({ label: 'Released', plate })).toHaveTextContent(
@@ -160,6 +164,7 @@ describe('WorkDetails', () => {
   });
 
   it('marks a suit with no model number or episodes with a dash', async () => {
+    /* START TEST SETUP */
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
@@ -175,6 +180,7 @@ describe('WorkDetails', () => {
       },
     });
     renderWithProviders({ initialEntries: ['/works/mobile-suit-gundam-i'] });
+    /* END TEST SETUP */
 
     const section = await screen.findByRole('region', {
       name: 'Mobile weapons appearing',
@@ -188,6 +194,7 @@ describe('WorkDetails', () => {
   });
 
   it('says so when no suit appears', async () => {
+    /* START TEST SETUP */
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
@@ -197,6 +204,7 @@ describe('WorkDetails', () => {
       },
     });
     renderWithProviders({ initialEntries: ['/works/mobile-suit-gundam'] });
+    /* END TEST SETUP */
 
     const section = await screen.findByRole('region', {
       name: 'Mobile weapons appearing',
@@ -228,6 +236,7 @@ describe('WorkDetails', () => {
   });
 
   it("never shows the last work's suits on a related work's page", async () => {
+    /* START TEST SETUP */
     const user = userEvent.setup();
     server = makeMirageServer({
       environment: 'test',
@@ -244,6 +253,7 @@ describe('WorkDetails', () => {
       },
     });
     renderWithProviders({ initialEntries: ['/works/mobile-suit-gundam'] });
+    /* END TEST SETUP */
 
     const first = await screen.findByRole('region', {
       name: 'Mobile weapons appearing',
@@ -260,6 +270,7 @@ describe('WorkDetails', () => {
   });
 
   it("drops the last work's suits when they land after leaving it", async () => {
+    /* START TEST SETUP */
     const user = userEvent.setup();
     server = makeMirageServer({
       environment: 'test',
@@ -276,6 +287,7 @@ describe('WorkDetails', () => {
     });
     const fetchSpy = vi.spyOn(safeFetch, 'call');
     renderWithProviders({ initialEntries: ['/works/mobile-suit-gundam'] });
+    /* END TEST SETUP */
 
     // NOTE: leave before the first work's suits arrive.
     await user.click(await screen.findByRole('link', { name: 'Mobile Suit Gundam I' }));
@@ -291,6 +303,7 @@ describe('WorkDetails', () => {
   });
 
   it("shows the sub-list's error in its section", async () => {
+    /* START TEST SETUP */
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
@@ -301,6 +314,7 @@ describe('WorkDetails', () => {
       },
     });
     renderWithProviders({ initialEntries: ['/works/mobile-suit-gundam'] });
+    /* END TEST SETUP */
 
     const section = await screen.findByRole('region', {
       name: 'Mobile weapons appearing',

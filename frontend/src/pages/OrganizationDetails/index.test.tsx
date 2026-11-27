@@ -87,6 +87,7 @@ describe('OrganizationDetails', () => {
   });
 
   it('charts the parent above and the units below', async () => {
+    /* START TEST SETUP */
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
@@ -103,6 +104,7 @@ describe('OrganizationDetails', () => {
       },
     });
     renderWithProviders({ initialEntries: ['/organizations/earth-federation'] });
+    /* END TEST SETUP */
 
     const chart = await screen.findByRole('region', { name: 'Org chart' });
     expect(
@@ -161,6 +163,7 @@ describe('OrganizationDetails', () => {
   });
 
   it('pages one role section without refetching the others', async () => {
+    /* START TEST SETUP */
     const user = userEvent.setup();
     server = makeMirageServer({
       environment: 'test',
@@ -181,6 +184,7 @@ describe('OrganizationDetails', () => {
     const { router } = renderWithProviders({
       initialEntries: ['/organizations/earth-federation?limit=1'],
     });
+    /* END TEST SETUP */
 
     const manufactured = await screen.findByRole('region', { name: 'Manufactured' });
     expect(await within(manufactured).findByText('1–1 of 3')).toBeVisible();
@@ -205,6 +209,7 @@ describe('OrganizationDetails', () => {
   });
 
   it("shows a role section's error in that section", async () => {
+    /* START TEST SETUP */
     server = makeMirageServer({
       environment: 'test',
       overrides: (mirage) => {
@@ -218,6 +223,7 @@ describe('OrganizationDetails', () => {
       },
     });
     renderWithProviders({ initialEntries: ['/organizations/earth-federation'] });
+    /* END TEST SETUP */
 
     const operated = await screen.findByRole('region', { name: 'Operated' });
     expect(await within(operated).findByRole('alert')).toHaveTextContent(
