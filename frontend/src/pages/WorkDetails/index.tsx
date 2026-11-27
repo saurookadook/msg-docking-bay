@@ -17,6 +17,7 @@ import { WORK_TYPE_LABELS } from '@/constants';
 import { NotFound } from '@/pages/NotFound';
 import { fetchWork, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
+import { joinParts } from '@/utils';
 
 import { RelatedWorks, WorkSuits } from './components';
 import { formatWorkDates, workDatesLabel } from './utils/dates';
@@ -47,9 +48,7 @@ function OperationLog({ work }: { work: WorkDetailEntity }) {
     <DossierLayout
       header={
         <DossierHeader
-          classLine={[WORK_TYPE_LABELS[work_type], continuity?.name]
-            .filter((part) => part != null)
-            .join(' · ')}
+          classLine={joinParts([WORK_TYPE_LABELS[work_type], continuity?.name])}
           eyebrow={FRAMING}
           headingID={HEADING_ID}
           name={title}

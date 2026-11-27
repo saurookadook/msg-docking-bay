@@ -2,6 +2,7 @@ export * from './citationNumbers';
 export * from './continuityNames';
 export * from './entityPath';
 export * from './formatRange';
+export * from './joinParts';
 export * from './listSearch';
 export * from './logger';
 export * from './safeFetch';

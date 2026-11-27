@@ -16,6 +16,7 @@ import { UNIT_TYPE_LABELS } from '@/constants';
 import { NotFound } from '@/pages/NotFound';
 import { fetchMobileSuit, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
+import { joinParts } from '@/utils';
 
 import { SpecSheetTabs, SuitInfobox, SuitLineage } from './components';
 import { collectCitations, SOURCE_ID_PREFIX } from './utils/citations';
@@ -50,9 +51,7 @@ function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
     <DossierLayout
       header={
         <DossierHeader
-          classLine={[UNIT_TYPE_LABELS[unit_type], continuity?.name]
-            .filter((part) => part != null)
-            .join(' · ')}
+          classLine={joinParts([UNIT_TYPE_LABELS[unit_type], continuity?.name])}
           eyebrow={model_number ?? 'No model number'}
           headingID={HEADING_ID}
           name={name}

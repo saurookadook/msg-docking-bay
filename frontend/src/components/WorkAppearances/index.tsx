@@ -4,7 +4,7 @@ import type { SourceCitationEntity, WorkCardEntity } from '@/api';
 import { EntityLink, StatusLamp, type Cite } from '@/components';
 import { WORK_TYPE_LABELS } from '@/constants';
 import type { Nullable } from '@/types';
-import { formatEpisodes } from '@/utils';
+import { formatEpisodes, joinParts, yearOf } from '@/utils';
 
 import './styles.css';
 
@@ -50,7 +50,6 @@ export function WorkAppearances({ appearances, cite }: WorkAppearancesProps) {
             work,
           }) => {
             const episodes = formatEpisodes({ first_episode, last_episode });
-            const year = work.start_date?.slice(0, 4);
             return (
               <li key={work.slug}>
                 <EntityLink kind="work" slug={work.slug}>
@@ -58,9 +57,11 @@ export function WorkAppearances({ appearances, cite }: WorkAppearancesProps) {
                 </EntityLink>
                 {cite(source)}
                 <span className="work-appearances-meta">
-                  {[WORK_TYPE_LABELS[work.work_type], year, episodes]
-                    .filter((part) => part != null)
-                    .join(' · ')}
+                  {joinParts([
+                    WORK_TYPE_LABELS[work.work_type],
+                    yearOf(work.start_date),
+                    episodes,
+                  ])}
                 </span>
                 {is_debut && <StatusLamp status="online">Debut</StatusLamp>}
               </li>

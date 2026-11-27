@@ -3,6 +3,7 @@ import { useId } from 'react';
 import type { RelatedWorkEntity } from '@/api';
 import { EntityLink, type Cite } from '@/components';
 import { WORK_TYPE_LABELS } from '@/constants';
+import { joinParts, yearOf } from '@/utils';
 
 import { groupRelations } from '../../utils/relations';
 
@@ -41,9 +42,10 @@ export function RelatedWorks({ cite, relations }: RelatedWorksProps) {
                   </EntityLink>
                   {cite(source)}
                   <span className="related-works-meta">
-                    {[WORK_TYPE_LABELS[work.work_type], work.start_date?.slice(0, 4)]
-                      .filter((part) => part != null)
-                      .join(' · ')}
+                    {joinParts([
+                      WORK_TYPE_LABELS[work.work_type],
+                      yearOf(work.start_date),
+                    ])}
                   </span>
                 </li>
               ))}

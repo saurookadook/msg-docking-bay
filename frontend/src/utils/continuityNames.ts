@@ -1,5 +1,7 @@
 import type { Nullable } from '@/types';
 
+import { joinParts } from './joinParts';
+
 /**
  * @description The continuities an entity's appearances fall in, once each, in the order
  * of their works, for a header's class line: `Universal Century · Cosmic Era`.
@@ -11,5 +13,5 @@ export function continuityNames(
   const names = appearances.flatMap(({ work }) =>
     work.continuity == null ? [] : [work.continuity.name],
   );
-  return names.length === 0 ? null : [...new Set(names)].join(' · ');
+  return names.length === 0 ? null : joinParts([...new Set(names)]);
 }
