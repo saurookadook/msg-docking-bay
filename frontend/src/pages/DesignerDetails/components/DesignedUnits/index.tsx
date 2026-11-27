@@ -22,10 +22,10 @@ function designedColumns(cite: Cite): RosterColumns<DesignedMobileSuitEntity> {
       id: 'model_number',
     }),
     helper.accessor(({ mobile_suit }) => mobile_suit.name, {
-      cell: ({ row }) => (
+      cell: ({ getValue, row }) => (
         <>
           <EntityLink kind="mobileSuit" slug={row.original.mobile_suit.slug}>
-            {row.original.mobile_suit.name}
+            {getValue()}
           </EntityLink>
           {cite(row.original.source)}
         </>

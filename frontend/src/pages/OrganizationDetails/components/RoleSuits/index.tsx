@@ -26,7 +26,7 @@ function roleColumns(cite: Cite): RosterColumns<OrganizationMobileSuitEntity> {
       id: 'model_number',
     }),
     helper.accessor(({ mobile_suit }) => mobile_suit.name, {
-      cell: ({ row }) => {
+      cell: ({ getValue, row }) => {
         const { links, mobile_suit } = row.original;
         const sources = [
           ...new Map(links.map(({ source }) => [citationKey(source), source])).values(),
@@ -34,7 +34,7 @@ function roleColumns(cite: Cite): RosterColumns<OrganizationMobileSuitEntity> {
         return (
           <>
             <EntityLink kind="mobileSuit" slug={mobile_suit.slug}>
-              {mobile_suit.name}
+              {getValue()}
             </EntityLink>
             {sources.map((source) => (
               <span key={citationKey(source)}>{cite(source)}</span>
