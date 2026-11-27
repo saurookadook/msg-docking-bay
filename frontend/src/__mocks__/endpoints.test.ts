@@ -254,6 +254,53 @@ describe('endpointConfigs', () => {
     ).toEqual([['ms-06f-zaku-ii', ['manufacturer']]]);
   });
 
+  it("filters an organization's suits by role, as the API does", () => {
+    const path = '/api/organizations/{organization_slug}/mobile-suits';
+    expect(
+      handle(path, { organization_slug: 'earth-federation' }, { role: 'manufacturer' }),
+    ).toMatchObject({
+      data: [
+        { links: [{ role: 'manufacturer' }], mobile_suit: { slug: 'rx-78-2-gundam' } },
+      ],
+      meta: { total: 1 },
+    });
+    expect(
+      handle(path, { organization_slug: 'earth-federation' }, { role: 'operator' }),
+    ).toEqual({ data: [], meta: { limit: DEFAULT_PAGE_SIZE, offset: 0, total: 0 } });
+  });
+
+  it("keeps only the asked-for role's links on a suit with several", () => {
+    expect(findOrganizationMobileSuitsMock('earth-federation', 'developer')).toEqual(
+      [],
+    );
+    expect(
+      findOrganizationMobileSuitsMock('zeonic', 'manufacturer').flatMap(({ links }) =>
+        links.map(({ role }) => role),
+      ),
+    ).toEqual(['manufacturer']);
+  });
+
+  it("answers an unknown role with the API's 422", () => {
+    const response = handle(
+      '/api/organizations/{organization_slug}/mobile-suits',
+      { organization_slug: 'earth-federation' },
+      { role: 'pilot' },
+    );
+
+    expect(response).toBeInstanceOf(MirageResponse);
+    const [status, , body] = (response as MirageResponse).toRackResponse();
+    expect(status).toBe(422);
+    expect(body).toEqual({
+      detail: [
+        {
+          loc: ['query', 'role'],
+          msg: "Input should be 'manufacturer', 'operator' or 'developer'",
+          type: 'enum',
+        },
+      ],
+    });
+  });
+
   it("lists a designer's suits by name", () => {
     expect(
       findMechanicalDesignerMobileSuitsMock('kunio-okawara').map(

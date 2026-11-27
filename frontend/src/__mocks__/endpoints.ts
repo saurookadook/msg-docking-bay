@@ -33,8 +33,8 @@ import {
   mockMobileSuits,
 } from './mobileSuitMocks';
 import {
-  findOrganizationMobileSuitsMock,
   findOrganizationMock,
+  listOrganizationMobileSuitsMock,
   mockOrganizationDetails,
 } from './organizationMocks';
 import {
@@ -293,9 +293,17 @@ function detailHandler<T>({
   };
 }
 
+/** @description Whether a sub-list's `list` gave its items, not a validation error. */
+function isItemList<Item>(
+  value: readonly Item[] | ValidationError,
+): value is readonly Item[] {
+  return Array.isArray(value);
+}
+
 /**
  * @description A sub-list route's handler (`/{slug}/mobile-suits`): it finds the parent,
- * then pages its list. An unknown parent is the route's 404.
+ * then pages its list. An unknown parent is the route's 404; a filter `list` rejects is
+ * the route's 422.
  * @note The parent is resolved first, so an old slug lists the renamed row's items (D2).
  */
 function subListHandler<Parent, Item>({
@@ -305,15 +313,18 @@ function subListHandler<Parent, Item>({
   param,
 }: {
   find: (slug: string) => Parent | undefined;
-  list: (parent: Parent) => readonly Item[];
+  list: (
+    parent: Parent,
+    queryParams: Request['queryParams'],
+  ) => readonly Item[] | ValidationError;
   notFoundDetail: string;
   param: string;
 }): (request: Request) => { data: Item[]; meta: PageMeta } | MirageResponse {
   return (request) => {
     const parent = find(request.params[param] ?? '');
-    return parent === undefined
-      ? notFound(notFoundDetail)
-      : paginate(list(parent), request);
+    if (parent === undefined) return notFound(notFoundDetail);
+    const items = list(parent, request.queryParams);
+    return isItemList(items) ? paginate(items, request) : invalidQuery([items]);
   };
 }
 
@@ -448,7 +459,7 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
     path: '/api/organizations/{organization_slug}/mobile-suits',
     handler: subListHandler({
       find: findOrganizationMock,
-      list: ({ slug }) => findOrganizationMobileSuitsMock(slug),
+      list: ({ slug }, { role }) => listOrganizationMobileSuitsMock({ role, slug }),
       notFoundDetail: 'Organization not found',
       param: 'organization_slug',
     }),

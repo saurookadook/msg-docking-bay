@@ -10,19 +10,14 @@ import {
   type Cite,
   type SpecPlateItem,
 } from '@/components';
+import { ORGANIZATION_ROLE_LABELS } from '@/constants';
 import type { Nullable } from '@/types';
 import { formatEpisodes } from '@/utils';
 
 import './styles.css';
 
-const ROLE_LABELS: Record<MobileSuitOrganizationRole, string> = {
-  manufacturer: 'Manufacturer',
-  operator: 'Operator',
-  developer: 'Developer',
-};
-
-// NOTE: `Object.keys` types its result as string[]; these are ROLE_LABELS' own keys.
-const ROLES = Object.keys(ROLE_LABELS) as MobileSuitOrganizationRole[];
+// NOTE: `Object.keys` types its result as string[]; these are the labels' own keys.
+const ROLES = Object.keys(ORGANIZATION_ROLE_LABELS) as MobileSuitOrganizationRole[];
 
 /** @description A credit's key: the credited entity, and the work it is tagged with. */
 function creditKey({ slug, work }: { slug: string; work: Nullable<{ slug: string }> }) {
@@ -81,7 +76,7 @@ export function SuitCredits({ cite, suit }: SuitCreditsProps) {
       ),
     },
     ...ROLES.map((role) => ({
-      label: ROLE_LABELS[role],
+      label: ORGANIZATION_ROLE_LABELS[role],
       value: entryList(
         suit.organizations
           .filter((credit) => credit.role === role)

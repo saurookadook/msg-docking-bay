@@ -13,10 +13,22 @@ export type ListState<Card> = {
   errorMessage: Nullable<string>;
   items: Card[];
   meta: Nullable<PageMeta>;
-  /** @description The API query string, without `?`, of the last request. */
+  /**
+   * @description The API query string, without `?`, of the last request. For a
+   * sub-list, `subListKey`'s `<parent slug>?<query>`, so another parent's page is
+   * dropped too.
+   */
   query: Nullable<string>;
   requestInProgress: boolean;
 };
+
+/**
+ * @description The `query` a sub-list (`/{slug}/mobile-suits`) stores its page under: the
+ * parent's slug and the API query, so a page for another parent never replaces this one.
+ */
+export function subListKey({ query, slug }: { query: string; slug: string }): string {
+  return `${slug}?${query}`;
+}
 
 /** @description A catalog list route's 200 body: one page of cards and its paging. */
 export type ListPage<Card> = { data: Card[]; meta: PageMeta };

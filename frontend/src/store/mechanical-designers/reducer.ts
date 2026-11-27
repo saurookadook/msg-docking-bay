@@ -1,8 +1,11 @@
 import {
   REQUEST_MECHANICAL_DESIGNER,
+  REQUEST_MECHANICAL_DESIGNER_MOBILE_SUITS,
   REQUEST_MECHANICAL_DESIGNERS,
   SET_MECHANICAL_DESIGNER,
   SET_MECHANICAL_DESIGNER_ERROR,
+  SET_MECHANICAL_DESIGNER_MOBILE_SUITS,
+  SET_MECHANICAL_DESIGNER_MOBILE_SUITS_ERROR,
   SET_MECHANICAL_DESIGNERS,
   SET_MECHANICAL_DESIGNERS_ERROR,
 } from '@/store/actionTypes';
@@ -26,6 +29,7 @@ import type {
 export const initialMechanicalDesignersStateSlice: MechanicalDesignersStateSlice = {
   detailsBySlug: {},
   list: createInitialListState(),
+  mobileSuits: createInitialListState(),
 };
 
 const detailsBySlug: CombinedMechanicalDesignersStateSlice['detailsBySlug'] = [
@@ -60,7 +64,24 @@ const list: CombinedMechanicalDesignersStateSlice['list'] = [
   initialMechanicalDesignersStateSlice.list,
 ];
 
+const mobileSuits: CombinedMechanicalDesignersStateSlice['mobileSuits'] = [
+  (stateSlice, action) => {
+    switch (action.type) {
+      case REQUEST_MECHANICAL_DESIGNER_MOBILE_SUITS:
+        return requestList(stateSlice, action.payload.mechanicalDesigners);
+      case SET_MECHANICAL_DESIGNER_MOBILE_SUITS:
+        return setList(stateSlice, action.payload.mechanicalDesigners);
+      case SET_MECHANICAL_DESIGNER_MOBILE_SUITS_ERROR:
+        return setListError(stateSlice, action.payload.mechanicalDesigners);
+      default:
+        return stateSlice;
+    }
+  },
+  initialMechanicalDesignersStateSlice.mobileSuits,
+];
+
 export default combineReducers<MechanicalDesignersStateSlice, AppAction>({
   detailsBySlug,
   list,
+  mobileSuits,
 });

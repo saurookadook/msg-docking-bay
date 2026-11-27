@@ -1,4 +1,4 @@
-import type { SourceKind, UnitType, WorkType } from '@/api';
+import type { MobileSuitOrganizationRole, SourceKind, UnitType, WorkType } from '@/api';
 
 /**
  * @description Base URL that `safeFetch` resolves `/api/...` paths against.
@@ -125,6 +125,17 @@ export const WORK_TYPE_LABELS = {
   video_game: 'Video game',
   other: 'Other',
 } as const satisfies Record<WorkType, string>;
+
+/**
+ * @description Each role an organization plays for a suit, in the API's order, with the
+ * label its credits show.
+ * @note Its keys are also the values an organization's suit list's `role` accepts.
+ */
+export const ORGANIZATION_ROLE_LABELS = {
+  manufacturer: 'Manufacturer',
+  operator: 'Operator',
+  developer: 'Developer',
+} as const satisfies Record<MobileSuitOrganizationRole, string>;
 
 /** @description The unit types as filter select options, in the API's order. */
 export const UNIT_TYPE_OPTIONS = Object.entries(UNIT_TYPE_LABELS).map(

@@ -1,19 +1,24 @@
 import type {
+  MobileSuitAppearanceCardEntity,
   PageMeta,
   WorkCardEntity,
   WorkDetailEntity,
+  WorkMobileSuitsListResponse,
   WorkResponse,
   WorksListResponse,
 } from '@/api';
 import {
   REQUEST_WORK,
+  REQUEST_WORK_MOBILE_SUITS,
   REQUEST_WORKS,
   SET_WORK,
   SET_WORK_ERROR,
+  SET_WORK_MOBILE_SUITS,
+  SET_WORK_MOBILE_SUITS_ERROR,
   SET_WORKS,
   SET_WORKS_ERROR,
 } from '@/store/actionTypes';
-import { fetchCatalogDetail, fetchCatalogList } from '@/store/catalogList';
+import { fetchCatalogDetail, fetchCatalogList, subListKey } from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
 
 /** @description Marks the works list as loading for `query`. */
@@ -108,5 +113,67 @@ export async function fetchWork({
       setWorkError({ dispatch, errorMessage, isNotFound, slug }),
     onRequest: () => requestWork({ dispatch, slug }),
     onSuccess: (detail) => setWork({ detail, dispatch, slug }),
+  });
+}
+
+/**
+ * @description Marks the work's suits as loading for `query`, a `subListKey`.
+ */
+export function requestWorkMobileSuits({
+  dispatch,
+  query,
+}: BaseAction & { query: string }): void {
+  return dispatch({ type: REQUEST_WORK_MOBILE_SUITS, payload: { works: { query } } });
+}
+
+/** @description Stores one page of the work's suits, unless a newer request has replaced it. */
+export function setWorkMobileSuits({
+  dispatch,
+  items,
+  meta,
+  query,
+}: BaseAction & {
+  items: MobileSuitAppearanceCardEntity[];
+  meta: PageMeta;
+  query: string;
+}): void {
+  return dispatch({
+    type: SET_WORK_MOBILE_SUITS,
+    payload: { works: { items, meta, query } },
+  });
+}
+
+/** @description Stores the error for the work's suits, unless a newer request has replaced it. */
+export function setWorkMobileSuitsError({
+  dispatch,
+  errorMessage,
+  query,
+}: BaseAction & { errorMessage: string; query: string }): void {
+  return dispatch({
+    type: SET_WORK_MOBILE_SUITS_ERROR,
+    payload: { works: { errorMessage, query } },
+  });
+}
+
+/**
+ * @description Requests one page of `GET /api/works/{work_slug}/mobile-suits` for
+ * `query` (the API query string, without `?`) and stores it under `subListKey`.
+ * @note `slug` is the work's current slug, from its loaded detail.
+ */
+export async function fetchWorkMobileSuits({
+  dispatch,
+  query,
+  slug,
+}: BaseAction & { query: string; slug: string }): Promise<void> {
+  const requestKey = subListKey({ query, slug });
+  return fetchCatalogList<WorkMobileSuitsListResponse>({
+    listPath: `/api/works/${encodeURIComponent(slug)}/mobile-suits`,
+    name: fetchWorkMobileSuits.name,
+    onError: (errorMessage) =>
+      setWorkMobileSuitsError({ dispatch, errorMessage, query: requestKey }),
+    onRequest: () => requestWorkMobileSuits({ dispatch, query: requestKey }),
+    onSuccess: ({ data, meta }) =>
+      setWorkMobileSuits({ dispatch, items: data, meta, query: requestKey }),
+    query,
   });
 }
