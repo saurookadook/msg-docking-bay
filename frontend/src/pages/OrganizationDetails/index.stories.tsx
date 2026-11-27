@@ -2,9 +2,18 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Response as MirageResponse, type Server } from 'miragejs';
 
 import { findOrganizationMock } from '@/__mocks__/organizationMocks';
-import type { OrganizationResponse } from '@/api';
+import type { OrganizationDetailEntity, OrganizationResponse } from '@/api';
 
 import { OrganizationDetails } from '.';
+
+/** @description An organization fixture, or a clear error if it was renamed or removed. */
+function mockOrganization(slug: string): OrganizationDetailEntity {
+  const organization = findOrganizationMock(slug);
+  if (organization == null) {
+    throw new Error(`[mockOrganization] : no organization mock '${slug}'`);
+  }
+  return organization;
+}
 
 const meta = {
   title: 'Pages/OrganizationDetails',
@@ -28,7 +37,7 @@ export const WithOrgChart: Story = {
     mirage: (server: Server) => {
       server.get('/organizations/:organization_slug', (): OrganizationResponse => ({
         data: {
-          ...findOrganizationMock('earth-federation')!,
+          ...mockOrganization('earth-federation'),
           child_organizations: [
             { name: 'Earth Federation Forces', slug: 'earth-federation-forces' },
             { name: 'Titans', slug: 'titans' },

@@ -2,9 +2,17 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Response as MirageResponse, type Server } from 'miragejs';
 
 import { findCharacterMock } from '@/__mocks__/characterMocks';
-import type { CharacterResponse } from '@/api';
+import type { CharacterDetailEntity, CharacterResponse } from '@/api';
 
 import { CharacterDetails } from '.';
+
+/** @description A character fixture, or a clear error if it was renamed or removed. */
+function mockCharacter(slug: string): CharacterDetailEntity {
+  const character = findCharacterMock(slug);
+  if (character == null)
+    throw new Error(`[mockCharacter] : no character mock '${slug}'`);
+  return character;
+}
 
 const meta = {
   title: 'Pages/CharacterDetails',
@@ -40,7 +48,7 @@ export const Loading: Story = {
     mirage: (server: Server) => {
       server.get(
         '/characters/:character_slug',
-        (): CharacterResponse => ({ data: findCharacterMock('amuro-ray')! }),
+        (): CharacterResponse => ({ data: mockCharacter('amuro-ray') }),
         { timing: 60 * 60_000 },
       );
     },

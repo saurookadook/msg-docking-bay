@@ -7,9 +7,16 @@ import {
   mockTheOrigin,
   mockTheOriginAdvent,
 } from '@/__mocks__/workMocks';
-import type { WorkResponse } from '@/api';
+import type { WorkDetailEntity, WorkResponse } from '@/api';
 
 import { WorkDetails } from '.';
+
+/** @description A work fixture, or a clear error if it was renamed or removed. */
+function mockWork(slug: string): WorkDetailEntity {
+  const work = findWorkMock(slug);
+  if (work == null) throw new Error(`[mockWork] : no work mock '${slug}'`);
+  return work;
+}
 
 const meta = {
   title: 'Pages/WorkDetails',
@@ -34,7 +41,7 @@ export const ManyRelations: Story = {
       const source = mockSources.mobileSuitGundamI;
       server.get('/works/:work_slug', (): WorkResponse => ({
         data: {
-          ...findWorkMock('mobile-suit-gundam')!,
+          ...mockWork('mobile-suit-gundam'),
           relations: [
             {
               created_at: mockNow,
