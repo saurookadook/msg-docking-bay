@@ -6,8 +6,23 @@ import { mockNow, mockSources, mockWikidataSource } from '@/__mocks__/catalogMoc
 import { paginate } from '@/__mocks__/endpoints';
 import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockRx782Gundam } from '@/__mocks__/mobileSuitMocks';
+import type { DesignedMobileSuitEntity } from '@/api';
 import { safeFetch } from '@/utils';
 import { getSpecPlateValue, renderWithProviders } from '@/utils/testing';
+
+/** @description One suit credited by two sources; the second copy is sparse. */
+const mockTwoSourceCredits: DesignedMobileSuitEntity[] = [
+  {
+    created_at: mockNow,
+    mobile_suit: mockRx782Gundam,
+    source: mockSources.rx782Gundam,
+  },
+  {
+    created_at: mockNow,
+    mobile_suit: { ...mockRx782Gundam, continuity: null, model_number: null },
+    source: mockWikidataSource,
+  },
+];
 
 async function findCredits(name: string | RegExp = 'Kunio Okawara') {
   return screen.findByRole('region', { name });
@@ -92,26 +107,7 @@ describe('DesignerDetails', () => {
       overrides: (mirage) => {
         mirage.get(
           '/mechanical-designers/:mechanical_designer_slug/mobile-suits',
-          (_schema, request) =>
-            paginate(
-              [
-                {
-                  created_at: mockNow,
-                  mobile_suit: mockRx782Gundam,
-                  source: mockSources.rx782Gundam,
-                },
-                {
-                  created_at: mockNow,
-                  mobile_suit: {
-                    ...mockRx782Gundam,
-                    continuity: null,
-                    model_number: null,
-                  },
-                  source: mockWikidataSource,
-                },
-              ],
-              request,
-            ),
+          (_schema, request) => paginate(mockTwoSourceCredits, request),
         );
       },
     });

@@ -2,7 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Response as MirageResponse, type Server } from 'miragejs';
 
 import { findOrganizationMock } from '@/__mocks__/organizationMocks';
-import type { OrganizationDetailEntity, OrganizationResponse } from '@/api';
+import type {
+  OrganizationDetailEntity,
+  OrganizationMobileSuitsListResponse,
+  OrganizationResponse,
+} from '@/api';
 
 import { OrganizationDetails } from '.';
 
@@ -65,7 +69,7 @@ export const SectionFailed: Story = {
     mirage: (server: Server) => {
       server.get(
         '/organizations/:organization_slug/mobile-suits',
-        (_schema, request) =>
+        (_schema, request): MirageResponse | OrganizationMobileSuitsListResponse =>
           request.queryParams['role'] === 'operator'
             ? new MirageResponse(503, {}, { detail: 'Deck offline' })
             : { data: [], meta: { limit: 50, offset: 0, total: 0 } },
