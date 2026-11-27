@@ -13,8 +13,14 @@ describe('collectCitations', () => {
     const citations = collectCitations({
       organization: findOrganizationMock('principality-of-zeon')!,
       sections: [
-        findOrganizationMobileSuitsMock('zeonic', 'manufacturer'),
-        findOrganizationMobileSuitsMock('principality-of-zeon', 'operator'),
+        findOrganizationMobileSuitsMock({
+          organizationSlug: 'zeonic',
+          role: 'manufacturer',
+        }),
+        findOrganizationMobileSuitsMock({
+          organizationSlug: 'principality-of-zeon',
+          role: 'operator',
+        }),
         [],
       ],
     });

@@ -247,10 +247,9 @@ describe('endpointConfigs', () => {
 
   it("lists an organization's suits once each, with every link", () => {
     expect(
-      findOrganizationMobileSuitsMock('zeonic').map(({ links, mobile_suit }) => [
-        mobile_suit.slug,
-        links.map(({ role }) => role),
-      ]),
+      findOrganizationMobileSuitsMock({ organizationSlug: 'zeonic' }).map(
+        ({ links, mobile_suit }) => [mobile_suit.slug, links.map(({ role }) => role)],
+      ),
     ).toEqual([['ms-06f-zaku-ii', ['manufacturer']]]);
   });
 
@@ -270,13 +269,17 @@ describe('endpointConfigs', () => {
   });
 
   it("keeps only the asked-for role's links on a suit with several", () => {
-    expect(findOrganizationMobileSuitsMock('earth-federation', 'developer')).toEqual(
-      [],
-    );
     expect(
-      findOrganizationMobileSuitsMock('zeonic', 'manufacturer').flatMap(({ links }) =>
-        links.map(({ role }) => role),
-      ),
+      findOrganizationMobileSuitsMock({
+        organizationSlug: 'earth-federation',
+        role: 'developer',
+      }),
+    ).toEqual([]);
+    expect(
+      findOrganizationMobileSuitsMock({
+        organizationSlug: 'zeonic',
+        role: 'manufacturer',
+      }).flatMap(({ links }) => links.map(({ role }) => role)),
     ).toEqual(['manufacturer']);
   });
 

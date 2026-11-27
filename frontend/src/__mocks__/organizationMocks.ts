@@ -92,15 +92,18 @@ export function findOrganizationMock(
  * suit, in `mockMobileSuits` order (by name), with its links in the suit fixture's order.
  * A `role` keeps only the suits with that role, and only those links, as the API does.
  */
-export function findOrganizationMobileSuitsMock(
-  organizationSlug: string,
-  role?: MobileSuitOrganizationRole,
-): OrganizationMobileSuitEntity[] {
+export function findOrganizationMobileSuitsMock({
+  organizationSlug,
+  role,
+}: {
+  organizationSlug: string;
+  role?: MobileSuitOrganizationRole;
+}): OrganizationMobileSuitEntity[] {
   return creditsBySuit({
     credits: ({ organizations }) => organizations,
     matches: (credit) =>
       credit.organization.slug === organizationSlug &&
-      (role === undefined || credit.role === role),
+      (role == null || credit.role === role),
   }).map(({ card, credits }) => ({
     links: credits.map(({ created_at, role, source, work }) => ({
       created_at,
@@ -122,15 +125,17 @@ function isOrganizationRole(value: unknown): value is MobileSuitOrganizationRole
  * error for a role it doesn't know.
  * @note `slug` is the organization's current slug: the route resolves it first.
  */
-export function listOrganizationMobileSuitsMock({
+export function findOrganizationMobileSuitsForQueryMock({
   role,
   slug,
 }: {
   role: unknown;
   slug: string;
 }): OrganizationMobileSuitEntity[] | ValidationError {
-  if (role == null) return findOrganizationMobileSuitsMock(slug);
-  if (isOrganizationRole(role)) return findOrganizationMobileSuitsMock(slug, role);
+  if (role == null) return findOrganizationMobileSuitsMock({ organizationSlug: slug });
+  if (isOrganizationRole(role)) {
+    return findOrganizationMobileSuitsMock({ organizationSlug: slug, role });
+  }
   return {
     loc: ['query', 'role'],
     msg: enumMessage(Object.keys(ORGANIZATION_ROLE_LABELS)),

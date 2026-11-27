@@ -34,7 +34,7 @@ import {
 } from './mobileSuitMocks';
 import {
   findOrganizationMock,
-  listOrganizationMobileSuitsMock,
+  findOrganizationMobileSuitsForQueryMock,
   mockOrganizationDetails,
 } from './organizationMocks';
 import {
@@ -460,7 +460,7 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
     handler: subListHandler({
       find: findOrganizationMock,
       list: ({ parent: { slug }, queryParams: { role } }) =>
-        listOrganizationMobileSuitsMock({ role, slug }),
+        findOrganizationMobileSuitsForQueryMock({ role, slug }),
       notFoundDetail: 'Organization not found',
       param: 'organization_slug',
     }),
