@@ -1,7 +1,5 @@
-import { useId } from 'react';
-
 import type { OrganizationDetailEntity, OrganizationRefEntity } from '@/api';
-import { EntityLink } from '@/components';
+import { DetailSection, EntityLink } from '@/components';
 
 import './styles.css';
 
@@ -40,16 +38,12 @@ function OrgTier({
  * @returns nothing when the catalog lists neither a parent nor a unit
  */
 export function OrgChart({ organization }: OrgChartProps) {
-  const headingID = useId();
   const { child_organizations, name, parent_organization } = organization;
 
   if (parent_organization == null && child_organizations.length === 0) return null;
 
   return (
-    <section aria-labelledby={headingID} className="org-chart">
-      <h3 className="stencil-label" id={headingID}>
-        Org chart
-      </h3>
+    <DetailSection className="org-chart" title="Org chart">
       <div className="tier-tree">
         <OrgTier
           label="Parent"
@@ -62,6 +56,6 @@ export function OrgChart({ organization }: OrgChartProps) {
         </div>
         <OrgTier label="Units" organizations={child_organizations} />
       </div>
-    </section>
+    </DetailSection>
   );
 }

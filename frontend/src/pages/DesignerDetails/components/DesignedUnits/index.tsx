@@ -1,7 +1,6 @@
-import { useId } from 'react';
-
 import type { DesignedMobileSuitEntity } from '@/api';
 import {
+  DetailSection,
   EntityLink,
   RosterBody,
   rosterColumnHelper,
@@ -57,13 +56,8 @@ export type DesignedUnitsProps = {
 
 /** @description The mobile weapons credited to the designer, by name, paged in `?offset=`. */
 export function DesignedUnits({ cite, list }: DesignedUnitsProps) {
-  const headingID = useId();
-
   return (
-    <section aria-labelledby={headingID} className="designed-units">
-      <h3 className="stencil-label" id={headingID}>
-        Designed units
-      </h3>
+    <DetailSection className="designed-units" title="Designed units">
       <RosterBody
         caption="Mobile weapons credited to this designer, by name"
         columns={designedColumns(cite)}
@@ -71,6 +65,6 @@ export function DesignedUnits({ cite, list }: DesignedUnitsProps) {
         getRowID={creditRowID}
         list={list}
       />
-    </section>
+    </DetailSection>
   );
 }

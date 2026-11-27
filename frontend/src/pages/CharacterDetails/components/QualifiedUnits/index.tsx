@@ -1,7 +1,5 @@
-import { useId } from 'react';
-
 import type { PilotedMobileSuitEntity } from '@/api';
-import { EntityLink, type Cite } from '@/components';
+import { DetailSection, EntityLink, type Cite } from '@/components';
 
 import './styles.css';
 
@@ -16,17 +14,12 @@ export type QualifiedUnitsProps = {
  * source.
  */
 export function QualifiedUnits({ cite, piloted }: QualifiedUnitsProps) {
-  const headingID = useId();
-
   return (
-    <section aria-labelledby={headingID} className="qualified-units">
-      <h3 className="stencil-label" id={headingID}>
-        Qualified units
-      </h3>
+    <DetailSection className="qualified-units" title="Qualified units">
       {piloted.length === 0 ? (
         <p className="qualified-units-none meta-note">None on file</p>
       ) : (
-        <ul aria-labelledby={headingID} className="plain-list wrap-list">
+        <ul aria-label="Qualified units" className="plain-list wrap-list">
           {piloted.map(({ mobile_suit, source, work }) => (
             <li className="tier-node" key={`${mobile_suit.slug}-${work?.slug ?? ''}`}>
               {mobile_suit.model_number != null && (
@@ -41,6 +34,6 @@ export function QualifiedUnits({ cite, piloted }: QualifiedUnitsProps) {
           ))}
         </ul>
       )}
-    </section>
+    </DetailSection>
   );
 }

@@ -1,8 +1,4 @@
 .work-appearances {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-
     & ul {
         display: flex;
         flex-direction: column;

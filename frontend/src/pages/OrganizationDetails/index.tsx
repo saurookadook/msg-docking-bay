@@ -1,9 +1,9 @@
-import { useId } from 'react';
 import { useParams } from 'react-router';
 
 import type { OrganizationDetailEntity } from '@/api';
 import {
   CatalogDetail,
+  DetailSection,
   DossierHeader,
   DossierLayout,
   DossierStrip,
@@ -46,7 +46,6 @@ const PENDING_ITEMS = [
 
 /** @description The faction registry for a loaded organization. */
 function FactionRegistry({ organization }: { organization: OrganizationDetailEntity }) {
-  const weaponsHeadingID = useId();
   const manufactured = useRoleSection({
     section: MANUFACTURED,
     slug: organization.slug,
@@ -110,14 +109,11 @@ function FactionRegistry({ organization }: { organization: OrganizationDetailEnt
     >
       <OrgChart organization={organization} />
       <WorkAppearances appearances={organization.appearances} cite={cite} />
-      <section aria-labelledby={weaponsHeadingID} className="organization-weapons">
-        <h3 className="stencil-label" id={weaponsHeadingID}>
-          Mobile weapons
-        </h3>
+      <DetailSection className="organization-weapons" title="Mobile weapons">
         {sections.map(({ list, section }) => (
           <RoleSuits cite={cite} key={section.role} list={list} section={section} />
         ))}
-      </section>
+      </DetailSection>
       <PendingSection title="History" />
       <SourceCitations citations={citations} idPrefix={SOURCE_ID_PREFIX} />
     </DossierLayout>

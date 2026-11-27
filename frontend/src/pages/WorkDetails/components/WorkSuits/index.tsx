@@ -1,7 +1,11 @@
-import { useId } from 'react';
-
 import type { MobileSuitAppearanceCardEntity } from '@/api';
-import { EntityLink, RosterBody, rosterColumnHelper, StatusLamp } from '@/components';
+import {
+  DetailSection,
+  EntityLink,
+  RosterBody,
+  rosterColumnHelper,
+  StatusLamp,
+} from '@/components';
 import { UNIT_TYPE_LABELS } from '@/constants';
 import type { ListState } from '@/store';
 import { formatEpisodes } from '@/utils';
@@ -43,19 +47,14 @@ export type WorkSuitsProps = {
 
 /** @description The mobile weapons appearing in the work, debuts first, paged in `?offset=`. */
 export function WorkSuits({ list }: WorkSuitsProps) {
-  const headingID = useId();
-
   return (
-    <section aria-labelledby={headingID} className="work-suits">
-      <h3 className="stencil-label" id={headingID}>
-        Mobile weapons appearing
-      </h3>
+    <DetailSection className="work-suits" title="Mobile weapons appearing">
       <RosterBody
         caption="Mobile weapons in this work, debuts first"
         columns={columns}
         emptyState={<p>None on file</p>}
         list={list}
       />
-    </section>
+    </DetailSection>
   );
 }

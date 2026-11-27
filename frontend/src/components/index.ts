@@ -4,6 +4,7 @@ export * from './CatalogRoster';
 export * from './CitationMark';
 export * from './CitationMark/numberedCitations';
 export * from './DeckPanel';
+export * from './DetailSection';
 export * from './DossierHeader';
 export * from './DossierLayout';
 export * from './DossierStrip';

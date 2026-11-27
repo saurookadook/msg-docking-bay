@@ -2,9 +2,3 @@
     color: var(--color-text-muted);
     margin: 0;
 }
-
-.pending-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-}

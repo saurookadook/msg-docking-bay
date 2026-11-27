@@ -1,7 +1,5 @@
-import { useId } from 'react';
-
 import type { SourceCitationEntity, WorkCardEntity } from '@/api';
-import { EntityLink, StatusLamp, type Cite } from '@/components';
+import { DetailSection, EntityLink, StatusLamp, type Cite } from '@/components';
 import { WORK_TYPE_LABELS } from '@/constants';
 import type { Nullable } from '@/types';
 import { formatEpisodes, joinParts, yearOf } from '@/utils';
@@ -31,15 +29,10 @@ export type WorkAppearancesProps = {
  * @returns nothing when the catalog lists no appearance
  */
 export function WorkAppearances({ appearances, cite }: WorkAppearancesProps) {
-  const headingID = useId();
-
   if (appearances.length === 0) return null;
 
   return (
-    <section aria-labelledby={headingID} className="work-appearances">
-      <h3 className="stencil-label" id={headingID}>
-        Appearances
-      </h3>
+    <DetailSection className="work-appearances" title="Appearances">
       <ul className="plain-list">
         {appearances.map(
           ({
@@ -69,6 +62,6 @@ export function WorkAppearances({ appearances, cite }: WorkAppearancesProps) {
           },
         )}
       </ul>
-    </section>
+    </DetailSection>
   );
 }

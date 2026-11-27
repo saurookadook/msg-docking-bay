@@ -1,6 +1,4 @@
-import { useId } from 'react';
-
-import { DeckPanel } from '@/components';
+import { DeckPanel, DetailSection } from '@/components';
 
 import './styles.css';
 
@@ -15,13 +13,9 @@ export function PendingPanel() {
 
 /** @description A wiki section the catalog does not hold yet: its heading over a `PendingPanel`. */
 export function PendingSection({ title }: { title: string }) {
-  const headingID = useId();
   return (
-    <section aria-labelledby={headingID} className="pending-section">
-      <h3 className="stencil-label" id={headingID}>
-        {title}
-      </h3>
+    <DetailSection className="pending-section" title={title}>
       <PendingPanel />
-    </section>
+    </DetailSection>
   );
 }
