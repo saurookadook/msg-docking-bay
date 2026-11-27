@@ -231,8 +231,9 @@ Where the implementation differs from the steps above:
 
 - **Four extra commits.**
   - `refactor(frontend): share the appearances' continuity names` (before step 8):
-    `continuityNames` in `@/utils`, since the personnel file and the faction registry both
-    build their class line from their appearances' continuities.
+    `continuityNames` (renamed `continuityLabel` in review) in `@/utils`, since the
+    personnel file and the faction registry both build their class line from their
+    appearances' continuities.
   - `fix(frontend): drop another parent's suits when its sub-list loads` (before step 9):
     a sub-list request moved its key to the new parent but kept the old parent's rows, so a
     related-work link briefly listed the previous work's suits. The step 9 page test caught
@@ -251,7 +252,8 @@ Where the implementation differs from the steps above:
   filter needs the roles too; `SuitCredits` reads it.
 - **Mirage `role` filter (Q5).** `subListHandler`'s `list` takes the query and may return a
   `ValidationError`; the role check lives in `organizationMocks.ts`
-  (`listOrganizationMobileSuitsMock`), keeping `endpoints.ts` under 500 lines (496).
+  (`findOrganizationMobileSuitsForQueryMock`, so named in review), keeping `endpoints.ts`
+  under 500 lines (497).
 - **Sub-list keys (Q2).** Each role section's API query carries its own `role=`
   (`roleSectionQuery`), so the key `useCatalogSubList` checks matches the one stored.
   The hook returns a loading list while the stored page belongs to another parent or query.
@@ -265,7 +267,8 @@ Where the implementation differs from the steps above:
     qualified-units rack and an empty sub-list (not "DATA PENDING").
   - An organization link with no work reads "All works" in the role sections' Works column.
   - The work's sub-list carries no sources, so the operation log cites only its relations.
-- **Bundle:** the app's JS grows from 398 kB (124 kB gzip) after F3 to 420 kB (129 kB gzip).
+- **Bundle:** the app's JS grows from 398 kB (124 kB gzip) after F3 to 419 kB (129 kB gzip)
+  after the review fixes.
   `build-storybook` prints its chunk-size advisory; not compared with `main`.
 - **Browser check** in the app with `MOCK_API=true`: `/works/msg`,
   `/organizations/earth-federation-universal-century` and `/characters/amuro` swap to their
@@ -275,3 +278,36 @@ Where the implementation differs from the steps above:
   Magnet Coating tab with its sticky infobox, unchanged by the refactors; at 360 px (in an
   iframe) the operation log's strip pins at the top with no overflow; no console errors.
   Not checked: a full keyboard-only walk, and Night shift on the new pages.
+
+### Review fixes (2026-11-26)
+
+One `comprehensive-review` run (base `main`) kept 55 findings: 31 standards, 21 smells and
+3 spec, none critical or high. 42 were fixed, one commit per concern:
+
+- **Standards:** named arguments for Mirage's sub-list `list`, the organization suit mocks
+  and `useRoleSection`; guarded fixture lookups and typed mock responses in the stories and
+  tests; `find…Mock` naming, `mock` fixture prefixes, `import type`, the `[rowSlug]` error
+  tag; `when …` describe blocks and setup markers in the new tests; the role section's
+  offset param derived once (`offsetParamFor`).
+- **Shared pieces:** `numberedCitations` (each page's `cite`), `joinParts` and `yearOf`
+  (meta and class lines), `DetailSection` (a body section and its `h3`),
+  `mobileSuitColumns` (model number, name, unit type), the `muted-label`, `meta-note` and
+  `wrap-list` utilities, `SubListRequest`, `subListApiQuery` (the sub-list hook's default
+  query), `startGuardedFetch` (both list hooks' effect), `fetchCatalogSubList` (the three
+  sub-list actions), `requestPathsFor` (tests), and `OrgTier` in the org chart.
+- **Renames:** `PlateEntry`, `suitList`, `continuityLabel`.
+- **Kept, by decision:**
+  - The faction registry's role sections stay `h4`s under its "Mobile weapons" `h3`: one
+    sub-list split three ways, so the outline nests them, unlike the other pages' `h3`
+    sub-lists.
+  - Related-work rows keep their type and year line, matching the appearance rows.
+  - The sub-list reducers stay three-case switches: they already call the shared
+    transitions, like every `list` field, and a generic factory would need payload casts.
+  - Not fixed: splitting the step 2 commit (a history rewrite), moving `entryList` and
+    `PendingSection` back (D1 placed them), nesting `.pending-section` under
+    `.pending-panel` (it wraps the panel), a data-driven `DossierPage` (Q7a chose slots),
+    a `parentSlug` field (Q2 chose the string key), and inlining `useRoleSection`.
+- The org chart gained tests for a parent with no units and units with no parent, which
+  `OrgTier`'s empty tier needed. The pages were re-checked in the browser after the style
+  refactors: the personnel file, operation log, faction registry and engineering credits
+  look as before, with no console errors.
