@@ -25,7 +25,7 @@ function subListRequests(fetchSpy: MockInstance<typeof safeFetch.call>): string[
 }
 
 /** @description Three manufactured suits, so a one-row page has a next page. */
-const manufacturedSuits: OrganizationMobileSuitEntity[] = ['a', 'b', 'c'].map(
+const mockManufacturedSuits: OrganizationMobileSuitEntity[] = ['a', 'b', 'c'].map(
   (suffix) => ({
     links: [
       {
@@ -172,7 +172,9 @@ describe('OrganizationDetails', () => {
           '/organizations/:organization_slug/mobile-suits',
           (_schema, request) =>
             paginate(
-              request.queryParams['role'] === 'manufacturer' ? manufacturedSuits : [],
+              request.queryParams['role'] === 'manufacturer'
+                ? mockManufacturedSuits
+                : [],
               request,
             ),
         );

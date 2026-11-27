@@ -2,16 +2,16 @@ import { describe, expect, it } from 'vitest';
 
 import { continuityNames } from './continuityNames';
 
-const universalCentury = { name: 'Universal Century' };
-const cosmicEra = { name: 'Cosmic Era' };
+const mockUniversalCentury = { name: 'Universal Century' };
+const mockCosmicEra = { name: 'Cosmic Era' };
 
 describe('continuityNames', () => {
   it('names each continuity once, in the order of the works', () => {
     expect(
       continuityNames([
-        { work: { continuity: universalCentury } },
-        { work: { continuity: cosmicEra } },
-        { work: { continuity: universalCentury } },
+        { work: { continuity: mockUniversalCentury } },
+        { work: { continuity: mockCosmicEra } },
+        { work: { continuity: mockUniversalCentury } },
       ]),
     ).toBe('Universal Century · Cosmic Era');
   });
