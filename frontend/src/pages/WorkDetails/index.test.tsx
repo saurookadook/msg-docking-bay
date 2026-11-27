@@ -9,7 +9,11 @@ import { findWorkMobileSuitsMock } from '@/__mocks__/mobileSuitMocks';
 import { findWorkMock } from '@/__mocks__/workMocks';
 import type { WorkResponse } from '@/api';
 import { safeFetch } from '@/utils';
-import { getSpecPlateValue, renderWithProviders } from '@/utils/testing';
+import {
+  getSpecPlateValue,
+  renderWithProviders,
+  requestPathsFor,
+} from '@/utils/testing';
 
 async function findLog(name: string = 'Mobile Suit Gundam') {
   return screen.findByRole('region', { name });
@@ -215,11 +219,9 @@ describe('WorkDetails', () => {
       pathname: '/works/mobile-suit-gundam',
       search: '?limit=1&offset=1',
     });
-    expect(
-      fetchSpy.mock.calls
-        .filter(([{ name }]) => name === 'fetchWorkMobileSuits')
-        .map(([, { requestPathname }]) => requestPathname),
-    ).toEqual(['/api/works/mobile-suit-gundam/mobile-suits?limit=1&offset=1']);
+    expect(requestPathsFor({ fetchSpy, name: 'fetchWorkMobileSuits' })).toEqual([
+      '/api/works/mobile-suit-gundam/mobile-suits?limit=1&offset=1',
+    ]);
 
     await router.navigate(-1);
     await waitFor(() => expect(router.state.location.pathname).toBe('/works'));
@@ -282,11 +284,7 @@ describe('WorkDetails', () => {
     const section = screen.getByRole('region', { name: 'Mobile weapons appearing' });
     expect(await within(section).findByText('2 on file')).toBeVisible();
     expect(within(section).queryByText('Episodes 1–43')).not.toBeInTheDocument();
-    expect(
-      fetchSpy.mock.calls
-        .filter(([{ name }]) => name === 'fetchWorkMobileSuits')
-        .map(([, { requestPathname }]) => requestPathname),
-    ).toEqual([
+    expect(requestPathsFor({ fetchSpy, name: 'fetchWorkMobileSuits' })).toEqual([
       '/api/works/mobile-suit-gundam/mobile-suits',
       '/api/works/mobile-suit-gundam-i/mobile-suits',
     ]);

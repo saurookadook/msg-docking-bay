@@ -10,6 +10,7 @@ import {
   getListItemTexts,
   getSpecPlateValue,
   renderWithProviders,
+  requestPathsFor,
 } from '@/utils/testing';
 
 async function findPersonnelFile(name: string = 'Amuro Ray') {
@@ -134,9 +135,7 @@ describe('CharacterDetails', () => {
     await waitFor(() =>
       expect(router.state.location.pathname).toBe('/characters/amuro-ray'),
     );
-    expect(
-      fetchSpy.mock.calls.filter(([{ name }]) => name === 'fetchCharacter'),
-    ).toHaveLength(1);
+    expect(requestPathsFor({ fetchSpy, name: 'fetchCharacter' })).toHaveLength(1);
 
     await router.navigate(-1);
     expect(router.state.location.pathname).toBe('/characters');

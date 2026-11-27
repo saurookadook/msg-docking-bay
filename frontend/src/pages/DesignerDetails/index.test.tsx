@@ -8,7 +8,11 @@ import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockRx782Gundam } from '@/__mocks__/mobileSuitMocks';
 import type { DesignedMobileSuitEntity } from '@/api';
 import { safeFetch } from '@/utils';
-import { getSpecPlateValue, renderWithProviders } from '@/utils/testing';
+import {
+  getSpecPlateValue,
+  renderWithProviders,
+  requestPathsFor,
+} from '@/utils/testing';
 
 /** @description One suit credited by two sources; the second copy is sparse. */
 const mockTwoSourceCredits: DesignedMobileSuitEntity[] = [
@@ -159,9 +163,7 @@ describe('DesignerDetails', () => {
     await findDesignedTable();
     expect(router.state.location.pathname).toBe('/mechanical-designers/hajime-katoki');
     expect(
-      fetchSpy.mock.calls
-        .filter(([{ name }]) => name === 'fetchMechanicalDesignerMobileSuits')
-        .map(([, { requestPathname }]) => requestPathname),
+      requestPathsFor({ fetchSpy, name: 'fetchMechanicalDesignerMobileSuits' }),
     ).toEqual(['/api/mechanical-designers/hajime-katoki/mobile-suits']);
 
     await router.navigate(-1);

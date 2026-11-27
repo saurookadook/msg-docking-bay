@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Response as MirageResponse, type Server } from 'miragejs';
-import { afterEach, describe, expect, it, vi, type MockInstance } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { mockNow, mockSources } from '@/__mocks__/catalogMocks';
 import { paginate } from '@/__mocks__/endpoints';
@@ -11,17 +11,14 @@ import { findOrganizationMock } from '@/__mocks__/organizationMocks';
 import { mockMobileSuitGundam } from '@/__mocks__/workMocks';
 import type { OrganizationMobileSuitEntity, OrganizationResponse } from '@/api';
 import { safeFetch } from '@/utils';
-import { getSpecPlateValue, renderWithProviders } from '@/utils/testing';
+import {
+  getSpecPlateValue,
+  renderWithProviders,
+  requestPathsFor,
+} from '@/utils/testing';
 
 async function findRegistry(name: string = 'Earth Federation') {
   return screen.findByRole('region', { name });
-}
-
-/** @description The organization sub-list requests made, as their request paths. */
-function subListRequests(fetchSpy: MockInstance<typeof safeFetch.call>): string[] {
-  return fetchSpy.mock.calls
-    .filter(([{ name }]) => name === 'fetchOrganizationMobileSuits')
-    .map(([, { requestPathname }]) => requestPathname);
 }
 
 /** @description Three manufactured suits, so a one-row page has a next page. */
@@ -197,7 +194,9 @@ describe('OrganizationDetails', () => {
     expect(await within(manufactured).findByText('2–2 of 3')).toBeVisible();
     expect(router.state.location.search).toBe('?limit=1&manufacturer_offset=1');
     expect(within(manufactured).getByRole('rowheader')).toHaveTextContent('Gundam b');
-    expect(subListRequests(fetchSpy).toSorted()).toEqual([
+    expect(
+      requestPathsFor({ fetchSpy, name: 'fetchOrganizationMobileSuits' }).toSorted(),
+    ).toEqual([
       '/api/organizations/earth-federation/mobile-suits?limit=1&offset=1&role=manufacturer',
       '/api/organizations/earth-federation/mobile-suits?limit=1&role=developer',
       '/api/organizations/earth-federation/mobile-suits?limit=1&role=manufacturer',
@@ -241,12 +240,14 @@ describe('OrganizationDetails', () => {
     const manufactured = await screen.findByRole('region', { name: 'Manufactured' });
     await within(manufactured).findByRole('table');
     expect(router.state.location.pathname).toBe('/organizations/earth-federation');
+    expect(requestPathsFor({ fetchSpy, name: 'fetchOrganization' })).toHaveLength(1);
     expect(
-      fetchSpy.mock.calls.filter(([{ name }]) => name === 'fetchOrganization'),
-    ).toHaveLength(1);
-    expect(subListRequests(fetchSpy)).toHaveLength(3);
+      requestPathsFor({ fetchSpy, name: 'fetchOrganizationMobileSuits' }),
+    ).toHaveLength(3);
     expect(
-      subListRequests(fetchSpy).every((path) => path.includes('/earth-federation/')),
+      requestPathsFor({ fetchSpy, name: 'fetchOrganizationMobileSuits' }).every(
+        (path) => path.includes('/earth-federation/'),
+      ),
     ).toBe(true);
 
     await router.navigate(-1);
