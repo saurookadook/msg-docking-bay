@@ -46,6 +46,24 @@ function guardDispatch({
 }
 
 /**
+ * @description Starts a fetch whose dispatches stop once the returned cleanup runs: an
+ * effect returns it, so a response that lands after the page moved on is dropped.
+ */
+function startGuardedFetch({
+  dispatch,
+  fetch,
+}: {
+  dispatch: AppDispatch;
+  fetch: (guardedDispatch: AppDispatch) => Promise<void>;
+}): () => void {
+  let isActive = true;
+  void fetch(guardDispatch({ dispatch, isActive: () => isActive }));
+  return () => {
+    isActive = false;
+  };
+}
+
+/**
  * @description Loads the catalog page the URL asks for, and returns it. The API query
  * is built from `keys` only, so other params never reach the API.
  * @note It refetches whenever that query changes; the slice drops a response for an
@@ -64,16 +82,14 @@ export function useCatalogList<Card>({
   const [searchParams] = useSearchParams();
   const query = listSearch({ keys, searchParams });
 
-  useEffect(() => {
-    let isActive = true;
-    void fetchList({
-      dispatch: guardDispatch({ dispatch: appDispatch, isActive: () => isActive }),
-      query,
-    });
-    return () => {
-      isActive = false;
-    };
-  }, [appDispatch, fetchList, query]);
+  useEffect(
+    () =>
+      startGuardedFetch({
+        dispatch: appDispatch,
+        fetch: (dispatch) => fetchList({ dispatch, query }),
+      }),
+    [appDispatch, fetchList, query],
+  );
 
   return selectList(appState);
 }
@@ -146,15 +162,10 @@ export function useCatalogSubList<Item>({
 
   useEffect(() => {
     if (slug == null) return;
-    let isActive = true;
-    void fetchSubList({
-      dispatch: guardDispatch({ dispatch: appDispatch, isActive: () => isActive }),
-      query,
-      slug,
+    return startGuardedFetch({
+      dispatch: appDispatch,
+      fetch: (dispatch) => fetchSubList({ dispatch, query, slug }),
     });
-    return () => {
-      isActive = false;
-    };
   }, [appDispatch, fetchSubList, query, slug]);
 
   if (slug != null && list.query === subListKey({ query, slug })) return list;
