@@ -313,18 +313,18 @@ function subListHandler<Parent, Item>({
   param,
 }: {
   find: (slug: string) => Parent | undefined;
-  list: (
-    parent: Parent,
-    queryParams: Request['queryParams'],
-  ) => readonly Item[] | ValidationError;
+  list: (args: {
+    parent: Parent;
+    queryParams: Request['queryParams'];
+  }) => readonly Item[] | ValidationError;
   notFoundDetail: string;
   param: string;
 }): (request: Request) => { data: Item[]; meta: PageMeta } | MirageResponse {
   return (request) => {
     const parent = find(request.params[param] ?? '');
     if (parent === undefined) return notFound(notFoundDetail);
-    const items = list(parent, request.queryParams);
-    return isItemList(items) ? paginate(items, request) : invalidQuery([items]);
+    const result = list({ parent, queryParams: request.queryParams });
+    return isItemList(result) ? paginate(result, request) : invalidQuery([result]);
   };
 }
 
@@ -414,7 +414,7 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
     path: '/api/mechanical-designers/{mechanical_designer_slug}/mobile-suits',
     handler: subListHandler({
       find: findMechanicalDesignerMock,
-      list: ({ slug }) => findMechanicalDesignerMobileSuitsMock(slug),
+      list: ({ parent: { slug } }) => findMechanicalDesignerMobileSuitsMock(slug),
       notFoundDetail: 'Mechanical designer not found',
       param: 'mechanical_designer_slug',
     }),
@@ -459,7 +459,8 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
     path: '/api/organizations/{organization_slug}/mobile-suits',
     handler: subListHandler({
       find: findOrganizationMock,
-      list: ({ slug }, { role }) => listOrganizationMobileSuitsMock({ role, slug }),
+      list: ({ parent: { slug }, queryParams: { role } }) =>
+        listOrganizationMobileSuitsMock({ role, slug }),
       notFoundDetail: 'Organization not found',
       param: 'organization_slug',
     }),
@@ -488,7 +489,7 @@ export const endpointConfigs: readonly AnyEndpointConfig[] = [
     path: '/api/works/{work_slug}/mobile-suits',
     handler: subListHandler({
       find: findWorkMock,
-      list: ({ slug }) => findWorkMobileSuitsMock(slug),
+      list: ({ parent: { slug } }) => findWorkMobileSuitsMock(slug),
       notFoundDetail: 'Work not found',
       param: 'work_slug',
     }),
