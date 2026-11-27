@@ -3,7 +3,7 @@ import {
   entryList,
   SpecPlate,
   type Cite,
-  type Entry,
+  type PlateEntry,
   type SpecPlateItem,
 } from '@/components';
 import type { Nullable } from '@/types';
@@ -27,7 +27,9 @@ function summaryItems(sheet: Nullable<MobileSuitSpecSheetEntity>): SpecPlateItem
   const partsInherited = (kind: MobileSuitSpecSheetEntity['inherited_parts'][number]) =>
     sheet?.inherited_parts.includes(kind) ?? false;
   const partList = (items: PartItem[]) =>
-    entryList(items.map((item): Entry => ({ content: partText(item), key: item.key })));
+    entryList(
+      items.map((item): PlateEntry => ({ content: partText(item), key: item.key })),
+    );
 
   return [
     measurementItem({ field: lineupHeight(sheet)?.field ?? 'overall_height_m', sheet }),
