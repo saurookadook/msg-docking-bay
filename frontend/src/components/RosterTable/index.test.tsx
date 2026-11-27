@@ -123,7 +123,7 @@ describe('RosterTable', () => {
           rows={[{ name: 'Gundam' }]}
         />,
       ),
-    ).toThrow('[RosterTable] : a row with no slug needs a getRowID');
+    ).toThrow("[rowSlug] : a row with no string 'slug' needs a getRowID");
     const slugHelper = rosterColumnHelper<{ slug: number }>();
     expect(() =>
       render(
@@ -135,7 +135,7 @@ describe('RosterTable', () => {
           rows={[{ slug: 7 }]}
         />,
       ),
-    ).toThrow('[RosterTable] : a row with no slug needs a getRowID');
+    ).toThrow("[rowSlug] : a row with no string 'slug' needs a getRowID");
     consoleError.mockRestore();
   });
 });

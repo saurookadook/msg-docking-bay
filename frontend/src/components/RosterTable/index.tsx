@@ -28,7 +28,7 @@ function rowSlug(row: unknown): string {
     const { slug } = row;
     if (typeof slug === 'string') return slug;
   }
-  throw new TypeError('[RosterTable] : a row with no slug needs a getRowID');
+  throw new TypeError("[rowSlug] : a row with no string 'slug' needs a getRowID");
 }
 
 /**
