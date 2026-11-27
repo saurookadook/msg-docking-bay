@@ -112,6 +112,13 @@ describe('catalogList', () => {
       });
     });
 
+    it('reads a key with no query as its parent alone', () => {
+      const bare = { ...shown, query: 'mobile-suit-gundam' };
+      expect(
+        requestSubList(bare, { query: 'mobile-suit-gundam?offset=50' }).items,
+      ).toEqual([mockRx782Gundam]);
+    });
+
     it("drops another parent's rows as soon as the new parent's page is asked for", () => {
       expect(requestSubList(shown, { query: 'mobile-suit-gundam-i?' })).toEqual({
         errorMessage: null,

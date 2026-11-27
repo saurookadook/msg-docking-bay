@@ -102,7 +102,11 @@ describe('DesignerDetails', () => {
                 },
                 {
                   created_at: mockNow,
-                  mobile_suit: mockRx782Gundam,
+                  mobile_suit: {
+                    ...mockRx782Gundam,
+                    continuity: null,
+                    model_number: null,
+                  },
                   source: mockWikidataSource,
                 },
               ],
@@ -119,6 +123,12 @@ describe('DesignerDetails', () => {
         .getAllByRole('rowheader')
         .map(({ textContent }) => textContent),
     ).toEqual(['Gundam[1]', 'Gundam[2]']);
+    const [, , second] = within(table).getAllByRole('row');
+    expect(
+      within(second!)
+        .getAllByRole('cell')
+        .map(({ textContent }) => textContent),
+    ).toEqual(['—', 'Mobile Suit', '—']);
   });
 
   it('says so, and lists no sources, for a designer with no credits', async () => {

@@ -8,6 +8,7 @@ import { paginate } from '@/__mocks__/endpoints';
 import { makeMirageServer } from '@/__mocks__/mirageServer';
 import { mockRx782Gundam } from '@/__mocks__/mobileSuitMocks';
 import { findOrganizationMock } from '@/__mocks__/organizationMocks';
+import { mockMobileSuitGundam } from '@/__mocks__/workMocks';
 import type { OrganizationMobileSuitEntity, OrganizationResponse } from '@/api';
 import { safeFetch } from '@/utils';
 import { getSpecPlateValue, renderWithProviders } from '@/utils/testing';
@@ -31,11 +32,16 @@ const manufacturedSuits: OrganizationMobileSuitEntity[] = ['a', 'b', 'c'].map(
         created_at: mockNow,
         role: 'manufacturer',
         source: mockSources.rx782Gundam,
-        work: null,
+        // NOTE: the first suit is tagged with a work and has no model number.
+        work:
+          suffix === 'a'
+            ? { slug: mockMobileSuitGundam.slug, title: mockMobileSuitGundam.title }
+            : null,
       },
     ],
     mobile_suit: {
       ...mockRx782Gundam,
+      model_number: suffix === 'a' ? null : mockRx782Gundam.model_number,
       name: `Gundam ${suffix}`,
       slug: `gundam-${suffix}`,
     },
@@ -179,6 +185,11 @@ describe('OrganizationDetails', () => {
 
     const manufactured = await screen.findByRole('region', { name: 'Manufactured' });
     expect(await within(manufactured).findByText('1–1 of 3')).toBeVisible();
+    expect(
+      within(manufactured)
+        .getAllByRole('cell')
+        .map(({ textContent }) => textContent),
+    ).toEqual(['—', 'Mobile Suit', 'Mobile Suit Gundam']);
     await user.click(within(manufactured).getByRole('link', { name: 'Next' }));
 
     expect(await within(manufactured).findByText('2–2 of 3')).toBeVisible();

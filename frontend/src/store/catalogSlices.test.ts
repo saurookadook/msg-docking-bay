@@ -396,21 +396,31 @@ describe('catalog slices', () => {
     });
   });
 
-  it('stores a failed sub-list request as an error', async () => {
-    server = makeMirageServer({ environment: 'test' });
+  it.each([
+    [fetchWorkMobileSuits, 'works', 'Work not found'],
+    [
+      fetchMechanicalDesignerMobileSuits,
+      'mechanicalDesigners',
+      'Mechanical designer not found',
+    ],
+  ] as const)(
+    '%o stores a failed sub-list request as an error',
+    async (fetchSubList, slice, message) => {
+      server = makeMirageServer({ environment: 'test' });
 
-    const { mobileSuits } = (
-      await run(({ dispatch }) =>
-        fetchWorkMobileSuits({ dispatch, query: '', slug: 'turn-a-gundam' }),
-      )
-    ).works;
+      const { mobileSuits } = (
+        await run(({ dispatch }) =>
+          fetchSubList({ dispatch, query: '', slug: 'turn-a-gundam' }),
+        )
+      )[slice];
 
-    expect(mobileSuits).toMatchObject({
-      errorMessage: 'Work not found',
-      items: [],
-      query: 'turn-a-gundam?',
-    });
-  });
+      expect(mobileSuits).toMatchObject({
+        errorMessage: message,
+        items: [],
+        query: 'turn-a-gundam?',
+      });
+    },
+  );
 
   it("stores each role's suits in its own section", async () => {
     server = makeMirageServer({ environment: 'test' });

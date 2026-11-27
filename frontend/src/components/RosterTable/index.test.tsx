@@ -124,6 +124,18 @@ describe('RosterTable', () => {
         />,
       ),
     ).toThrow('[RosterTable] : a row with no slug needs a getRowID');
+    const slugHelper = rosterColumnHelper<{ slug: number }>();
+    expect(() =>
+      render(
+        <RosterTable
+          caption="Credits"
+          columns={slugHelper.columns([
+            slugHelper.accessor('slug', { header: 'Slug' }),
+          ])}
+          rows={[{ slug: 7 }]}
+        />,
+      ),
+    ).toThrow('[RosterTable] : a row with no slug needs a getRowID');
     consoleError.mockRestore();
   });
 });

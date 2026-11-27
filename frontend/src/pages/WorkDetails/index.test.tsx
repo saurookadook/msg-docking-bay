@@ -155,6 +155,34 @@ describe('WorkDetails', () => {
     expect(within(section).getByText('2 on file')).toBeVisible();
   });
 
+  it('marks a suit with no model number or episodes with a dash', async () => {
+    server = makeMirageServer({
+      environment: 'test',
+      overrides: (mirage) => {
+        mirage.get('/works/:work_slug/mobile-suits', (_schema, request) =>
+          paginate(
+            findWorkMobileSuitsMock('mobile-suit-gundam-i').map((suit) => ({
+              ...suit,
+              model_number: null,
+            })),
+            request,
+          ),
+        );
+      },
+    });
+    renderWithProviders({ initialEntries: ['/works/mobile-suit-gundam-i'] });
+
+    const section = await screen.findByRole('region', {
+      name: 'Mobile weapons appearing',
+    });
+    const [first] = (await within(section).findAllByRole('row')).slice(1);
+    expect(
+      within(first!)
+        .getAllByRole('cell')
+        .map(({ textContent }) => textContent),
+    ).toEqual(['—', 'Mobile Suit', '—', '—']);
+  });
+
   it('says so when no suit appears', async () => {
     server = makeMirageServer({
       environment: 'test',
@@ -227,6 +255,41 @@ describe('WorkDetails', () => {
     expect(within(next).getByRole('status')).toHaveTextContent('Scanning the deck');
     expect(await within(next).findByText('2 on file')).toBeVisible();
     expect(within(next).queryByText('Episodes 1–43')).not.toBeInTheDocument();
+  });
+
+  it("drops the last work's suits when they land after leaving it", async () => {
+    const user = userEvent.setup();
+    server = makeMirageServer({
+      environment: 'test',
+      overrides: (mirage) => {
+        mirage.get(
+          '/works/:work_slug/mobile-suits',
+          (_schema, request) => {
+            const workSlug = request.params['work_slug'] ?? '';
+            return paginate(findWorkMobileSuitsMock(workSlug), request);
+          },
+          { timing: 100 },
+        );
+      },
+    });
+    const fetchSpy = vi.spyOn(safeFetch, 'call');
+    renderWithProviders({ initialEntries: ['/works/mobile-suit-gundam'] });
+
+    // NOTE: leave before the first work's suits arrive.
+    await user.click(await screen.findByRole('link', { name: 'Mobile Suit Gundam I' }));
+
+    await findLog('Mobile Suit Gundam I');
+    const section = screen.getByRole('region', { name: 'Mobile weapons appearing' });
+    expect(await within(section).findByText('2 on file')).toBeVisible();
+    expect(within(section).queryByText('Episodes 1–43')).not.toBeInTheDocument();
+    expect(
+      fetchSpy.mock.calls
+        .filter(([{ name }]) => name === 'fetchWorkMobileSuits')
+        .map(([, { requestPathname }]) => requestPathname),
+    ).toEqual([
+      '/api/works/mobile-suit-gundam/mobile-suits',
+      '/api/works/mobile-suit-gundam-i/mobile-suits',
+    ]);
   });
 
   it("shows the sub-list's error in its section", async () => {
