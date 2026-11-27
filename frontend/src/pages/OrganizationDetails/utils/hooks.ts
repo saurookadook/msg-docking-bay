@@ -7,10 +7,13 @@ import type { RoleSection } from './roleSections';
  * @description One role section's page of suits, loaded once the organization is.
  * @note `slug` is the organization's current slug, from its loaded detail.
  */
-export function useRoleSection(
-  section: RoleSection,
-  slug: string,
-): ListState<OrganizationMobileSuitEntity> {
+export function useRoleSection({
+  section,
+  slug,
+}: {
+  section: RoleSection;
+  slug: string;
+}): ListState<OrganizationMobileSuitEntity> {
   return useCatalogSubList({
     apiQuery: section.apiQuery,
     fetchSubList: section.fetchSubList,

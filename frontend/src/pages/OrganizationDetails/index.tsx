@@ -47,9 +47,12 @@ const PENDING_ITEMS = [
 /** @description The faction registry for a loaded organization. */
 function FactionRegistry({ organization }: { organization: OrganizationDetailEntity }) {
   const weaponsHeadingID = useId();
-  const manufactured = useRoleSection(MANUFACTURED, organization.slug);
-  const operated = useRoleSection(OPERATED, organization.slug);
-  const developed = useRoleSection(DEVELOPED, organization.slug);
+  const manufactured = useRoleSection({
+    section: MANUFACTURED,
+    slug: organization.slug,
+  });
+  const operated = useRoleSection({ section: OPERATED, slug: organization.slug });
+  const developed = useRoleSection({ section: DEVELOPED, slug: organization.slug });
   const sections = [
     { list: manufactured, section: MANUFACTURED },
     { list: operated, section: OPERATED },
