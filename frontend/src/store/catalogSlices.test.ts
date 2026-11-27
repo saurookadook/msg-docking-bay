@@ -7,11 +7,14 @@ import { mockMobileSuitGundam } from '@/__mocks__/workMocks';
 import type { HTTPValidationError } from '@/api';
 
 import {
+  fetchCharacter,
   fetchCharacters,
   fetchContinuities,
+  fetchMechanicalDesigner,
   fetchMechanicalDesigners,
   fetchMobileSuit,
   fetchMobileSuits,
+  fetchOrganization,
   fetchOrganizations,
   fetchWork,
   fetchWorks,
@@ -247,6 +250,98 @@ describe('catalog slices', () => {
       ).mobileSuits;
 
       expect(detailsBySlug[mockRx782Gundam.slug]).toMatchObject({
+        detail: null,
+        errorMessage,
+        isNotFound: false,
+      });
+    },
+  );
+
+  it.each([
+    [fetchCharacter, 'characters', 'amuro', 'amuro-ray'],
+    [
+      fetchOrganization,
+      'organizations',
+      'earth-federation-universal-century',
+      'earth-federation',
+    ],
+    [fetchMechanicalDesigner, 'mechanicalDesigners', 'katoki-hajime', 'hajime-katoki'],
+  ] as const)(
+    '%o stores an old slug under itself and under the current one',
+    async (fetchDetail, slice, oldSlug, currentSlug) => {
+      server = makeMirageServer({ environment: 'test' });
+
+      const { detailsBySlug } = (
+        await run(({ dispatch }) => fetchDetail({ dispatch, slug: oldSlug }))
+      )[slice];
+
+      const stored = {
+        detail: expect.objectContaining({ slug: currentSlug }),
+        errorMessage: null,
+        isNotFound: false,
+        requestInProgress: false,
+      };
+      expect(detailsBySlug[oldSlug]).toEqual(stored);
+      expect(detailsBySlug[currentSlug]).toEqual(stored);
+    },
+  );
+
+  it.each([
+    [fetchCharacter, 'characters', 'Character not found'],
+    [fetchOrganization, 'organizations', 'Organization not found'],
+    [fetchMechanicalDesigner, 'mechanicalDesigners', 'Mechanical designer not found'],
+  ] as const)(
+    '%o marks an unknown slug as not found',
+    async (fetchDetail, slice, message) => {
+      server = makeMirageServer({ environment: 'test' });
+
+      const { detailsBySlug } = (
+        await run(({ dispatch }) => fetchDetail({ dispatch, slug: 'char-aznable' }))
+      )[slice];
+
+      expect(detailsBySlug['char-aznable']).toEqual({
+        detail: null,
+        errorMessage: message,
+        isNotFound: true,
+        requestInProgress: false,
+      });
+    },
+  );
+
+  it.each([
+    [
+      fetchCharacter,
+      'characters',
+      '/characters/:character_slug',
+      'The character request failed.',
+    ],
+    [
+      fetchOrganization,
+      'organizations',
+      '/organizations/:organization_slug',
+      'The organization request failed.',
+    ],
+    [
+      fetchMechanicalDesigner,
+      'mechanicalDesigners',
+      '/mechanical-designers/:mechanical_designer_slug',
+      'The mechanical designer request failed.',
+    ],
+  ] as const)(
+    '%o marks a failed request as an error, not a 404',
+    async (fetchDetail, slice, route, errorMessage) => {
+      server = makeMirageServer({
+        environment: 'test',
+        overrides: (mirage) => {
+          mirage.get(route, () => new MirageResponse(503, {}, {}));
+        },
+      });
+
+      const { detailsBySlug } = (
+        await run(({ dispatch }) => fetchDetail({ dispatch, slug: 'amuro-ray' }))
+      )[slice];
+
+      expect(detailsBySlug['amuro-ray']).toMatchObject({
         detail: null,
         errorMessage,
         isNotFound: false,
