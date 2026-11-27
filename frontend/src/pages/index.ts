@@ -6,5 +6,6 @@ export * from './Home';
 export * from './MobileSuitDetails';
 export * from './MobileSuitList';
 export * from './NotFound';
+export * from './OrganizationDetails';
 export * from './OrganizationList';
 export * from './WorkList';

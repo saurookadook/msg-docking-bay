@@ -1,0 +1,5 @@
+#organization-details .organization-weapons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}

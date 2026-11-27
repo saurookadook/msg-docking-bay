@@ -10,6 +10,7 @@ import {
   MobileSuitDetails,
   MobileSuitList,
   NotFound,
+  OrganizationDetails,
   OrganizationList,
   WorkList,
 } from '@/pages';
@@ -28,6 +29,10 @@ export const routerConfig: RouteObject[] = [
       { path: 'mobile-suits', element: <MobileSuitList /> },
       { path: 'mobile-suits/:mobileSuitSlug', element: <MobileSuitDetails /> },
       { path: 'organizations', element: <OrganizationList /> },
+      {
+        path: 'organizations/:organizationSlug',
+        element: <OrganizationDetails />,
+      },
       { path: 'works', element: <WorkList /> },
       { path: '*', element: <NotFound /> },
     ],
