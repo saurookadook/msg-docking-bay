@@ -8,4 +8,5 @@ export * from './MobileSuitList';
 export * from './NotFound';
 export * from './OrganizationDetails';
 export * from './OrganizationList';
+export * from './WorkDetails';
 export * from './WorkList';

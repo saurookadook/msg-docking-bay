@@ -12,6 +12,7 @@ import {
   NotFound,
   OrganizationDetails,
   OrganizationList,
+  WorkDetails,
   WorkList,
 } from '@/pages';
 
@@ -34,6 +35,7 @@ export const routerConfig: RouteObject[] = [
         element: <OrganizationDetails />,
       },
       { path: 'works', element: <WorkList /> },
+      { path: 'works/:workSlug', element: <WorkDetails /> },
       { path: '*', element: <NotFound /> },
     ],
   },
