@@ -156,10 +156,11 @@ Each lists the wiki's sections; ✅ = data available now, ⏳ = shown as an empt
   - Home deck = rows of cages for the current page of suits; continuity = which deck/bay.
   - Search terminal on a console; picking a result **flies the camera along the crane rail** to that
   cage (or loads the cage on demand).
-  - Suit detail = close-up orbit of that cage; Personnel/Organizations/Works pages = in-world terminal
-  screens on the catwalk showing the same wiki content.
-  - **Launch sequence** ("Sortie"): mech walks to the catapult, Condition Red lights, catapult fires,
-  then navigates to a random suit. `[Pilot name], launching!` uses the suit's first pilot from data.
+  - Suit detail = close-up orbit of that cage; Personnel/Organizations/Works pages =
+  in-world terminal screens on the catwalk showing the same wiki content.
+  - **Launch sequence** ("Sortie"): mech walks to the catapult, Condition Red lights,
+  catapult fires, then navigates to a random suit. `[Pilot name], launching!` uses the suit's
+  first pilot from data.
 - **Performance:** instancing, one draw-call-light material set, `frameloop="demand"` when idle, DPR
   cap, dispose on unmount; budget ~60 fps on an integrated GPU with 24 cages.
 
