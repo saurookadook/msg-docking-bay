@@ -14,13 +14,27 @@ export type SpecPlateItem = {
 };
 
 export type SpecPlateProps = React.HTMLAttributes<HTMLDListElement> & {
+  /** @description Narrows the label column, for a plate in a side panel. */
+  isCompact?: boolean;
   items: SpecPlateItem[];
 };
 
 /** @description A stamped label–value plate, such as a suit's spec sheet. */
-export function SpecPlate({ className, items, ...props }: SpecPlateProps) {
+export function SpecPlate({
+  className,
+  isCompact = false,
+  items,
+  ...props
+}: SpecPlateProps) {
   return (
-    <dl className={classNames('spec-plate', className)} {...props}>
+    <dl
+      className={classNames(
+        'spec-plate',
+        { 'spec-plate-compact': isCompact },
+        className,
+      )}
+      {...props}
+    >
       {items.map(({ isInherited = false, label, value }) => (
         <div className="spec-plate-row" key={label}>
           <dt className="stencil-label">{label}</dt>

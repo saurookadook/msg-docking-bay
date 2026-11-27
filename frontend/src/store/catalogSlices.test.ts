@@ -2,12 +2,15 @@ import { Response as MirageResponse, type Server } from 'miragejs';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { makeMirageServer } from '@/__mocks__/mirageServer';
+import { mockRx782Gundam } from '@/__mocks__/mobileSuitMocks';
 import { mockMobileSuitGundam } from '@/__mocks__/workMocks';
+import type { HTTPValidationError } from '@/api';
 
 import {
   fetchCharacters,
   fetchContinuities,
   fetchMechanicalDesigners,
+  fetchMobileSuit,
   fetchMobileSuits,
   fetchOrganizations,
   fetchWork,
@@ -161,6 +164,95 @@ describe('catalog slices', () => {
       isNotFound: false,
     });
   });
+
+  it('stores a mobile suit under an old slug and under its current one', async () => {
+    server = makeMirageServer({ environment: 'test' });
+
+    const { detailsBySlug } = (
+      await run(({ dispatch }) => fetchMobileSuit({ dispatch, slug: 'rx-78-2' }))
+    ).mobileSuits;
+
+    const storedSuit = {
+      detail: expect.objectContaining({
+        slug: mockRx782Gundam.slug,
+        spec_sheets: expect.any(Array),
+      }),
+      errorMessage: null,
+      isNotFound: false,
+      requestInProgress: false,
+    };
+    expect(detailsBySlug['rx-78-2']).toEqual(storedSuit);
+    expect(detailsBySlug[mockRx782Gundam.slug]).toEqual(storedSuit);
+  });
+
+  it('stores a mobile suit asked for by its current slug once', async () => {
+    server = makeMirageServer({ environment: 'test' });
+
+    const { detailsBySlug } = (
+      await run(({ dispatch }) =>
+        fetchMobileSuit({ dispatch, slug: mockRx782Gundam.slug }),
+      )
+    ).mobileSuits;
+
+    expect(Object.keys(detailsBySlug)).toEqual([mockRx782Gundam.slug]);
+  });
+
+  it('marks an unknown mobile suit as not found', async () => {
+    server = makeMirageServer({ environment: 'test' });
+
+    const { detailsBySlug } = (
+      await run(({ dispatch }) => fetchMobileSuit({ dispatch, slug: 'turn-a-gundam' }))
+    ).mobileSuits;
+
+    expect(detailsBySlug['turn-a-gundam']).toEqual({
+      detail: null,
+      errorMessage: 'Mobile suit not found',
+      isNotFound: true,
+      requestInProgress: false,
+    });
+  });
+
+  it.each([
+    [503, {}, 'The mobile suit request failed.'],
+    [
+      422,
+      {
+        detail: [
+          {
+            loc: ['path', 'mobile_suit_slug'],
+            msg: 'Too long',
+            type: 'string_too_long',
+          },
+        ],
+      } satisfies HTTPValidationError,
+      'mobile_suit_slug: Too long',
+    ],
+  ])(
+    'marks a %i mobile suit answer as an error, not a 404',
+    async (status, body, errorMessage) => {
+      server = makeMirageServer({
+        environment: 'test',
+        overrides: (mirage) => {
+          mirage.get(
+            '/mobile-suits/:mobile_suit_slug',
+            () => new MirageResponse(status, {}, body),
+          );
+        },
+      });
+
+      const { detailsBySlug } = (
+        await run(({ dispatch }) =>
+          fetchMobileSuit({ dispatch, slug: mockRx782Gundam.slug }),
+        )
+      ).mobileSuits;
+
+      expect(detailsBySlug[mockRx782Gundam.slug]).toMatchObject({
+        detail: null,
+        errorMessage,
+        isNotFound: false,
+      });
+    },
+  );
 
   it('loads every continuity, or the error', async () => {
     server = makeMirageServer({ environment: 'test' });

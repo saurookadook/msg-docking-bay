@@ -17,6 +17,10 @@
         }
     }
 
+    &.spec-plate-compact .spec-plate-row {
+        grid-template-columns: 7rem 1fr;
+    }
+
     & .spec-plate-row + .spec-plate-row {
         border-block-start: 1px dashed var(--color-border);
     }

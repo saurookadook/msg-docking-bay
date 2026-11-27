@@ -19,5 +19,6 @@ export const GundamWiki: Story = {};
 export const SeveralSources: Story = {
   args: {
     citations: [mockSources.rx782Gundam, mockWikidataSource],
+    idPrefix: 'story-source',
   },
 };

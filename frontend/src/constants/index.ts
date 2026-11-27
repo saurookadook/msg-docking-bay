@@ -1,4 +1,4 @@
-import type { UnitType, WorkType } from '@/api';
+import type { SourceKind, UnitType, WorkType } from '@/api';
 
 /**
  * @description Base URL that `safeFetch` resolves `/api/...` paths against.
@@ -144,3 +144,11 @@ export const WORK_TYPE_OPTIONS = Object.entries(WORK_TYPE_LABELS).map(
 
 /** @description How long the roster search waits after the last keystroke to search. */
 export const SEARCH_DEBOUNCE_MS = 300;
+
+/** @description The name each kind of source is credited by. */
+export const SOURCE_KIND_LABELS = {
+  fandom_page: 'Gundam Wiki',
+  wikidata_item: 'Wikidata',
+  wikipedia_en_page: 'Wikipedia (EN)',
+  wikipedia_ja_page: 'Wikipedia (JA)',
+} as const satisfies Record<SourceKind, string>;

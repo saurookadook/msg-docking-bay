@@ -327,68 +327,76 @@ function createDesignerCreditMock({
  * @description Each suit's detail, keyed by its current slug. Credits follow the API's
  * order: pilots by work (none last), organizations by role, designers by name.
  */
+/** @description The RX-78-2's base spec sheet, as the API gives it. */
+export const mockRx782GundamBaseSheet = specSheet(mockSources.rx782Gundam, {
+  ...rx782BaseSpecs,
+  ...rx782Parts,
+  turn_time_s: 1.5,
+});
+
+/**
+ * @description The RX-78-2's Magnet Coating sheet, its gaps filled from the base sheet.
+ * @note The infobox gives "1.1~after magnet coating upgrade"; the rest comes from the
+ * base sheet of the same source, parts included, since the infobox lists them once.
+ */
+export const mockRx782GundamMagnetCoatingSheet = specSheet(mockSources.rx782Gundam, {
+  ...rx782BaseSpecs,
+  ...rx782Parts,
+  configuration: 'Magnet Coating',
+  inherited_fields: [
+    'empty_weight_kg',
+    'generator_output_kw',
+    'gross_weight_kg',
+    'head_height_m',
+    'max_acceleration_g',
+    'max_speed_kmh',
+    'sensor_range_m',
+    'total_thrust_kg',
+  ],
+  inherited_parts: ['armaments', 'equipment', 'materials', 'powerplants'],
+  turn_time_s: 1.1,
+});
+
+/** @description The RX-78-2's detail, with two spec sheets and every kind of credit. */
+export const mockRx782GundamDetail: MobileSuitDetailEntity = {
+  ...mockRx782Gundam,
+  appearances: [
+    appearance(mockMobileSuitGundam, mockSources.rx782Gundam, {
+      first_episode: 1,
+      is_debut: true,
+      last_episode: 43,
+    }),
+    appearance(mockMobileSuitGundamI, mockSources.rx782Gundam),
+  ],
+  designers: [
+    createDesignerCreditMock({
+      mechanicalDesigner: mockKunioOkawaraRef,
+      source: mockSources.rx782Gundam,
+    }),
+  ],
+  organizations: [
+    createOrganizationCreditMock({
+      organization: mockEarthFederationRef,
+      role: 'manufacturer',
+      source: mockSources.rx782Gundam,
+    }),
+  ],
+  pilots: [
+    createPilotCreditMock({
+      character: mockAmuroRayRef,
+      source: mockSources.rx782Gundam,
+      work: mockMobileSuitGundam,
+    }),
+  ],
+  relations: [
+    alternateVersion('incoming', mockRx7802Gundam, mockSources.rx7802Gundam),
+    alternateVersion('incoming', mockRx78f00Gundam, mockSources.rx78f00Gundam),
+  ],
+  spec_sheets: [mockRx782GundamBaseSheet, mockRx782GundamMagnetCoatingSheet],
+};
+
 export const mockMobileSuitDetails: Readonly<Record<string, MobileSuitDetailEntity>> = {
-  [mockRx782Gundam.slug]: {
-    ...mockRx782Gundam,
-    appearances: [
-      appearance(mockMobileSuitGundam, mockSources.rx782Gundam, {
-        first_episode: 1,
-        is_debut: true,
-        last_episode: 43,
-      }),
-      appearance(mockMobileSuitGundamI, mockSources.rx782Gundam),
-    ],
-    designers: [
-      createDesignerCreditMock({
-        mechanicalDesigner: mockKunioOkawaraRef,
-        source: mockSources.rx782Gundam,
-      }),
-    ],
-    organizations: [
-      createOrganizationCreditMock({
-        organization: mockEarthFederationRef,
-        role: 'manufacturer',
-        source: mockSources.rx782Gundam,
-      }),
-    ],
-    pilots: [
-      createPilotCreditMock({
-        character: mockAmuroRayRef,
-        source: mockSources.rx782Gundam,
-        work: mockMobileSuitGundam,
-      }),
-    ],
-    relations: [
-      alternateVersion('incoming', mockRx7802Gundam, mockSources.rx7802Gundam),
-      alternateVersion('incoming', mockRx78f00Gundam, mockSources.rx78f00Gundam),
-    ],
-    spec_sheets: [
-      specSheet(mockSources.rx782Gundam, {
-        ...rx782BaseSpecs,
-        ...rx782Parts,
-        turn_time_s: 1.5,
-      }),
-      // NOTE: the infobox gives "1.1~after magnet coating upgrade"; the rest comes from the
-      // base sheet of the same source, parts included, since the infobox lists them once.
-      specSheet(mockSources.rx782Gundam, {
-        ...rx782BaseSpecs,
-        ...rx782Parts,
-        configuration: 'Magnet Coating',
-        inherited_fields: [
-          'empty_weight_kg',
-          'generator_output_kw',
-          'gross_weight_kg',
-          'head_height_m',
-          'max_acceleration_g',
-          'max_speed_kmh',
-          'sensor_range_m',
-          'total_thrust_kg',
-        ],
-        inherited_parts: ['armaments', 'equipment', 'materials', 'powerplants'],
-        turn_time_s: 1.1,
-      }),
-    ],
-  },
+  [mockRx782Gundam.slug]: mockRx782GundamDetail,
   [mockRx7802Gundam.slug]: {
     ...mockRx7802Gundam,
     // The article says it debuts in the manga, which the seed leaves out.

@@ -11,4 +11,12 @@ describe('VisualSlot', () => {
       'No visual on file for RX-78-2 Gundam',
     );
   });
+
+  it('keeps its name when shrunk to a thumbnail', () => {
+    render(<VisualSlot shape="thumbnail" subject="RX-78-2 Gundam" />);
+
+    expect(screen.getByRole('figure')).toHaveAccessibleName(
+      'No visual on file for RX-78-2 Gundam',
+    );
+  });
 });

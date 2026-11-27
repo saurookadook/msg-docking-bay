@@ -1,10 +1,19 @@
-import type { MobileSuitCardEntity, MobileSuitsListResponse, PageMeta } from '@/api';
+import type {
+  MobileSuitCardEntity,
+  MobileSuitDetailEntity,
+  MobileSuitResponse,
+  MobileSuitsListResponse,
+  PageMeta,
+} from '@/api';
 import {
-  REQUEST_MOBILE_SUITS, // force formatting
+  REQUEST_MOBILE_SUIT,
+  REQUEST_MOBILE_SUITS,
+  SET_MOBILE_SUIT,
+  SET_MOBILE_SUIT_ERROR,
   SET_MOBILE_SUITS,
   SET_MOBILE_SUITS_ERROR,
 } from '@/store/actionTypes';
-import { fetchCatalogList } from '@/store/catalogList';
+import { fetchCatalogDetail, fetchCatalogList } from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
 
 /** @description Marks the mobile suits list as loading for `query`. */
@@ -60,5 +69,69 @@ export async function fetchMobileSuits({
     onSuccess: ({ data, meta }) =>
       setMobileSuits({ dispatch, items: data, meta, query }),
     query,
+  });
+}
+
+/**
+ * @description Marks the mobile suit under `slug` as loading.
+ * @note `slug` is the suit's URL slug (`rx-78-2-gundam`), as asked for: an old one too.
+ */
+export function requestMobileSuit({
+  dispatch,
+  slug,
+}: BaseAction & { slug: string }): void {
+  return dispatch({ type: REQUEST_MOBILE_SUIT, payload: { mobileSuits: { slug } } });
+}
+
+/**
+ * @description Stores the mobile suit fetched for `slug`.
+ * @note `slug` is the suit's URL slug (`rx-78-2-gundam`), as asked for: an old one too.
+ */
+export function setMobileSuit({
+  detail,
+  dispatch,
+  slug,
+}: BaseAction & { detail: MobileSuitDetailEntity; slug: string }): void {
+  return dispatch({
+    type: SET_MOBILE_SUIT,
+    payload: { mobileSuits: { detail, slug } },
+  });
+}
+
+/**
+ * @description Stores the error for the mobile suit under `slug`; `isNotFound` marks a
+ * 404.
+ * @note `slug` is the suit's URL slug (`rx-78-2-gundam`), as asked for: an old one too.
+ */
+export function setMobileSuitError({
+  dispatch,
+  errorMessage,
+  isNotFound,
+  slug,
+}: BaseAction & { errorMessage: string; isNotFound: boolean; slug: string }): void {
+  return dispatch({
+    type: SET_MOBILE_SUIT_ERROR,
+    payload: { mobileSuits: { errorMessage, isNotFound, slug } },
+  });
+}
+
+/**
+ * @description Requests `GET /api/mobile-suits/{mobile_suit_slug}` and stores the suit
+ * under `slug`, the slug asked for. An old slug stores the renamed suit, whose `slug` is
+ * current, under both.
+ * @note `slug` is the suit's URL slug (`rx-78-2-gundam`), not its model number.
+ */
+export async function fetchMobileSuit({
+  dispatch,
+  slug,
+}: BaseAction & { slug: string }): Promise<void> {
+  return fetchCatalogDetail<MobileSuitResponse>({
+    detailPath: `/api/mobile-suits/${encodeURIComponent(slug)}`,
+    fallbackErrorMessage: 'The mobile suit request failed.',
+    name: fetchMobileSuit.name,
+    onError: ({ errorMessage, isNotFound }) =>
+      setMobileSuitError({ dispatch, errorMessage, isNotFound, slug }),
+    onRequest: () => requestMobileSuit({ dispatch, slug }),
+    onSuccess: (detail) => setMobileSuit({ detail, dispatch, slug }),
   });
 }

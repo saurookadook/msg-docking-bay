@@ -181,6 +181,13 @@ a {
 /****************************************************************
 Utilities
 ****************************************************************/
+/* A list without bullets or indent, for lists laid out as rows or chips. */
+.plain-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
 /* A small stencilled label: plate labels, captions, legends, status text. */
 .stencil-label {
     font-size: 0.75rem;

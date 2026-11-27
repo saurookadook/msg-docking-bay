@@ -118,6 +118,20 @@ export function setDetail<Detail>(
   };
 }
 
+/**
+ * @description Stores the detail fetched for `slug`, and under its current slug too when
+ * `slug` is an old one, so swapping the URL to the current slug does not fetch it again.
+ */
+export function setDetailUnderSlugs<Detail extends { slug: string }>(
+  stateSlice: DetailsBySlug<Detail>,
+  { detail, slug }: DetailSetPayload<Detail>,
+): DetailsBySlug<Detail> {
+  const storedState = setDetail(stateSlice, { detail, slug });
+  return detail.slug === slug
+    ? storedState
+    : setDetail(storedState, { detail, slug: detail.slug });
+}
+
 /** @description Stores the error for `slug`'s detail, with `detail` set to `null`. */
 export function setDetailError<Detail>(
   stateSlice: DetailsBySlug<Detail>,
@@ -197,4 +211,43 @@ export async function fetchCatalogList<Response extends ListPage<unknown>>({
   }
   // NOTE: called outside the try, so a store bug surfaces instead of reading as a failed request.
   return onSuccess(responseData);
+}
+
+/**
+ * @description Requests one entity's detail: dispatches the request, then the detail or
+ * the error, with `isNotFound` set on a 404. Each slice's `fetch<Kind>` wraps it with its
+ * own actions.
+ * @note A failed request does not throw: `safeFetch` has already logged it.
+ */
+export async function fetchCatalogDetail<Response extends { data: unknown }>({
+  detailPath,
+  fallbackErrorMessage,
+  name,
+  onError,
+  onRequest,
+  onSuccess,
+}: {
+  /** @description The detail route's path, with the slug already encoded. */
+  detailPath: string;
+  fallbackErrorMessage: string;
+  name: string;
+  onError: (args: { errorMessage: string; isNotFound: boolean }) => void;
+  onRequest: () => void;
+  onSuccess: (detail: Response['data']) => void;
+}): Promise<void> {
+  onRequest();
+  let responseData: Response;
+  try {
+    responseData = await safeFetch.call<Response>(
+      { name },
+      { fetchOpts: { method: 'GET' }, requestPathname: detailPath },
+    );
+  } catch (error) {
+    return onError({
+      errorMessage: catalogErrorMessage({ error, fallback: fallbackErrorMessage }),
+      isNotFound: error instanceof SafeFetchError && error.status === 404,
+    });
+  }
+  // NOTE: called outside the try, so a store bug surfaces instead of reading as a failed request.
+  return onSuccess(responseData.data);
 }

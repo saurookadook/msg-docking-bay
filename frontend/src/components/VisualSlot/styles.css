@@ -26,4 +26,26 @@
         color: var(--color-hologram);
         font-family: var(--font-family-mono);
     }
+
+    &.visual-slot-landscape {
+        aspect-ratio: 4 / 3;
+
+        & .visual-slot-blueprint {
+            block-size: 7rem;
+        }
+    }
+
+    &.visual-slot-thumbnail {
+        aspect-ratio: 1;
+        block-size: 3rem;
+        padding: var(--space-1);
+
+        & .visual-slot-blueprint {
+            block-size: 2rem;
+        }
+
+        & figcaption {
+            display: none;
+        }
+    }
 }
