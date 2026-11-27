@@ -1,10 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { DeckPanel } from '@/components/DeckPanel';
-import { DossierHeader } from '@/components/DossierHeader';
-import { DossierStrip } from '@/components/DossierStrip';
-import { SpecPlate } from '@/components/SpecPlate';
-import { VisualSlot } from '@/components/VisualSlot';
+import {
+  DeckPanel,
+  DossierHeader,
+  DossierStrip,
+  SpecPlate,
+  VisualSlot,
+} from '@/components';
 
 import { DossierLayout } from '.';
 
