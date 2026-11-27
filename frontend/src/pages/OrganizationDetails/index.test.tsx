@@ -151,6 +151,29 @@ describe('OrganizationDetails', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('charts units with no parent', async () => {
+    /* START TEST SETUP */
+    server = makeMirageServer({
+      environment: 'test',
+      overrides: (mirage) => {
+        mirage.get('/organizations/:organization_slug', (): OrganizationResponse => ({
+          data: {
+            ...findOrganizationMock('earth-federation')!,
+            child_organizations: [{ name: 'Titans', slug: 'titans' }],
+          },
+        }));
+      },
+    });
+    renderWithProviders({ initialEntries: ['/organizations/earth-federation'] });
+    /* END TEST SETUP */
+
+    const chart = await screen.findByRole('region', { name: 'Org chart' });
+    expect(within(chart).getByRole('list', { name: 'Units' })).toBeVisible();
+    expect(
+      within(chart).queryByRole('list', { name: 'Parent' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('lists the mobile weapons by role, with an empty role as none on file', async () => {
     server = makeMirageServer({ environment: 'test' });
     renderWithProviders({ initialEntries: ['/organizations/earth-federation'] });
