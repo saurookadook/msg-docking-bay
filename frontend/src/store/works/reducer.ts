@@ -13,6 +13,7 @@ import {
   createInitialListState,
   requestDetail,
   requestList,
+  requestSubList,
   setDetailError,
   setDetailUnderSlugs,
   setList,
@@ -65,7 +66,7 @@ const mobileSuits: CombinedWorksStateSlice['mobileSuits'] = [
   (stateSlice, action) => {
     switch (action.type) {
       case REQUEST_WORK_MOBILE_SUITS:
-        return requestList(stateSlice, action.payload.works);
+        return requestSubList(stateSlice, action.payload.works);
       case SET_WORK_MOBILE_SUITS:
         return setList(stateSlice, action.payload.works);
       case SET_WORK_MOBILE_SUITS_ERROR:

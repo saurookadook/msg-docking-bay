@@ -13,6 +13,7 @@ import {
   createInitialListState,
   requestDetail,
   requestList,
+  requestSubList,
   setDetailError,
   setDetailUnderSlugs,
   setList,
@@ -68,7 +69,7 @@ const mobileSuits: CombinedMechanicalDesignersStateSlice['mobileSuits'] = [
   (stateSlice, action) => {
     switch (action.type) {
       case REQUEST_MECHANICAL_DESIGNER_MOBILE_SUITS:
-        return requestList(stateSlice, action.payload.mechanicalDesigners);
+        return requestSubList(stateSlice, action.payload.mechanicalDesigners);
       case SET_MECHANICAL_DESIGNER_MOBILE_SUITS:
         return setList(stateSlice, action.payload.mechanicalDesigners);
       case SET_MECHANICAL_DESIGNER_MOBILE_SUITS_ERROR:

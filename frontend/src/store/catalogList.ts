@@ -59,6 +59,28 @@ export function requestList<Card>(
   return { ...stateSlice, errorMessage: null, requestInProgress: true, query };
 }
 
+/** @description The parent slug a `subListKey` belongs to: everything before its `?`. */
+function subListParent(key: Nullable<string>): Nullable<string> {
+  if (key == null) return null;
+  const queryStart = key.indexOf('?');
+  return queryStart === -1 ? key : key.slice(0, queryStart);
+}
+
+/**
+ * @description Starts loading a sub-list page (`query` is a `subListKey`). Another page
+ * of the same parent keeps the current rows until the new ones arrive, as `requestList`
+ * does; another parent's rows are dropped at once, so they never show on its page.
+ */
+export function requestSubList<Card>(
+  stateSlice: ListState<Card>,
+  { query }: ListRequestPayload,
+): ListState<Card> {
+  if (subListParent(stateSlice.query) === subListParent(query)) {
+    return requestList(stateSlice, { query });
+  }
+  return { ...createInitialListState<Card>(), requestInProgress: true, query };
+}
+
 /** @description Stores a page, unless a newer request has replaced its query. */
 export function setList<Card>(
   stateSlice: ListState<Card>,

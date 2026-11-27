@@ -13,6 +13,7 @@ import {
   createInitialListState,
   requestDetail,
   requestList,
+  requestSubList,
   setDetailError,
   setDetailUnderSlugs,
   setList,
@@ -73,7 +74,7 @@ const mobileSuitsByRole: CombinedOrganizationsStateSlice['mobileSuitsByRole'] = 
     switch (action.type) {
       case REQUEST_ORGANIZATION_MOBILE_SUITS: {
         const { role, ...payload } = action.payload.organizations;
-        return { ...stateSlice, [role]: requestList(stateSlice[role], payload) };
+        return { ...stateSlice, [role]: requestSubList(stateSlice[role], payload) };
       }
       case SET_ORGANIZATION_MOBILE_SUITS: {
         const { role, ...payload } = action.payload.organizations;
