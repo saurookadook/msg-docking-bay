@@ -36,7 +36,7 @@ const PENDING_SECTIONS = ['Staff', 'Characters', 'Plot'];
 
 /** @description The operation log for a loaded work. */
 function OperationLog({ work }: { work: WorkDetailEntity }) {
-  const suits = useWorkSuits(work.slug);
+  const suitList = useWorkSuits(work.slug);
   // NOTE: only relations are cited; the work's suit list carries no sources.
   const { citations, cite } = numberedCitations({
     idPrefix: SOURCE_ID_PREFIX,
@@ -90,7 +90,7 @@ function OperationLog({ work }: { work: WorkDetailEntity }) {
       strip={<DossierStrip eyebrow={FRAMING} name={title} />}
     >
       <RelatedWorks cite={cite} relations={work.relations} />
-      <WorkSuits list={suits} />
+      <WorkSuits list={suitList} />
       {PENDING_SECTIONS.map((pendingTitle) => (
         <PendingSection key={pendingTitle} title={pendingTitle} />
       ))}
