@@ -6,11 +6,15 @@ import type { RelatedWorkEntity } from '@/api';
 
 import { groupRelations } from './relations';
 
-function relation(
-  relation_type: RelatedWorkEntity['relation_type'],
-  direction: RelatedWorkEntity['direction'],
+function relation({
+  direction,
+  relation_type,
   work = mockMobileSuitGundamI,
-): RelatedWorkEntity {
+}: {
+  direction: RelatedWorkEntity['direction'];
+  relation_type: RelatedWorkEntity['relation_type'];
+  work?: RelatedWorkEntity['work'];
+}): RelatedWorkEntity {
   return {
     created_at: mockNow,
     direction,
@@ -34,15 +38,21 @@ describe('groupRelations', () => {
     ['side_story_of', 'incoming', 'Side stories'],
   ] as const)('labels a %s %s relation %o', (type, direction, label) => {
     expect(
-      groupRelations([relation(type, direction)]).map((group) => group.label),
+      groupRelations([relation({ direction, relation_type: type })]).map(
+        (group) => group.label,
+      ),
     ).toEqual([label]);
   });
 
   it('puts what the work is before what came of it, and groups each type', () => {
     const groups = groupRelations([
-      relation('compilation_of', 'incoming'),
-      relation('sequel_of', 'outgoing'),
-      relation('compilation_of', 'incoming', mockTheOrigin),
+      relation({ direction: 'incoming', relation_type: 'compilation_of' }),
+      relation({ direction: 'outgoing', relation_type: 'sequel_of' }),
+      relation({
+        direction: 'incoming',
+        relation_type: 'compilation_of',
+        work: mockTheOrigin,
+      }),
     ]);
 
     expect(groups.map(({ key, relations }) => [key, relations.length])).toEqual([
