@@ -5,8 +5,6 @@ export * from './SheetSummary';
 export * from './SpecSheetTabs';
 export * from './SuitAppearances';
 export * from './SuitCredits';
-export * from './SuitHeader';
 export * from './SuitInfobox';
 export * from './SuitLineage';
 export * from './SuitParts';
-export * from './SuitStrip';

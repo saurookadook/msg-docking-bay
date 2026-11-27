@@ -1,21 +1,28 @@
 import { useId } from 'react';
-import { Navigate, useLocation, useParams } from 'react-router';
+import { useParams } from 'react-router';
 
 import type { MobileSuitDetailEntity, SourceCitationEntity } from '@/api';
-import { CitationMark, SourceCitations, SpecPlate, StatusLamp } from '@/components';
+import {
+  CatalogDetail,
+  CitationMark,
+  DossierHeader,
+  DossierLayout,
+  DossierStrip,
+  SourceCitations,
+  SpecPlate,
+} from '@/components';
+import { UNIT_TYPE_LABELS } from '@/constants';
 import { NotFound } from '@/pages/NotFound';
 import { fetchMobileSuit, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
-import { entityPath, numberCitations } from '@/utils';
+import { numberCitations } from '@/utils';
 
 import {
   PendingPanel,
   SpecSheetTabs,
   SuitAppearances,
-  SuitHeader,
   SuitInfobox,
   SuitLineage,
-  SuitStrip,
 } from './components';
 import { collectCitations, SOURCE_ID_PREFIX } from './utils/citations';
 import { useSpecSheetSelection } from './utils/hooks';
@@ -25,7 +32,8 @@ import './styles.css';
 const selectMobileSuitDetails = (appState: AppState) =>
   appState.mobileSuits.detailsBySlug;
 
-const HEADING_ID = 'mobile-suit-details-title';
+const PAGE_ID = 'mobile-suit-details';
+const HEADING_ID = `${PAGE_ID}-title`;
 
 /** @description Infobox rows the catalog does not hold yet ("DATA PENDING"). */
 const REGISTRY_ITEMS = [
@@ -57,27 +65,39 @@ function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
   const cite = (source: SourceCitationEntity) => (
     <CitationMark idPrefix={SOURCE_ID_PREFIX} number={numberOf(source)} />
   );
+  const { continuity, model_number, name, name_ja, unit_type } = suit;
 
   return (
-    <section aria-labelledby={HEADING_ID} id="mobile-suit-details">
-      <SuitStrip suit={suit} />
-      <SuitHeader headingID={HEADING_ID} suit={suit} />
-      <SuitInfobox cite={cite} selected={selection.selected} suit={suit} />
-      <div className="mobile-suit-details-body">
-        <SpecPlate
-          aria-label="Registry"
-          className="registry-plate"
-          items={REGISTRY_ITEMS}
+    <DossierLayout
+      header={
+        <DossierHeader
+          classLine={[UNIT_TYPE_LABELS[unit_type], continuity?.name]
+            .filter((part) => part != null)
+            .join(' · ')}
+          eyebrow={model_number ?? 'No model number'}
+          headingID={HEADING_ID}
+          name={name}
+          nameJa={name_ja}
         />
-        <SpecSheetTabs cite={cite} name={suit.name} selection={selection} />
-        <SuitLineage cite={cite} suit={suit} />
-        <SuitAppearances appearances={suit.appearances} cite={cite} />
-        {PENDING_SECTIONS.map((title) => (
-          <PendingSection key={title} title={title} />
-        ))}
-        <SourceCitations citations={citations} idPrefix={SOURCE_ID_PREFIX} />
-      </div>
-    </section>
+      }
+      headingID={HEADING_ID}
+      id={PAGE_ID}
+      infobox={<SuitInfobox cite={cite} selected={selection.selected} suit={suit} />}
+      strip={<DossierStrip eyebrow={model_number} name={name} />}
+    >
+      <SpecPlate
+        aria-label="Registry"
+        className="registry-plate"
+        items={REGISTRY_ITEMS}
+      />
+      <SpecSheetTabs cite={cite} name={suit.name} selection={selection} />
+      <SuitLineage cite={cite} suit={suit} />
+      <SuitAppearances appearances={suit.appearances} cite={cite} />
+      {PENDING_SECTIONS.map((title) => (
+        <PendingSection key={title} title={title} />
+      ))}
+      <SourceCitations citations={citations} idPrefix={SOURCE_ID_PREFIX} />
+    </DossierLayout>
   );
 }
 
@@ -87,40 +107,23 @@ function Dossier({ suit }: { suit: MobileSuitDetailEntity }) {
  */
 export function MobileSuitDetails() {
   const { mobileSuitSlug = '' } = useParams<AppParams>();
-  const { search } = useLocation();
   const detailState = useCatalogDetail({
     fetchDetail: fetchMobileSuit,
     selectDetails: selectMobileSuitDetails,
     slug: mobileSuitSlug,
   });
-  const suit = detailState?.detail ?? null;
-
-  if (detailState?.isNotFound === true) return <NotFound />;
-
-  if (suit != null && suit.slug !== mobileSuitSlug) {
-    return (
-      <Navigate
-        replace
-        to={{ pathname: entityPath({ kind: 'mobileSuit', slug: suit.slug }), search }}
-      />
-    );
-  }
-
-  if (suit != null) return <Dossier suit={suit} />;
 
   return (
-    <section aria-labelledby={HEADING_ID} id="mobile-suit-details">
-      <h2 className="visually-hidden" id={HEADING_ID}>
-        Mobile suit dossier
-      </h2>
-      <p role="status">
-        {detailState?.errorMessage == null && (
-          <StatusLamp status="busy">Opening the dossier</StatusLamp>
-        )}
-      </p>
-      {detailState?.errorMessage != null && (
-        <p role="alert">{detailState.errorMessage}</p>
-      )}
-    </section>
+    <CatalogDetail
+      detailState={detailState}
+      id={PAGE_ID}
+      kind="mobileSuit"
+      loadingHeading="Mobile suit dossier"
+      loadingLabel="Opening the dossier"
+      notFound={<NotFound />}
+      slug={mobileSuitSlug}
+    >
+      {(suit) => <Dossier suit={suit} />}
+    </CatalogDetail>
   );
 }

@@ -1,0 +1,22 @@
+.dossier-strip {
+    align-items: center;
+    background: var(--color-surface);
+    border-block-end: 1px solid var(--color-border-strong);
+    display: flex;
+    gap: var(--space-2);
+    padding-block: var(--space-1);
+
+    & .dossier-strip-visual {
+        flex-shrink: 0;
+    }
+
+    & p {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+    }
+
+    & .dossier-strip-eyebrow {
+        color: var(--color-text-muted);
+    }
+}

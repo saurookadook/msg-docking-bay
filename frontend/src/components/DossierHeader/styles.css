@@ -1,14 +1,14 @@
-.suit-header {
+.dossier-header {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
 
-    & .suit-header-name-ja {
+    & .dossier-header-name-ja {
         font-size: 1.125rem;
         margin: 0;
     }
 
-    & .suit-header-class {
+    & .dossier-header-class {
         color: var(--color-text-muted);
         margin: 0;
     }

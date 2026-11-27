@@ -1,0 +1,60 @@
+.dossier-layout {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-areas:
+        'header infobox'
+        'body infobox';
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+    grid-template-rows: auto 1fr;
+
+    @media (max-width: 40rem) {
+        grid-template-areas:
+            'strip'
+            'header'
+            'infobox'
+            'body';
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: none;
+    }
+
+    & .dossier-layout-strip {
+        display: none;
+
+        @media (max-width: 40rem) {
+            display: block;
+            grid-area: strip;
+            inset-block-start: 0;
+            position: sticky;
+            z-index: 1;
+        }
+    }
+
+    & .dossier-layout-header {
+        grid-area: header;
+    }
+
+    & .dossier-layout-infobox {
+        align-self: start;
+        grid-area: infobox;
+        inset-block-start: var(--space-3);
+        position: sticky;
+
+        @media (max-width: 40rem) {
+            position: static;
+        }
+    }
+
+    & .dossier-layout-body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        grid-area: body;
+        min-inline-size: 0;
+    }
+
+    & .source-citations li {
+        @media (max-width: 40rem) {
+            scroll-margin-block-start: 5rem;
+        }
+    }
+}
