@@ -1,6 +1,6 @@
 import { useId } from 'react';
 
-import type { OrganizationDetailEntity } from '@/api';
+import type { OrganizationDetailEntity, OrganizationRefEntity } from '@/api';
 import { EntityLink } from '@/components';
 
 import './styles.css';
@@ -8,6 +8,31 @@ import './styles.css';
 export type OrgChartProps = {
   organization: OrganizationDetailEntity;
 };
+
+/** @description One tier of the chart above or below the organization: its linked names. */
+function OrgTier({
+  label,
+  organizations,
+}: {
+  label: string;
+  organizations: readonly OrganizationRefEntity[];
+}) {
+  if (organizations.length === 0) return null;
+  return (
+    <div className="org-chart-tier">
+      <h4 className="stencil-label muted-label">{label}</h4>
+      <ul aria-label={label} className="plain-list wrap-list">
+        {organizations.map(({ name, slug }) => (
+          <li className="tier-node" key={slug}>
+            <EntityLink kind="organization" slug={slug}>
+              {name}
+            </EntityLink>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 /**
  * @description The organization's place in its hierarchy: its parent above it, and its
@@ -26,37 +51,16 @@ export function OrgChart({ organization }: OrgChartProps) {
         Org chart
       </h3>
       <div className="tier-tree">
-        {parent_organization != null && (
-          <div className="org-chart-tier">
-            <h4 className="stencil-label muted-label">Parent</h4>
-            <ul aria-label="Parent" className="plain-list wrap-list">
-              <li className="tier-node">
-                <EntityLink kind="organization" slug={parent_organization.slug}>
-                  {parent_organization.name}
-                </EntityLink>
-              </li>
-            </ul>
-          </div>
-        )}
+        <OrgTier
+          label="Parent"
+          organizations={parent_organization == null ? [] : [parent_organization]}
+        />
         <div className="org-chart-tier">
           <p aria-current="page" className="tier-node">
             {name}
           </p>
         </div>
-        {child_organizations.length > 0 && (
-          <div className="org-chart-tier">
-            <h4 className="stencil-label muted-label">Units</h4>
-            <ul aria-label="Units" className="plain-list wrap-list">
-              {child_organizations.map((child) => (
-                <li className="tier-node" key={child.slug}>
-                  <EntityLink kind="organization" slug={child.slug}>
-                    {child.name}
-                  </EntityLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <OrgTier label="Units" organizations={child_organizations} />
       </div>
     </section>
   );
