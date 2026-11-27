@@ -23,10 +23,16 @@ export type ListState<Card> = {
 };
 
 /**
+ * @description One sub-list page request: the parent's current slug, and the API query
+ * string, without `?`.
+ */
+export type SubListRequest = { query: string; slug: string };
+
+/**
  * @description The `query` a sub-list (`/{slug}/mobile-suits`) stores its page under: the
  * parent's slug and the API query, so a page for another parent never replaces this one.
  */
-export function subListKey({ query, slug }: { query: string; slug: string }): string {
+export function subListKey({ query, slug }: SubListRequest): string {
   return `${slug}?${query}`;
 }
 

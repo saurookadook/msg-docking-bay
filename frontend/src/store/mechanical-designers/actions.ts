@@ -18,7 +18,12 @@ import {
   SET_MECHANICAL_DESIGNERS,
   SET_MECHANICAL_DESIGNERS_ERROR,
 } from '@/store/actionTypes';
-import { fetchCatalogDetail, fetchCatalogList, subListKey } from '@/store/catalogList';
+import {
+  fetchCatalogDetail,
+  fetchCatalogList,
+  subListKey,
+  type SubListRequest,
+} from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
 
 /** @description Marks the designers list as loading for `query`. */
@@ -197,7 +202,7 @@ export async function fetchMechanicalDesignerMobileSuits({
   dispatch,
   query,
   slug,
-}: BaseAction & { query: string; slug: string }): Promise<void> {
+}: BaseAction & SubListRequest): Promise<void> {
   const requestKey = subListKey({ query, slug });
   return fetchCatalogList<MechanicalDesignerMobileSuitsListResponse>({
     listPath: `/api/mechanical-designers/${encodeURIComponent(slug)}/mobile-suits`,

@@ -18,7 +18,12 @@ import {
   SET_WORKS,
   SET_WORKS_ERROR,
 } from '@/store/actionTypes';
-import { fetchCatalogDetail, fetchCatalogList, subListKey } from '@/store/catalogList';
+import {
+  fetchCatalogDetail,
+  fetchCatalogList,
+  subListKey,
+  type SubListRequest,
+} from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
 
 /** @description Marks the works list as loading for `query`. */
@@ -164,7 +169,7 @@ export async function fetchWorkMobileSuits({
   dispatch,
   query,
   slug,
-}: BaseAction & { query: string; slug: string }): Promise<void> {
+}: BaseAction & SubListRequest): Promise<void> {
   const requestKey = subListKey({ query, slug });
   return fetchCatalogList<WorkMobileSuitsListResponse>({
     listPath: `/api/works/${encodeURIComponent(slug)}/mobile-suits`,

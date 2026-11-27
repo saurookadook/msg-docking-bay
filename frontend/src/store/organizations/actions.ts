@@ -19,7 +19,12 @@ import {
   SET_ORGANIZATIONS,
   SET_ORGANIZATIONS_ERROR,
 } from '@/store/actionTypes';
-import { fetchCatalogDetail, fetchCatalogList, subListKey } from '@/store/catalogList';
+import {
+  fetchCatalogDetail,
+  fetchCatalogList,
+  subListKey,
+  type SubListRequest,
+} from '@/store/catalogList';
 import type { BaseAction } from '@/store/types';
 
 /** @description Marks the organizations list as loading for `query`. */
@@ -203,7 +208,7 @@ export async function fetchOrganizationMobileSuits({
   query,
   role,
   slug,
-}: BaseAction & RoleSection & { query: string; slug: string }): Promise<void> {
+}: BaseAction & RoleSection & SubListRequest): Promise<void> {
   const requestKey = subListKey({ query, slug });
   return fetchCatalogList<OrganizationMobileSuitsListResponse>({
     listPath: `/api/organizations/${encodeURIComponent(slug)}/mobile-suits`,

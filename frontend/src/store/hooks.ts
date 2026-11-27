@@ -11,6 +11,7 @@ import {
   type DetailsBySlug,
   type DetailState,
   type ListState,
+  type SubListRequest,
 } from './catalogList';
 import { AppStoreContext, type AppStoreContextValue } from './context';
 import { fetchContinuities } from './continuities/actions';
@@ -122,7 +123,7 @@ export function useCatalogSubList<Item>({
 }: {
   /** @description The API query string, without `?`, for the URL's search params. */
   apiQuery: (searchParams: URLSearchParams) => string;
-  fetchSubList: (args: BaseAction & { query: string; slug: string }) => Promise<void>;
+  fetchSubList: (args: BaseAction & SubListRequest) => Promise<void>;
   selectList: (appState: AppState) => ListState<Item>;
   slug: Nullable<string>;
 }): ListState<Item> {

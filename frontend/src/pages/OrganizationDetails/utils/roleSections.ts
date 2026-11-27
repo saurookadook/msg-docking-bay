@@ -1,12 +1,17 @@
 import type { MobileSuitOrganizationRole, OrganizationMobileSuitEntity } from '@/api';
-import { fetchOrganizationMobileSuits, type AppState, type ListState } from '@/store';
+import {
+  fetchOrganizationMobileSuits,
+  type AppState,
+  type ListState,
+  type SubListRequest,
+} from '@/store';
 import type { BaseAction } from '@/store/types';
 
 /** @description One role section of the faction registry's mobile weapons. */
 export type RoleSection = {
   /** @description The API query for the section's page, with its `role`. */
   apiQuery: (searchParams: URLSearchParams) => string;
-  fetchSubList: (args: BaseAction & { query: string; slug: string }) => Promise<void>;
+  fetchSubList: (args: BaseAction & SubListRequest) => Promise<void>;
   /** @description The search param the section's pager writes. */
   offsetParam: string;
   role: MobileSuitOrganizationRole;
