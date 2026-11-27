@@ -16,7 +16,7 @@ import {
 import { NotFound } from '@/pages/NotFound';
 import { fetchCharacter, useCatalogDetail, type AppState } from '@/store';
 import type { AppParams } from '@/types';
-import { numberCitations } from '@/utils';
+import { continuityNames, numberCitations } from '@/utils';
 
 import { QualifiedUnits } from './components';
 import { collectCitations, SOURCE_ID_PREFIX } from './utils/citations';
@@ -47,17 +47,6 @@ const PENDING_SECTIONS = [
   'Quotes',
 ];
 
-/**
- * @description The continuities a character appears in, in the order of their works, as
- * the header's class line.
- */
-function continuityLine({ appearances }: CharacterDetailEntity): string {
-  const names = appearances.flatMap(({ work }) =>
-    work.continuity == null ? [] : [work.continuity.name],
-  );
-  return names.length === 0 ? 'Personnel' : [...new Set(names)].join(' · ');
-}
-
 /** @description The personnel file for a loaded character. */
 function PersonnelFile({ character }: { character: CharacterDetailEntity }) {
   const { citations, numberOf } = numberCitations(collectCitations(character));
@@ -69,7 +58,7 @@ function PersonnelFile({ character }: { character: CharacterDetailEntity }) {
     <DossierLayout
       header={
         <DossierHeader
-          classLine={continuityLine(character)}
+          classLine={continuityNames(character.appearances) ?? 'Personnel'}
           eyebrow={FRAMING}
           headingID={HEADING_ID}
           name={character.name}

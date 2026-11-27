@@ -1,4 +1,5 @@
 export * from './citationNumbers';
+export * from './continuityNames';
 export * from './entityPath';
 export * from './formatRange';
 export * from './listSearch';
