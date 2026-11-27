@@ -106,6 +106,15 @@ export function useCatalogDetail<Detail>({
   return detailState;
 }
 
+const SUB_LIST_KEYS = ['limit', 'offset'] as const;
+
+/**
+ * @description A sub-list's default API query: the page's `limit` and `offset` from the
+ * URL, sorted by key.
+ */
+export const subListApiQuery = (searchParams: URLSearchParams) =>
+  listSearch({ keys: SUB_LIST_KEYS, searchParams });
+
 /**
  * @description Loads the page of a parent's sub-list (`/{slug}/mobile-suits`) that the
  * URL asks for, and returns it. It waits for `slug`: the parent's current slug, from its
@@ -116,13 +125,16 @@ export function useCatalogDetail<Detail>({
  * refetches. The effect's guard drops a response that lands after the page unmounts.
  */
 export function useCatalogSubList<Item>({
-  apiQuery,
+  apiQuery = subListApiQuery,
   fetchSubList,
   selectList,
   slug,
 }: {
-  /** @description The API query string, without `?`, for the URL's search params. */
-  apiQuery: (searchParams: URLSearchParams) => string;
+  /**
+   * @description The API query string, without `?`, for the URL's search params;
+   * `subListApiQuery` by default.
+   */
+  apiQuery?: (searchParams: URLSearchParams) => string;
   fetchSubList: (args: BaseAction & SubListRequest) => Promise<void>;
   selectList: (appState: AppState) => ListState<Item>;
   slug: Nullable<string>;

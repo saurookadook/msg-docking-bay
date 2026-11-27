@@ -5,12 +5,6 @@ import {
   type AppState,
   type ListState,
 } from '@/store';
-import { listSearch } from '@/utils';
-
-const SUB_LIST_KEYS = ['limit', 'offset'] as const;
-
-const apiQuery = (searchParams: URLSearchParams) =>
-  listSearch({ keys: SUB_LIST_KEYS, searchParams });
 
 const selectDesignedUnits = (appState: AppState) =>
   appState.mechanicalDesigners.mobileSuits;
@@ -22,7 +16,6 @@ const selectDesignedUnits = (appState: AppState) =>
  */
 export function useDesignedUnits(slug: string): ListState<DesignedMobileSuitEntity> {
   return useCatalogSubList({
-    apiQuery,
     fetchSubList: fetchMechanicalDesignerMobileSuits,
     selectList: selectDesignedUnits,
     slug,
